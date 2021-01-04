@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2020, WSO2 Inc. (http://wso2.com) All Rights Reserved.
+ * Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -15,38 +15,36 @@
  */
 
 plugins {
+    id 'java'
     id "com.google.protobuf" version "0.8.10"
 }
 
-apply from: "$rootDir/gradle/javaProject.gradle"
-
-archivesBaseName = 'ballerina-choreo-tracing-extension'
+description = 'Ballerina - Choreo Extension - Native Module'
 
 dependencies {
-    implementation project(':ballerina-lang')
-    implementation project(':ballerina-config')
-    implementation project(':ballerina-runtime')
-    implementation 'io.jaegertracing:jaeger-core'
-    implementation ("io.grpc:grpc-protobuf")  {
-        exclude group: 'io.grpc' , module: 'grpc-context';
+    implementation "org.ballerinalang:ballerina-runtime:${ballerinaLangVersion}"
+    implementation "org.ballerinalang:ballerina-config:${ballerinaLangVersion}"
+    implementation "io.jaegertracing:jaeger-core:${jaegerVersion}"
+    implementation("io.grpc:grpc-protobuf:${grpcVersion}") {
+        exclude group: 'io.grpc', module: 'grpc-context';
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
     }
-    implementation ("io.grpc:grpc-stub") {
-        exclude group: 'io.grpc' , module: 'grpc-context';
+    implementation("io.grpc:grpc-stub:${grpcVersion}") {
+        exclude group: 'io.grpc', module: 'grpc-context';
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
 
     }
-    implementation ("io.grpc:grpc-netty-shaded") {
-        exclude group: 'io.grpc' , module: 'grpc-context';
+    implementation("io.grpc:grpc-netty-shaded:${grpcVersion}") {
+        exclude group: 'io.grpc', module: 'grpc-context';
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
     }
     implementation "javax.annotation:javax.annotation-api:1.3.2"
 }
 
 protobuf {
-    protoc { artifact = "com.google.protobuf:protoc:${project.ext.protobufVersion}" }
+    protoc { artifact = "com.google.protobuf:protoc:${protobufVersion}" }
     plugins {
-        grpc { artifact = "io.grpc:protoc-gen-grpc-java:${project.ext.grpcVersion}" }
+        grpc { artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}" }
     }
     generateProtoTasks {
         all()*.plugins { grpc {} }
@@ -63,18 +61,7 @@ sourceSets {
     }
 }
 
-checkstyleMain {
-    exclude 'org/ballerinalang/observe/trace/extension/choreo/gen/*'
-}
-
-createJavadoc {
-    enabled false
-}
-
-ext.moduleName = 'io.ballerina.observe.trace.extension.choreo'
-
 compileJava {
-    inputs.property("moduleName", moduleName)
     doFirst {
         options.compilerArgs = [
                 '--module-path', classpath.asPath,
@@ -82,3 +69,52 @@ compileJava {
         classpath = files()
     }
 }
+
+jar {
+    manifest {
+        attributes('Implementation-Title': project.name, 'Implementation-Version': project.version)
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId project.group
+            artifactId "choreo-extension-native"
+            version = project.version
+            artifact jar
+        }
+    }
+
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/${System.getenv("packagePublishRepo")}")
+            credentials {
+                username = System.getenv("packageUser")
+                password = System.getenv("packagePAT")
+            }
+        }
+    }
+}
+
+def reporterPropertiesFile = new File("${project.projectDir}/src/main/resources/choreo-reporter.properties")
+def originalProperties = reporterPropertiesFile.text
+
+task updateReporterProperties {
+    doLast {
+        def tomlVersion = project.version.split("-")[0]
+
+        def newProperties = reporterPropertiesFile.text.replace("@toml.version@", tomlVersion)
+        reporterPropertiesFile.text = newProperties
+    }
+}
+
+task revertReporterProperties {
+    doLast {
+        reporterPropertiesFile.text = originalProperties
+    }
+}
+
+processResources.finalizedBy revertReporterProperties
+processResources.dependsOn updateReporterProperties
