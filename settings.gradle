@@ -21,12 +21,12 @@ plugins {
 rootProject.name = 'module-ballerinax-choreo'
 
 include(':build-config:checkstyle')
-//include(':choreo-extension-ballerina')
+include(':choreo-extension-ballerina')
 include(':choreo-extension-native')
 //include(':choreo-extension-tests')
 
 project(':build-config:checkstyle').projectDir = file('build-config/checkstyle')
-//project(':choreo-extension-ballerina').projectDir = file('choreo-extension-ballerina')
+project(':choreo-extension-ballerina').projectDir = file('choreo-extension-ballerina')
 project(':choreo-extension-native').projectDir = file('choreo-extension-native')
 //project(':choreo-extension-tests').projectDir = file('choreo-extension-tests')
 
