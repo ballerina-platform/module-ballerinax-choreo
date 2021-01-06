@@ -9,5 +9,8 @@ module io.ballerina.observe.trace.extension.choreo {
     requires com.google.protobuf;
     requires io.ballerina.config;
 
-    exports io.ballerina.observe.choreo;
+    provides io.ballerina.runtime.observability.tracer.spi.TracerProviderFactory
+            with io.ballerina.observe.choreo.ChoreoTracerProviderFactory;
+    provides io.ballerina.runtime.observability.metrics.spi.MetricReporterFactory
+            with io.ballerina.observe.choreo.ChoreoMetricReporterFactory;
 }
