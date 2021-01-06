@@ -14,12 +14,19 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/java;
+
 # Extension class created by ChoreoMetricReporterFactory
 public class MetricReporter {
     # Handle Metrics Reporter start.
     #
     # + return - `()` if no error occurred, and an error otherwise
-    public isolated function initialize() returns error? {
-        // Initialize
+    public function initialize() returns error? {
+        check externInitializeMetricReporter();
     }
 }
+
+function externInitializeMetricReporter() returns error? = @java:Method {
+    'class: "org.ballerinalang.observe.trace.extension.choreo.InitUtils",
+    name: "initializeMetricReporter"
+} external;

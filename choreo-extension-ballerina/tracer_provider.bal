@@ -14,12 +14,19 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import ballerina/java;
+
 # Extension class created by ChoreoTracerProviderFactory
 public class TracerProvider {
     # Handle Tracer Provider initialization.
     #
     # + return - `()` if no error occurred, and an error otherwise
     public function initialize() returns error? {
-        // Initialize
+        check externInitializeTracerProvider();
     }
 }
+
+function externInitializeTracerProvider() returns error? = @java:Method {
+    'class: "org.ballerinalang.observe.trace.extension.choreo.InitUtils",
+    name: "initializeTracerProvider"
+} external;

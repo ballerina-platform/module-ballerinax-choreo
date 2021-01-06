@@ -18,6 +18,7 @@ package org.ballerinalang.observe.trace.extension.choreo;
 
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
+import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.observability.metrics.Counter;
 import io.ballerina.runtime.observability.metrics.DefaultMetricRegistry;
 import io.ballerina.runtime.observability.metrics.Gauge;
@@ -26,10 +27,8 @@ import io.ballerina.runtime.observability.metrics.PercentileValue;
 import io.ballerina.runtime.observability.metrics.PolledGauge;
 import io.ballerina.runtime.observability.metrics.Snapshot;
 import io.ballerina.runtime.observability.metrics.Tag;
-import io.ballerina.runtime.observability.metrics.spi.MetricReporter;
 import org.ballerinalang.observe.trace.extension.choreo.client.ChoreoClient;
 import org.ballerinalang.observe.trace.extension.choreo.client.ChoreoClientHolder;
-import org.ballerinalang.observe.trace.extension.choreo.client.error.ChoreoClientException;
 import org.ballerinalang.observe.trace.extension.choreo.logging.LogFactory;
 import org.ballerinalang.observe.trace.extension.choreo.logging.Logger;
 import org.ballerinalang.observe.trace.extension.choreo.model.ChoreoMetric;
@@ -45,14 +44,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static org.ballerinalang.observe.trace.extension.choreo.Constants.CHOREO_EXTENSION_NAME;
-
 /**
  * Ballerina MetricReporter extension for Choreo cloud.
  *
  * @since 2.0.0
  */
-public class MetricsReporterExtension implements MetricReporter, AutoCloseable {
+public class MetricsReporter implements AutoCloseable {
     private static final Logger LOGGER = LogFactory.getLogger();
 
     private static final int PUBLISH_INTERVAL_SECS = 10;
@@ -68,30 +65,17 @@ public class MetricsReporterExtension implements MetricReporter, AutoCloseable {
     private ScheduledExecutorService executorService;
     private Task task;
 
-    @Override
-    public void init() {
-        ChoreoClient choreoClient;
-        try {
-            choreoClient = ChoreoClientHolder.getChoreoClient(this);
-        } catch (ChoreoClientException e) {
-            throw ErrorCreator.createError(
-                    StringUtils.fromString("Could not initialize the client. Please check Ballerina configurations."),
-                    StringUtils.fromString(e.getMessage()));
-        }
-
+    public BError init() {
+        ChoreoClient choreoClient = ChoreoClientHolder.getChoreoClient(this);
         if (Objects.isNull(choreoClient)) {
-            throw ErrorCreator.createError(StringUtils.fromString("Choreo client is not initialized"));
+            return ErrorCreator.createError(StringUtils.fromString("Choreo client is not initialized"));
         }
 
         executorService = new ScheduledThreadPoolExecutor(1);
         task = new Task(choreoClient);
         executorService.scheduleWithFixedDelay(task, 0, PUBLISH_INTERVAL_SECS, TimeUnit.SECONDS);
         LOGGER.info("started publishing metrics to Choreo");
-    }
-
-    @Override
-    public String getName() {
-        return CHOREO_EXTENSION_NAME;
+        return null;
     }
 
     @Override

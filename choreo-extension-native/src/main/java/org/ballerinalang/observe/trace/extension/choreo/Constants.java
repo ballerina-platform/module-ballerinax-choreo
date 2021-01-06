@@ -19,7 +19,7 @@ package org.ballerinalang.observe.trace.extension.choreo;
 
 /**
  * This is the constants class that defines all the constants
- * that are used by the {@link OpenTracerExtension}.
+ * that are used by the {@link ChoreoTracerProvider}.
  *
  * @since 2.0.0
  */
@@ -28,6 +28,11 @@ public class Constants {
     private Constants() {}
 
     public static final String CHOREO_EXTENSION_NAME = "choreo";
+
+    public static final String EXTENSION_PROPERTIES_FILE = "choreo-extension.properties";
+    public static final String PACKAGE_VERSION_PROPERTY_KEY = "moduleVersion";
+    public static final String PACKAGE_ORG = "ballerinax";
+    public static final String PACKAGE_NAME = "choreo";
 
     public static final String REPORTER_HOST_NAME_CONFIG = "reporter.hostname";
     public static final String DEFAULT_REPORTER_HOSTNAME = "periscope.choreo.dev";

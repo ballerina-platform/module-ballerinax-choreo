@@ -52,14 +52,14 @@ public class ChoreoClientHolder {
     private static final Logger LOGGER = LogFactory.getLogger();
 
     private static ChoreoClient choreoClient;
-    private static Set<AutoCloseable> choreoClientDependents = new HashSet<>();
+    private static final Set<AutoCloseable> choreoClientDependents = new HashSet<>();
 
     /**
-     * Get the client that can be used to communicate with Choreo cloud.
+     * Initialize the Choreo client.
      *
      * @return ChoreoClient
      */
-    public static synchronized ChoreoClient getChoreoClient() throws ChoreoClientException {
+    public static synchronized ChoreoClient initChoreoClient() throws ChoreoClientException {
         if (choreoClient == null) {
             MetadataReader metadataReader;
             try {
@@ -97,7 +97,15 @@ public class ChoreoClientHolder {
             createShutdownHook();
             choreoClient = newChoreoClient;
         }
+        return choreoClient;
+    }
 
+    /**
+     * Get the client that can be used to communicate with Choreo cloud.
+     *
+     * @return ChoreoClient
+     */
+    public static ChoreoClient getChoreoClient() {
         return choreoClient;
     }
 
@@ -148,7 +156,7 @@ public class ChoreoClientHolder {
      * @param dependentObj Object to be closed when the Choreo client is closed
      * @return ChoreoClient
      */
-    public static synchronized ChoreoClient getChoreoClient(AutoCloseable dependentObj) throws ChoreoClientException {
+    public static synchronized ChoreoClient getChoreoClient(AutoCloseable dependentObj) {
         final ChoreoClient client = getChoreoClient();
         choreoClientDependents.add(dependentObj);
         return client;
@@ -168,7 +176,7 @@ public class ChoreoClientHolder {
             }
         } else {
             try {
-                instanceId = new String(Files.readAllBytes(instanceIdConfigFilePath), StandardCharsets.UTF_8);
+                instanceId = Files.readString(instanceIdConfigFilePath);
             } catch (IOException e) {
                 LOGGER.error("could not read from " + instanceIdConfigFilePath.toString());
                 instanceId = UUID.randomUUID().toString();

@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-org.ballerinalang.observe.trace.extension.choreo.OpenTracerExtension
+org.ballerinalang.observe.trace.extension.choreo.ChoreoMetricReporterFactory
