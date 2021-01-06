@@ -54,3 +54,45 @@ path = "./lib/grpc-netty-shaded-@grpc.version@.jar"
 groupId = "io.grpc"
 artifactId = "grpc-netty-shaded"
 version = "@grpc.version@"
+
+[[platform.java11.dependency]]
+path = "./lib/grpc-api-@grpc.version@.jar"
+groupId = "io.grpc"
+artifactId = "grpc-api"
+version = "@grpc.version@"
+
+[[platform.java11.dependency]]
+path = "./lib/grpc-core-@grpc.version@.jar"
+groupId = "io.grpc"
+artifactId = "grpc-core"
+version = "@grpc.version@"
+
+[[platform.java11.dependency]]
+path = "./lib/grpc-protobuf-lite-@grpc.version@.jar"
+groupId = "io.grpc"
+artifactId = "grpc-protobuf-lite"
+version = "@grpc.version@"
+
+[[platform.java11.dependency]]
+path = "./lib/grpc-context-@grpc.version@.jar"
+groupId = "io.grpc"
+artifactId = "grpc-context"
+version = "@grpc.version@"
+
+[[platform.java11.dependency]]
+path = "./lib/guava-@guava.version@.jar"
+groupId = "com.google.guava"
+artifactId = "guava"
+version = "@guava.version@"
+
+[[platform.java11.dependency]]
+path = "./lib/protobuf-java-@protobuf.version@.jar"
+groupId = "com.google.protobuf"
+artifactId = "protobuf-java"
+version = "@protobuf.version@"
+
+[[platform.java11.dependency]]
+path = "./lib/perfmark-api-@perfmark.version@.jar"
+groupId = "io.perfmark"
+artifactId = "perfmark-api"
+version = "@perfmark.version@"

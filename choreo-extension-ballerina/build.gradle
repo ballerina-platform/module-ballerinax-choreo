@@ -36,19 +36,16 @@ dependencies {
 
     externalJars "io.jaegertracing:jaeger-core:${jaegerVersion}"
     externalJars "io.opentracing:opentracing-noop:${openTracingVersion}"
-    externalJars("io.grpc:grpc-protobuf:${grpcVersion}") {
-        exclude group: 'io.grpc', module: 'grpc-context';
-        exclude group: 'com.google.code.findbugs', module: 'jsr305'
-    }
-    externalJars("io.grpc:grpc-stub:${grpcVersion}") {
-        exclude group: 'io.grpc', module: 'grpc-context';
-        exclude group: 'com.google.code.findbugs', module: 'jsr305'
-
-    }
-    externalJars("io.grpc:grpc-netty-shaded:${grpcVersion}") {
-        exclude group: 'io.grpc', module: 'grpc-context';
-        exclude group: 'com.google.code.findbugs', module: 'jsr305'
-    }
+    externalJars "io.grpc:grpc-protobuf:${grpcVersion}"
+    externalJars "io.grpc:grpc-stub:${grpcVersion}"
+    externalJars "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    externalJars "io.grpc:grpc-api:${grpcVersion}"
+    externalJars "io.grpc:grpc-core:${grpcVersion}"
+    externalJars "io.grpc:grpc-protobuf-lite:${grpcVersion}"
+    externalJars "io.grpc:grpc-context:${grpcVersion}"
+    externalJars "com.google.guava:guava:${guavaVersion}"
+    externalJars "com.google.protobuf:protobuf-java:${protobufVersion}"
+    externalJars "io.perfmark:perfmark-api:${perfmarkVersion}"
 }
 
 clean {
@@ -96,6 +93,8 @@ task updateTomlVerions {
         def openTracingVersion = project.openTracingVersion
         def grpcVersion = project.grpcVersion
         def protobufVersion = project.protobufVersion
+        def guavaVersion = project.guavaVersion
+        def perfmarkVersion = project.perfmarkVersion
 
         def newConfig = ballerinaConfigFile.text.replace("@project.version@", project.version)
         newConfig = newConfig.replace("@toml.version@", tomlVersion)
@@ -107,6 +106,8 @@ task updateTomlVerions {
         newConfig = newConfig.replace("@opentracing.version@", openTracingVersion)
         newConfig = newConfig.replace("@grpc.version@", grpcVersion)
         newConfig = newConfig.replace("@protobuf.version@", protobufVersion)
+        newConfig = newConfig.replace("@guava.version@", guavaVersion)
+        newConfig = newConfig.replace("@perfmark.version@", perfmarkVersion)
         ballerinaConfigFile.text = newConfig
     }
 }
