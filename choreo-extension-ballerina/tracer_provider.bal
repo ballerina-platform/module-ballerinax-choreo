@@ -27,6 +27,6 @@ public class TracerProvider {
 }
 
 function externInitializeTracerProvider() returns error? = @java:Method {
-    'class: "org.ballerinalang.observe.trace.extension.choreo.InitUtils",
+    'class: "io.ballerina.observe.choreo.InitUtils",
     name: "initializeTracerProvider"
 } external;

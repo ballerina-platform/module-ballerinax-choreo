@@ -27,6 +27,6 @@ public class MetricReporter {
 }
 
 function externInitializeMetricReporter() returns error? = @java:Method {
-    'class: "org.ballerinalang.observe.trace.extension.choreo.InitUtils",
+    'class: "io.ballerina.observe.choreo.InitUtils",
     name: "initializeMetricReporter"
 } external;
