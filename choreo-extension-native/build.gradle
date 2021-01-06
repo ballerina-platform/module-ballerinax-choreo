@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
+description = 'Ballerina - Choreo Extension - Native Module'
+
 plugins {
     id 'java'
-    id "com.google.protobuf" version "0.8.10"
+    id "com.google.protobuf" version "0.8.14"
 }
-
-description = 'Ballerina - Choreo Extension - Native Module'
 
 dependencies {
     implementation "org.ballerinalang:ballerina-runtime:${ballerinaLangVersion}"
     implementation "org.ballerinalang:ballerina-config:${ballerinaLangVersion}"
     implementation "io.jaegertracing:jaeger-core:${jaegerVersion}"
     implementation("io.grpc:grpc-protobuf:${grpcVersion}") {
-        exclude group: 'io.grpc', module: 'grpc-context';
+        exclude group: 'io.grpc', module: 'grpc-context'
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
     }
     implementation("io.grpc:grpc-stub:${grpcVersion}") {
-        exclude group: 'io.grpc', module: 'grpc-context';
+        exclude group: 'io.grpc', module: 'grpc-context'
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
 
     }
     implementation("io.grpc:grpc-netty-shaded:${grpcVersion}") {
-        exclude group: 'io.grpc', module: 'grpc-context';
+        exclude group: 'io.grpc', module: 'grpc-context'
         exclude group: 'com.google.code.findbugs', module: 'jsr305'
     }
     implementation "javax.annotation:javax.annotation-api:1.3.2"

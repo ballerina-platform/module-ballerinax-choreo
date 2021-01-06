@@ -123,6 +123,7 @@ public class ChoreoTracesTestCase extends BaseTestCase {
 
         String responseData = HttpClientRequest.doGet(TEST_RESOURCE_URL).getData();
         Assert.assertEquals(responseData, "Sum: 53");
+
         Assert.assertFalse(choreoExtLogLeecher.isTextFound(), "Choreo extension not expected to enable");
         Assert.assertFalse(choreoExtMetricsEnabledLogLeecher.isTextFound(),
                 "Choreo extension metrics not expected to enable");
