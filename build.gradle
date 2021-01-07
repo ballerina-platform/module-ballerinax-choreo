@@ -168,13 +168,13 @@ subprojects {
 
         // Standard Library Dependencies
         ballerinaStdLibs "org.ballerinalang:config-ballerina:${stdlibConfigVersion}"
-        ballerinaStdLibs "org.ballerinalang:stringutils-ballerina:${stdlibStringUtilsVersion}"
+        ballerinaStdLibs "org.ballerinalang:stringutils-ballerina:${stdlibStringutilsVersion}"
         ballerinaStdLibs "org.ballerinalang:http-ballerina:${stdlibHttpVersion}"
 
         // Standard Library Transitive Dependencies
         ballerinaStdLibs "org.ballerinalang:io-ballerina:${stdlibIoVersion}"
         ballerinaStdLibs "org.ballerinalang:runtime-ballerina:${stdlibRuntimeVersion}"
-        ballerinaStdLibs "org.ballerinalang:system-ballerina:${stdlibSystemVersion}"
+        ballerinaStdLibs "org.ballerinalang:os-ballerina:${stdlibOsVersion}"
         ballerinaStdLibs "org.ballerinalang:time-ballerina:${stdlibTimeVersion}"
         ballerinaStdLibs "org.ballerinalang:task-ballerina:${stdlibTaskVersion}"
         ballerinaStdLibs "org.ballerinalang:file-ballerina:${stdlibFileVersion}"
@@ -184,6 +184,10 @@ subprojects {
         ballerinaStdLibs "org.ballerinalang:mime-ballerina:${stdlibMimeVersion}"
         ballerinaStdLibs "org.ballerinalang:cache-ballerina:${stdlibCacheVersion}"
         ballerinaStdLibs "org.ballerinalang:auth-ballerina:${stdlibAuthVersion}"
+        ballerinaStdLibs "org.ballerinalang:jwt-ballerina:${stdlibJwtVersion}"
+        ballerinaStdLibs "org.ballerinalang:oauth2-ballerina:${stdlibOAuth2Version}"
+        ballerinaStdLibs "org.ballerinalang:uuid-ballerina:${stdlibUuidVersion}"
+        ballerinaStdLibs "org.ballerinalang:encoding-ballerina:${stdlibEncodingVersion}"
     }
 
     checkstyle {
