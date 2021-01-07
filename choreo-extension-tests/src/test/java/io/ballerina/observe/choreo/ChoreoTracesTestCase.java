@@ -82,10 +82,10 @@ public class ChoreoTracesTestCase extends BaseTestCase {
                 "--" + CONFIG_OBSERVABILITY_ENABLED + "=true",
                 "--" + CONFIG_TABLE_OBSERVABILITY + ".provider=choreo"
         ));
-        final String balFile = Paths.get(RESOURCES_DIR.getAbsolutePath(), "01_http_svc_test.bal").toFile()
+        final String projectDir = Paths.get(RESOURCES_DIR.getAbsolutePath(), "choreo_ext_test").toFile()
                 .getAbsolutePath();
-        serverInstance.startServer(balFile, new String[]{"--observability-included"},
-                runtimeArgs.toArray(new String[0]), new int[] { 9091 });
+        serverInstance.startServer(projectDir, "choreo_ext_test", null, runtimeArgs.toArray(new String[0]),
+                new int[] { 9091 });
         choreoExtLogLeecher.waitForText(1000);
         choreoObservabilityUrlLogLeecher.waitForText(10000);
         choreoExtMetricsEnabledLogLeecher.waitForText(1000);
@@ -116,9 +116,9 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         LogLeecher exceptionLogLeecher = new LogLeecher("Exception");
         serverInstance.addErrorLogLeecher(exceptionLogLeecher);
 
-        final String balFile = Paths.get(RESOURCES_DIR.getAbsolutePath(), "01_http_svc_test.bal").toFile()
+        final String projectDir = Paths.get(RESOURCES_DIR.getAbsolutePath(), "choreo_ext_test").toFile()
                 .getAbsolutePath();
-        serverInstance.startServer(balFile, null, null, new int[] { 9091 });
+        serverInstance.startServer(projectDir, "choreo_ext_test", null, null, new int[] { 9091 });
         sampleServerLogLeecher.waitForText(1000);
 
         String responseData = HttpClientRequest.doGet(TEST_RESOURCE_URL).getData();
