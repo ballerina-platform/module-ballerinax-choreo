@@ -45,8 +45,9 @@ public class ChoreoTracesTestCase extends BaseTestCase {
 
     private static final String CHOREO_EXTENSION_LOG_PREFIX = "ballerina: initializing connection with observability " +
             "backend ";
-    private static final String CHOREO_EXTENSION_METRICS_ENABLED_LOG = "ballerina: started publishing metrics to Chore";
-    private static final String CHOREO_EXTENSION_TRACES_ENABLED_LOG = "ballerina: started publishing traces to Chore";
+    private static final String CHOREO_EXTENSION_METRICS_ENABLED_LOG =
+            "ballerina: started publishing metrics to Choreo";
+    private static final String CHOREO_EXTENSION_TRACES_ENABLED_LOG = "ballerina: started publishing traces to Choreo";
     private static final String CHOREO_EXTENSION_URL_LOG_PREFIX = "ballerina: visit ";
     private static final String CHOREO_EXTENSION_URL_LOG_POSTFIX = " to access observability data";
     private static final String SAMPLE_SERVER_LOG = "[ballerina/http] started HTTP/WS listener 0.0.0.0:9091";

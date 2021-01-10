@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-io.ballerina.observe.choreo.ChoreoTracerProviderFactory
+io.ballerina.observe.choreo.ChoreoTracerProvider

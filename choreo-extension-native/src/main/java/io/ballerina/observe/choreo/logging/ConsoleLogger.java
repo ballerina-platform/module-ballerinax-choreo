@@ -26,6 +26,7 @@ import java.io.PrintStream;
 public class ConsoleLogger implements Logger {
     private static final PrintStream console = System.out;
     private static final String prefix = "ballerina: ";
+    private static final String errorPrefix = "error: ";
     private static final String postfix = "\n";
     private final LogPrinter debugLogPrinter;
 
@@ -50,7 +51,7 @@ public class ConsoleLogger implements Logger {
 
     @Override
     public void error(String format, Object... args) {
-        console.printf(prefix + format + postfix, args);
+        console.printf(errorPrefix + format + postfix, args);
     }
 
     private interface LogPrinter {

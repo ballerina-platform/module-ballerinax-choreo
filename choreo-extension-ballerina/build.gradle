@@ -67,9 +67,39 @@ task unpackJballerinaTools(type: Copy, dependsOn: configurations.jbalTools) {
     }
 }
 
+task unpackStdLibs(dependsOn: configurations.ballerinaStdLibs) {
+    doLast {
+        configurations.ballerinaStdLibs.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+            copy {
+                from project.zipTree(artifact.getFile())
+                into new File("${buildDir}/extracted-distributions", artifact.name + "-zip")
+            }
+        }
+    }
+}
+
 task copyExternalJarsToLib(type: Copy) {
     into "${project.projectDir}/lib"
     from configurations.externalJars
+}
+
+task copyStdlibs(type: Copy) {
+    dependsOn unpackJballerinaTools
+    dependsOn unpackStdLibs
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    into "${project.buildDir}/extracted-distributions/jballerina-tools-zip/jballerina-tools-${ballerinaLangVersion}"
+
+    /* Standard Libraries */
+    configurations.ballerinaStdLibs.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+        def artifactExtractedPath = "${buildDir}/extracted-distributions/" + artifact.name + "-zip"
+        into("repo/balo") {
+            from "${artifactExtractedPath}/balo"
+        }
+        into("repo/cache") {
+            from "${artifactExtractedPath}/cache"
+        }
+    }
 }
 
 def packageName = "choreo"
@@ -84,10 +114,8 @@ def originalConfig = ballerinaConfigFile.text
 
 task updateTomlVerions {
     doLast {
+        def stdlibDependentIoVersion = project.stdlibIoVersion.split("-")[0]
         def stdlibDependentConfigVersion = project.stdlibConfigVersion.split("-")[0]
-        def stdlibDependentStringUtilsVersion = project.stdlibStringutilsVersion.split("-")[0]
-        def stdlibDependentHttpVersion = project.stdlibHttpVersion.split("-")[0]
-        def stdlibDependentObserveVersion = project.stdlibObserveVersion.split("-")[0]
 
         def jaegerVersion = project.jaegerVersion
         def openTracingVersion = project.openTracingVersion
@@ -98,10 +126,8 @@ task updateTomlVerions {
 
         def newConfig = ballerinaConfigFile.text.replace("@project.version@", project.version)
         newConfig = newConfig.replace("@toml.version@", tomlVersion)
+        newConfig = newConfig.replace("@stdlib.io.version@", stdlibDependentIoVersion)
         newConfig = newConfig.replace("@stdlib.config.version@", stdlibDependentConfigVersion)
-        newConfig = newConfig.replace("@stdlib.stringutils.version@", stdlibDependentStringUtilsVersion)
-        newConfig = newConfig.replace("@stdlib.http.version@", stdlibDependentHttpVersion)
-        newConfig = newConfig.replace("@stdlib.observe.version@", stdlibDependentObserveVersion)
         newConfig = newConfig.replace("@jaeger.version@", jaegerVersion)
         newConfig = newConfig.replace("@opentracing.version@", openTracingVersion)
         newConfig = newConfig.replace("@grpc.version@", grpcVersion)
@@ -120,7 +146,7 @@ task revertTomlFile {
 
 task ballerinaBuild {
     dependsOn copyExternalJarsToLib
-    dependsOn unpackJballerinaTools
+    dependsOn copyStdlibs
     dependsOn updateTomlVerions
     dependsOn configurations.nativeJar
     dependsOn configurations.externalJars

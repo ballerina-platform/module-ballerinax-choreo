@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2020, WSO2 Inc. (http://wso2.com) All Rights Reserved.
  *
@@ -14,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.ballerina.observe.choreo;
 
 /**
@@ -25,14 +23,10 @@ package io.ballerina.observe.choreo;
  */
 public class Constants {
 
-    private Constants() {}
+    private Constants() {   // Prevent initialization
+    }
 
     public static final String CHOREO_EXTENSION_NAME = "choreo";
-
-    public static final String EXTENSION_PROPERTIES_FILE = "choreo-extension.properties";
-    public static final String PACKAGE_VERSION_PROPERTY_KEY = "moduleVersion";
-    public static final String PACKAGE_ORG = "ballerinax";
-    public static final String PACKAGE_NAME = "choreo";
 
     public static final String REPORTER_HOST_NAME_CONFIG = "reporter.hostname";
     public static final String DEFAULT_REPORTER_HOSTNAME = "periscope.choreo.dev";

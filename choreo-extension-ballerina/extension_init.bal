@@ -15,14 +15,23 @@
 // under the License.
 
 import ballerina/java;
+import ballerina/io;
+import ballerina/config;
 
-# Extension class created by ChoreoMetricReporterFactory
-public class MetricReporter {
-    # Handle Metrics Reporter start.
-    #
-    # + return - `()` if no error occurred, and an error otherwise
-    public function initialize() returns error? {
-        check externInitializeMetricReporter();
+const EXTENSION_NAME = "choreo";
+
+const string OBSERVABILITY_METRICS_ENABLED_CONFIG = "b7a.observability.metrics.enabled";
+final boolean OBSERVABILITY_METRICS_ENABLED = config:getAsBoolean(OBSERVABILITY_METRICS_ENABLED_CONFIG, false);
+
+const string OBSERVABILITY_METRICS_REPORTER_NAME_CONFIG = "b7a.observability.metrics.reporter";
+final string OBSERVABILITY_METRICS_REPORTER_NAME = config:getAsString(OBSERVABILITY_METRICS_REPORTER_NAME_CONFIG, "prometheus");
+
+function init() {
+    if (OBSERVABILITY_METRICS_ENABLED && OBSERVABILITY_METRICS_REPORTER_NAME == EXTENSION_NAME) {
+        error? err = externInitializeMetricReporter();
+        if (err is error) {
+            io:println(err);
+        }
     }
 }
 

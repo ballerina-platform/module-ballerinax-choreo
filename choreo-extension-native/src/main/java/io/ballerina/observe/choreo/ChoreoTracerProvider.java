@@ -15,8 +15,8 @@
  */
 package io.ballerina.observe.choreo;
 
-import io.ballerina.observe.choreo.client.ChoreoClient;
-import io.ballerina.observe.choreo.client.ChoreoClientHolder;
+import io.ballerina.observe.choreo.logging.LogFactory;
+import io.ballerina.observe.choreo.logging.Logger;
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.observability.tracer.spi.TracerProvider;
@@ -25,7 +25,7 @@ import io.jaegertracing.internal.samplers.RateLimitingSampler;
 import io.jaegertracing.spi.Reporter;
 import io.opentracing.Tracer;
 
-import java.util.Objects;
+import static io.ballerina.observe.choreo.Constants.CHOREO_EXTENSION_NAME;
 
 /**
  * This is the open tracing extension class for {@link TracerProvider}.
@@ -33,26 +33,30 @@ import java.util.Objects;
  * @since 2.0.0
  */
 public class ChoreoTracerProvider implements TracerProvider {
-    private static volatile Reporter reporterInstance;
+    private static final Logger LOGGER = LogFactory.getLogger();
+    private Reporter reporterInstance;
+
+    @Override
+    public String getName() {
+        return CHOREO_EXTENSION_NAME;
+    }
+
+    @Override
+    public void init() {
+        if (InitUtils.isChoreoClientInitialized()) {
+            reporterInstance = new ChoreoJaegerReporter();
+            LOGGER.info("started publishing traces to Choreo");
+        } else {
+            throw ErrorCreator.createError(StringUtils.fromString(
+                    "Unable to start publishing traces as Choreo Client is not initialized"));
+        }
+    }
 
     @Override
     public Tracer getTracer(String serviceName) {
-        ChoreoClient choreoClient = ChoreoClientHolder.getChoreoClient();
-        if (Objects.isNull(choreoClient)) {
-            throw ErrorCreator.createError(StringUtils.fromString(
-                    "Choreo client is not initialized. Please check Ballerina configurations."));
-        }
-
         return new JaegerTracer.Builder(serviceName)
                 .withSampler(new RateLimitingSampler(2))
-                .withReporter(getReporter())
+                .withReporter(reporterInstance)
                 .build();
-    }
-
-    public static Reporter getReporter() {
-        if (reporterInstance == null) {
-            reporterInstance = new ChoreoJaegerReporter();
-        }
-        return reporterInstance;
     }
 }

@@ -51,26 +51,21 @@ public class InitUtils {
      * @return Error if initializing metrics reporter fails
      */
     public static BError initializeMetricReporter() {
-        if (Objects.isNull(ChoreoClientHolder.getChoreoClient())) {
+        if (isChoreoClientInitialized()) {
+            MetricsReporter metricsExtension = new MetricsReporter();
+            return metricsExtension.init();
+        } else {
             return ErrorCreator.createError(StringUtils.fromString(
                     "Unable to start publishing metrics as Choreo Client is not initialized"));
         }
-        MetricsReporter metricsExtension = new MetricsReporter();
-        return metricsExtension.init();
     }
 
     /**
-     * Initialize Choreo configurations.
-     * This is called by the TracerProvider ballerina object.
+     * Check if the Choreo client is initialized.
      *
-     * @return Error if initializing configurations fails
+     * @return true if choreo client is initialized
      */
-    public static BError initializeTracerProvider() {
-        if (Objects.isNull(ChoreoClientHolder.getChoreoClient())) {
-            return ErrorCreator.createError(StringUtils.fromString(
-                    "Unable to start publishing traces as Choreo Client is not initialized"));
-        }
-        ChoreoTracerProvider.getReporter();     // Trigger Reporter initialization
-        return null;
+    public static boolean isChoreoClientInitialized() {
+        return !Objects.isNull(ChoreoClientHolder.getChoreoClient());
     }
 }
