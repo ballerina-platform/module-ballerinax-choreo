@@ -35,6 +35,7 @@ dependencies {
     nativeJar project(':choreo-extension-native')
 
     externalJars "io.jaegertracing:jaeger-core:${jaegerVersion}"
+    externalJars "io.opentracing:opentracing-util:${openTracingVersion}"
     externalJars "io.opentracing:opentracing-noop:${openTracingVersion}"
     externalJars "io.grpc:grpc-protobuf:${grpcVersion}"
     externalJars "io.grpc:grpc-stub:${grpcVersion}"
