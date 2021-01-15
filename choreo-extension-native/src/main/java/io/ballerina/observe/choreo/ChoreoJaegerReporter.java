@@ -1,17 +1,19 @@
 /*
- * Copyright (c) 2020, WSO2 Inc. (http://wso2.com) All Rights Reserved.
+ * Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 
 package io.ballerina.observe.choreo;
@@ -21,8 +23,10 @@ import io.ballerina.observe.choreo.client.ChoreoClientHolder;
 import io.ballerina.observe.choreo.logging.LogFactory;
 import io.ballerina.observe.choreo.logging.Logger;
 import io.ballerina.observe.choreo.model.ChoreoTraceSpan;
+import io.ballerina.observe.choreo.model.SpanEvent;
 import io.jaegertracing.internal.JaegerSpan;
 import io.jaegertracing.internal.JaegerSpanContext;
+import io.jaegertracing.internal.LogData;
 import io.jaegertracing.internal.Reference;
 import io.jaegertracing.spi.Reporter;
 import io.opentracing.References;
@@ -37,6 +41,10 @@ import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import static io.ballerina.runtime.observability.ObservabilityConstants.CHECKPOINT_EVENT_NAME;
+import static io.ballerina.runtime.observability.ObservabilityConstants.TAG_KEY_SRC_MODULE;
+import static io.ballerina.runtime.observability.ObservabilityConstants.TAG_KEY_SRC_POSITION;
 
 /**
  * Custom Jaeger tracing reporter for publishing stats to Choreo cloud.
@@ -109,11 +117,29 @@ public class ChoreoJaegerReporter implements Reporter, AutoCloseable {
                 );
                 references.add(reference);
             }
+            List<SpanEvent> events;
+            if (jaegerSpan.getLogs() != null) {
+                events = new ArrayList<>(jaegerSpan.getLogs().size());
+                for (LogData eventLog : jaegerSpan.getLogs()) {
+                    SpanEvent event = new SpanEvent(
+                            eventLog.getTime(),
+                            (((Map) eventLog.getFields().get(CHECKPOINT_EVENT_NAME)).
+                                    get(TAG_KEY_SRC_MODULE)).toString(),
+                            (((Map) eventLog.getFields().get(CHECKPOINT_EVENT_NAME)).
+                                    get(TAG_KEY_SRC_POSITION)).toString()
+                    );
+                    events.add(event);
+                }
+            } else {
+                events = null;
+            }
+
             JaegerSpanContext spanContext = jaegerSpan.context();
             long timestamp = jaegerSpan.getStart() / 1000;  // Jaeger stores timestamp in microseconds by default
             long duration = jaegerSpan.getDuration() / 1000;    // Jaeger stores duration in microseconds by default
             ChoreoTraceSpan traceSpan = new ChoreoTraceSpan(spanContext.getTraceId(), spanContext.getSpanId(),
-                    jaegerSpan.getServiceName(), jaegerSpan.getOperationName(), timestamp, duration, tags, references);
+                    jaegerSpan.getServiceName(), jaegerSpan.getOperationName(), timestamp, duration, tags, references,
+                    events);
             synchronized (this) {
                 traceSpans.add(traceSpan);
             }
