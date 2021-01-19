@@ -69,7 +69,6 @@ public class ChoreoJaegerReporter implements Reporter, AutoCloseable {
         executorService = new ScheduledThreadPoolExecutor(1);
         task = new Task(choreoClient);
         executorService.scheduleAtFixedRate(task, PUBLISH_INTERVAL_SECS, PUBLISH_INTERVAL_SECS, TimeUnit.SECONDS);
-        LOGGER.info("started publishing traces to Choreo");
     }
 
     @Override
