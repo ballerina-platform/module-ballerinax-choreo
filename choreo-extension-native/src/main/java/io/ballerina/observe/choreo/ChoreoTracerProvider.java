@@ -57,7 +57,6 @@ public class ChoreoTracerProvider implements TracerProvider {
                 }
             }
         }
-        System.out.println("\n\n\nGet Tracer Done\n\n\n");
         return new JaegerTracer.Builder(serviceName)
                 .withSampler(new RateLimitingSampler(2))
                 .withReporter(reporterInstance)

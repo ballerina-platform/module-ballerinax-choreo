@@ -68,9 +68,8 @@ public class ChoreoClientHolder {
                 return null;
             }
 
-            final ChoreoClient newChoreoClient =
-                    initializeChoreoClient(reporterHostname, reporterPort, reporterUseSSL,
-                            appSecretHandler.getAppSecret());
+            final ChoreoClient newChoreoClient = new ChoreoClient(reporterHostname, reporterPort, reporterUseSSL,
+                    appSecretHandler.getAppSecret());
 
             String nodeId = getNodeId();
 
@@ -115,11 +114,6 @@ public class ChoreoClientHolder {
             }
         });
         Runtime.getRuntime().addShutdownHook(shutdownHook);
-    }
-
-    private static ChoreoClient initializeChoreoClient(String hostname, int port, boolean useSSL,
-                                                       String projectSecret) {
-        return new ChoreoClient(hostname, port, useSSL, projectSecret);
     }
 
     private static AppSecretHandler getAppSecretHandler(String applicationSecretOverride) throws IOException,
