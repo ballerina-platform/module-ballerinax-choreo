@@ -16,24 +16,36 @@
 
 import ballerina/java;
 import ballerina/io;
-import ballerina/config;
+import ballerina/observe;
 
 const EXTENSION_NAME = "choreo";
 
-const string OBSERVABILITY_METRICS_ENABLED_CONFIG = "b7a.observability.metrics.enabled";
-final boolean OBSERVABILITY_METRICS_ENABLED = config:getAsBoolean(OBSERVABILITY_METRICS_ENABLED_CONFIG, false);
-
-const string OBSERVABILITY_METRICS_REPORTER_NAME_CONFIG = "b7a.observability.metrics.reporter";
-final string OBSERVABILITY_METRICS_REPORTER_NAME = config:getAsString(OBSERVABILITY_METRICS_REPORTER_NAME_CONFIG);
+final configurable string reporterHostname = "periscope.choreo.dev";
+final configurable int reporterPort = 443;
+final configurable boolean reporterUseSSL = true;
+final configurable string applicationSecret = "";
 
 function init() {
-    if (OBSERVABILITY_METRICS_ENABLED && OBSERVABILITY_METRICS_REPORTER_NAME == EXTENSION_NAME) {
+    if ((observe:isTracingEnabled() && observe:getTracingProvider() == EXTENSION_NAME)
+            || (observe:isMetricsEnabled() && observe:getMetricsReporter() == EXTENSION_NAME)) {
+        error? err = externInitializeChoreoExtension(reporterHostname, reporterPort, reporterUseSSL, applicationSecret);
+        if (err is error) {
+            io:println(err);
+        }
+    }
+    if (observe:isMetricsEnabled() && observe:getMetricsReporter() == EXTENSION_NAME) {
         error? err = externInitializeMetricReporter();
         if (err is error) {
             io:println(err);
         }
     }
 }
+
+function externInitializeChoreoExtension(string reporterHostname, int reporterPort, boolean reporterUseSSL,
+        string applicationSecret) returns error? = @java:Method {
+    'class: "io.ballerina.observe.choreo.InitUtils",
+    name: "initializeChoreoExtension"
+} external;
 
 function externInitializeMetricReporter() returns error? = @java:Method {
     'class: "io.ballerina.observe.choreo.InitUtils",
