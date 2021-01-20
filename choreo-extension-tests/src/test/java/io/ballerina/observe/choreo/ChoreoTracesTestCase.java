@@ -75,8 +75,8 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         LogLeecher exceptionLogLeecher = new LogLeecher("Exception");
         serverInstance.addErrorLogLeecher(exceptionLogLeecher);
 
-        String configFile = Paths.get("src", "test", "resources", "bal", "choreo_ext_test").toFile()
-                .getAbsolutePath();
+        String configFile = Paths.get("src", "test", "resources", "bal", "choreo_ext_test", "Config.toml")
+                .toFile().getAbsolutePath();
         Map<String, String> env = new HashMap<>();
         env.put("BALCONFIGFILE", configFile);
 
