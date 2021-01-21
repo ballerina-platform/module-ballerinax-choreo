@@ -23,6 +23,10 @@ import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.logging.Logger;
 
 /**
  * Parent test class for all extension integration tests cases. This will provide basic
@@ -30,6 +34,7 @@ import java.io.IOException;
  * by all the test cases throughout.
  */
 public class BaseTestCase {
+    private static final Logger LOGGER = Logger.getLogger(BaseTestCase.class.getName());
     static BalServer balServer;
 
     @BeforeSuite(alwaysRun = true)
@@ -39,6 +44,12 @@ public class BaseTestCase {
 
     @AfterSuite(alwaysRun = true)
     public void destroy() throws IOException {
+        Path ballerinaInternalLog = Paths.get(balServer.getServerHome(), "ballerina-internal.log");
+        if (Files.exists(ballerinaInternalLog)) {
+            LOGGER.severe("=== Ballerina Internal Log Start ===");
+            Files.lines(ballerinaInternalLog).forEach(LOGGER::severe);
+            LOGGER.severe("=== Ballerina Internal Log End ===");
+        }
         balServer.cleanup();
     }
 }

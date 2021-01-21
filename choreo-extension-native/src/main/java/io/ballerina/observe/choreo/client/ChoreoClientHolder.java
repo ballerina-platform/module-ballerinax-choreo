@@ -22,8 +22,6 @@ import io.ballerina.observe.choreo.client.secret.AppSecretHandler;
 import io.ballerina.observe.choreo.client.secret.LinkedAppSecretHandler;
 import io.ballerina.observe.choreo.logging.LogFactory;
 import io.ballerina.observe.choreo.logging.Logger;
-import io.ballerina.runtime.observability.ObservabilityConstants;
-import org.ballerinalang.config.ConfigRegistry;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -32,16 +30,6 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-
-import static io.ballerina.observe.choreo.Constants.APPLICATION_ID_CONFIG;
-import static io.ballerina.observe.choreo.Constants.CHOREO_EXTENSION_NAME;
-import static io.ballerina.observe.choreo.Constants.DEFAULT_REPORTER_HOSTNAME;
-import static io.ballerina.observe.choreo.Constants.DEFAULT_REPORTER_PORT;
-import static io.ballerina.observe.choreo.Constants.DEFAULT_REPORTER_USE_SSL;
-import static io.ballerina.observe.choreo.Constants.EMPTY_APPLICATION_SECRET;
-import static io.ballerina.observe.choreo.Constants.REPORTER_HOST_NAME_CONFIG;
-import static io.ballerina.observe.choreo.Constants.REPORTER_PORT_CONFIG;
-import static io.ballerina.observe.choreo.Constants.REPORTER_USE_SSL_CONFIG;
 
 /**
  * Manages the Choreo Client used to communicate with the Choreo cloud.
@@ -59,7 +47,9 @@ public class ChoreoClientHolder {
      *
      * @return ChoreoClient
      */
-    public static synchronized ChoreoClient initChoreoClient() throws ChoreoClientException {
+    public static synchronized ChoreoClient initChoreoClient(String reporterHostname, int reporterPort,
+                                                             boolean reporterUseSSL, String applicationSecret)
+            throws ChoreoClientException {
         if (choreoClient == null) {
             MetadataReader metadataReader;
             try {
@@ -70,17 +60,16 @@ public class ChoreoClientHolder {
                 return null;
             }
 
-            ConfigRegistry configRegistry = ConfigRegistry.getInstance();
             AppSecretHandler appSecretHandler;
             try {
-                appSecretHandler = getAppSecretHandler(configRegistry);
+                appSecretHandler = getAppSecretHandler(applicationSecret);
             } catch (IOException e) {
                 LOGGER.error("Failed to initialize Choreo client. " + e.getMessage());
                 return null;
             }
 
-            final ChoreoClient newChoreoClient =
-                    initializeChoreoClient(configRegistry, appSecretHandler.getAppSecret());
+            final ChoreoClient newChoreoClient = new ChoreoClient(reporterHostname, reporterPort, reporterUseSSL,
+                    appSecretHandler.getAppSecret());
 
             String nodeId = getNodeId();
 
@@ -127,25 +116,12 @@ public class ChoreoClientHolder {
         Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
-    private static ChoreoClient initializeChoreoClient(ConfigRegistry configRegistry, String projectSecret) {
-        String hostname = configRegistry.getConfigOrDefault(getFullQualifiedConfig(REPORTER_HOST_NAME_CONFIG),
-                DEFAULT_REPORTER_HOSTNAME);
-        int port = Integer.parseInt(configRegistry.getConfigOrDefault(getFullQualifiedConfig(REPORTER_PORT_CONFIG),
-                String.valueOf(DEFAULT_REPORTER_PORT)));
-        boolean useSSL = Boolean.parseBoolean(configRegistry.getConfigOrDefault(
-                getFullQualifiedConfig(REPORTER_USE_SSL_CONFIG), String.valueOf(DEFAULT_REPORTER_USE_SSL)));
-        return new ChoreoClient(hostname, port, useSSL, projectSecret);
-    }
-
-    private static AppSecretHandler getAppSecretHandler(ConfigRegistry configRegistry) throws IOException,
+    private static AppSecretHandler getAppSecretHandler(String applicationSecretOverride) throws IOException,
             ChoreoClientException {
-        String appSecretFromConfig = configRegistry.getConfigOrDefault(getFullQualifiedConfig(APPLICATION_ID_CONFIG),
-                EMPTY_APPLICATION_SECRET);
-
-        if (EMPTY_APPLICATION_SECRET.equals(appSecretFromConfig)) {
+        if (applicationSecretOverride == null || applicationSecretOverride.isEmpty()) {
             return new AnonymousAppSecretHandler();
         } else {
-            return new LinkedAppSecretHandler(appSecretFromConfig);
+            return new LinkedAppSecretHandler(applicationSecretOverride);
         }
     }
 
@@ -185,9 +161,4 @@ public class ChoreoClientHolder {
 
         return instanceId;
     }
-
-    public static String getFullQualifiedConfig(String configName) {
-        return ObservabilityConstants.CONFIG_TABLE_OBSERVABILITY + "." + CHOREO_EXTENSION_NAME + "." + configName;
-    }
-
 }

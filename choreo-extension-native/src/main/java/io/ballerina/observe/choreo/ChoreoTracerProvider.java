@@ -25,8 +25,6 @@ import io.jaegertracing.internal.samplers.RateLimitingSampler;
 import io.jaegertracing.spi.Reporter;
 import io.opentracing.Tracer;
 
-import static io.ballerina.observe.choreo.Constants.CHOREO_EXTENSION_NAME;
-
 /**
  * This is the open tracing extension class for {@link TracerProvider}.
  *
@@ -34,7 +32,8 @@ import static io.ballerina.observe.choreo.Constants.CHOREO_EXTENSION_NAME;
  */
 public class ChoreoTracerProvider implements TracerProvider {
     private static final Logger LOGGER = LogFactory.getLogger();
-    private Reporter reporterInstance;
+    private static final String CHOREO_EXTENSION_NAME = "choreo";
+    private volatile Reporter reporterInstance;
 
     @Override
     public String getName() {
@@ -42,18 +41,22 @@ public class ChoreoTracerProvider implements TracerProvider {
     }
 
     @Override
-    public void init() {
-        if (InitUtils.isChoreoClientInitialized()) {
-            reporterInstance = new ChoreoJaegerReporter();
-            LOGGER.info("started publishing traces to Choreo");
-        } else {
-            throw ErrorCreator.createError(StringUtils.fromString(
-                    "Unable to start publishing traces as Choreo Client is not initialized"));
-        }
+    public void init() {    // Do nothing
     }
 
     @Override
     public Tracer getTracer(String serviceName) {
+        synchronized (this) {
+            if (reporterInstance == null) {
+                if (InitUtils.isChoreoClientInitialized()) {
+                    reporterInstance = new ChoreoJaegerReporter();
+                    LOGGER.info("started publishing traces to Choreo");
+                } else {
+                    throw ErrorCreator.createError(StringUtils.fromString(
+                            "Unable to start publishing traces as Choreo Client is not initialized"));
+                }
+            }
+        }
         return new JaegerTracer.Builder(serviceName)
                 .withSampler(new RateLimitingSampler(2))
                 .withReporter(reporterInstance)

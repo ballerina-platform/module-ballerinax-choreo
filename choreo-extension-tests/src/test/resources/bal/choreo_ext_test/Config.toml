@@ -1,0 +1,5 @@
+[ballerina.observe]
+enabled=true
+provider="choreo"
+
+[ballerinax.choreo]

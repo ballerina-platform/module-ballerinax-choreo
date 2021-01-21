@@ -27,12 +27,8 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static io.ballerina.runtime.observability.ObservabilityConstants.CONFIG_OBSERVABILITY_ENABLED;
-import static io.ballerina.runtime.observability.ObservabilityConstants.CONFIG_TABLE_OBSERVABILITY;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Integration test for Choreo extension.
@@ -79,24 +75,27 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         LogLeecher exceptionLogLeecher = new LogLeecher("Exception");
         serverInstance.addErrorLogLeecher(exceptionLogLeecher);
 
-        final List<String> runtimeArgs = new ArrayList<>(Arrays.asList(
-                "--" + CONFIG_OBSERVABILITY_ENABLED + "=true",
-                "--" + CONFIG_TABLE_OBSERVABILITY + ".provider=choreo"
-        ));
+        String configFile = Paths.get("src", "test", "resources", "bal", "choreo_ext_test", "Config.toml")
+                .toFile().getAbsolutePath();
+        Map<String, String> env = new HashMap<>();
+        env.put("BALCONFIGFILE", configFile);
+
         final String projectDir = Paths.get(RESOURCES_DIR.getAbsolutePath(), "choreo_ext_test").toFile()
                 .getAbsolutePath();
-        serverInstance.startServer(projectDir, "choreo_ext_test", null, runtimeArgs.toArray(new String[0]),
+        serverInstance.startServer(projectDir, "choreo_ext_test", null, null, env,
                 new int[] { 9091 });
         choreoExtLogLeecher.waitForText(1000);
         choreoObservabilityUrlLogLeecher.waitForText(10000);
         choreoExtMetricsEnabledLogLeecher.waitForText(1000);
-        choreoExtTracesEnabledLogLeecher.waitForText(1000);
         sampleServerLogLeecher.waitForText(1000);
 
         // Send requests to generate metrics
         String responseData = HttpClientRequest.doGet(TEST_RESOURCE_URL).getData();
         Assert.assertEquals(responseData, "Sum: 53");
         Thread.sleep(3000);
+
+        // The tracing log is printed on first start of a span
+        choreoExtTracesEnabledLogLeecher.waitForText(1000);
 
         Assert.assertFalse(errorLogLeecher.isTextFound(), "Unexpected error log found");
         Assert.assertFalse(exceptionLogLeecher.isTextFound(), "Unexpected exception log found");

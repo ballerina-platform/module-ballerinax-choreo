@@ -21,27 +21,34 @@ import io.ballerina.observe.choreo.client.error.ChoreoClientException;
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BError;
+import io.ballerina.runtime.api.values.BString;
 
-import java.io.PrintStream;
 import java.util.Objects;
 
 /**
  * Native functions used by the Choreo extension objects.
  */
 public class InitUtils {
-    private static final PrintStream consoleError = System.err;
-
-    static {
-        ChoreoClient choreoClient = null;
+    /**
+     * Initialize the Choreo extension.
+     *
+     * @return error if initialization failed
+     */
+    public static BError initializeChoreoExtension(BString reporterHostname, int reporterPort,
+                                                   boolean reporterUseSSL, BString applicationSecret) {
+        ChoreoClient choreoClient;
         try {
-            choreoClient = ChoreoClientHolder.initChoreoClient();
+            choreoClient = ChoreoClientHolder.initChoreoClient(reporterHostname.getValue(), reporterPort,
+                    reporterUseSSL, applicationSecret.getValue());
         } catch (ChoreoClientException e) {
-            consoleError.println("error: Choreo client is not initialized. Please check Ballerina configurations. " +
-                    "reason " + e.getMessage());
+            return ErrorCreator.createError(StringUtils.fromString("Choreo client is not initialized. " +
+                    "Please check Ballerina configurations."), e);
         }
         if (Objects.isNull(choreoClient)) {
-            consoleError.println("error: Choreo client is not initialized. Please check Ballerina configurations.");
+            return ErrorCreator.createError(StringUtils.fromString("Choreo client is not initialized. " +
+                    "Please check Ballerina configurations."));
         }
+        return null;
     }
 
     /**
