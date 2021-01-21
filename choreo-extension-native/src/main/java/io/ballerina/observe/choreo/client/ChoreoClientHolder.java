@@ -118,7 +118,7 @@ public class ChoreoClientHolder {
 
     private static AppSecretHandler getAppSecretHandler(String applicationSecretOverride) throws IOException,
             ChoreoClientException {
-        if ("".equals(applicationSecretOverride)) {
+        if (applicationSecretOverride == null || applicationSecretOverride.isEmpty()) {
             return new AnonymousAppSecretHandler();
         } else {
             return new LinkedAppSecretHandler(applicationSecretOverride);
