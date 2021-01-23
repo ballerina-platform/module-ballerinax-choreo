@@ -23,7 +23,6 @@ description = 'Ballerina - Choreo Extension - Native Module'
 
 dependencies {
     implementation "org.ballerinalang:ballerina-runtime:${ballerinaLangVersion}"
-    implementation "org.ballerinalang:ballerina-config:${ballerinaLangVersion}"
     implementation "io.jaegertracing:jaeger-core:${jaegerVersion}"
     implementation("io.grpc:grpc-protobuf:${grpcVersion}") {
         exclude group: 'io.grpc', module: 'grpc-context'
