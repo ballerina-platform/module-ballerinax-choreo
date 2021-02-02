@@ -146,9 +146,11 @@ jacocoTestReport {
 
     afterEvaluate {
         def nativeBuildDir = "${rootProject.projectDir}/choreo-extension-native/build";
-        classDirectories.setFrom(
+        classDirectories.setFrom(files(
                 file("${nativeBuildDir}/classes/java/main"),
                 file("${nativeBuildDir}/resources/main")
-        )
+        ).collect {
+            fileTree(dir: it, exclude: 'io/ballerina/observe/choreo/gen/**')
+        })
     }
 }
