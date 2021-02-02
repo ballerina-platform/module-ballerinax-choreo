@@ -19,6 +19,7 @@ package io.ballerina.observe.choreo;
 
 import org.ballerinalang.test.context.BServerInstance;
 import org.ballerinalang.test.context.LogLeecher;
+import org.ballerinalang.test.context.Utils;
 import org.ballerinalang.test.util.HttpClientRequest;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -45,7 +46,6 @@ public class ChoreoTracesTestCase extends BaseTestCase {
             "ballerina: started publishing metrics to Choreo";
     private static final String CHOREO_EXTENSION_TRACES_ENABLED_LOG = "ballerina: started publishing traces to Choreo";
     private static final String CHOREO_EXTENSION_URL_LOG_PREFIX = "ballerina: visit ";
-    private static final String CHOREO_EXTENSION_URL_LOG_POSTFIX = " to access observability data";
     private static final String SAMPLE_SERVER_LOG = "[ballerina/http] started HTTP/WS listener 0.0.0.0:9091";
 
     @BeforeMethod
@@ -82,9 +82,10 @@ public class ChoreoTracesTestCase extends BaseTestCase {
 
         final String projectDir = Paths.get(RESOURCES_DIR.getAbsolutePath(), "choreo_ext_test").toFile()
                 .getAbsolutePath();
-        serverInstance.startServer(projectDir, "choreo_ext_test", null, null, env,
-                new int[] { 9091 });
-        choreoExtLogLeecher.waitForText(1000);
+        int[] requiredPorts = {9091};
+        serverInstance.startServer(projectDir, "choreo_ext_test", null, null, env, requiredPorts);
+        Utils.waitForPortsToOpen(requiredPorts, 1000 * 60, false, "localhost");
+        choreoExtLogLeecher.waitForText(10000);
         choreoObservabilityUrlLogLeecher.waitForText(10000);
         choreoExtMetricsEnabledLogLeecher.waitForText(1000);
         sampleServerLogLeecher.waitForText(1000);
@@ -118,8 +119,10 @@ public class ChoreoTracesTestCase extends BaseTestCase {
 
         final String projectDir = Paths.get(RESOURCES_DIR.getAbsolutePath(), "choreo_ext_test").toFile()
                 .getAbsolutePath();
-        serverInstance.startServer(projectDir, "choreo_ext_test", null, null, new int[] { 9091 });
-        sampleServerLogLeecher.waitForText(1000);
+        int[] requiredPorts = {9091};
+        serverInstance.startServer(projectDir, "choreo_ext_test", null, null, requiredPorts);
+        Utils.waitForPortsToOpen(requiredPorts, 1000 * 60, false, "localhost");
+        sampleServerLogLeecher.waitForText(10000);
 
         String responseData = HttpClientRequest.doGet(TEST_RESOURCE_URL).getData();
         Assert.assertEquals(responseData, "Sum: 53");
