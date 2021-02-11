@@ -150,6 +150,11 @@ def nativeModuleSources = "${nativeModuleDir}/src/main/java"
 jacocoTestReport {
     dependsOn test
 
+    reports {
+        html.enabled true
+        xml.enabled true
+    }
+
     afterEvaluate {
         classDirectories.setFrom(files(file(nativeModuleClasses), file(nativeModuleResources)).collect {
             fileTree(dir: it, exclude: 'io/ballerina/observe/choreo/gen/**')

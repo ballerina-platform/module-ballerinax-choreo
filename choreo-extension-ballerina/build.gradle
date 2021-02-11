@@ -103,8 +103,8 @@ task copyStdlibs(type: Copy) {
     }
 }
 
-def packageName = "choreo"
 def packageOrg = "ballerinax"
+def packageName = "choreo"
 def ballerinaConfigFile = new File("${project.projectDir}/Ballerina.toml")
 def ballerinaDependencyFile = new File("$project.projectDir/Dependencies.toml")
 def artifactBallerinaDocs = file("${project.projectDir}/build/docs_parent/")
