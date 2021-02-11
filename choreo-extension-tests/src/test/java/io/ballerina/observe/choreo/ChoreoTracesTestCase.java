@@ -93,7 +93,7 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         // Send requests to generate metrics
         String responseData = HttpClientRequest.doGet(TEST_RESOURCE_URL).getData();
         Assert.assertEquals(responseData, "Sum: 53");
-        Thread.sleep(3000);
+        Thread.sleep(11000);    // Data is published every 10 seconds
 
         // The tracing log is printed on first start of a span
         choreoExtTracesEnabledLogLeecher.waitForText(1000);
