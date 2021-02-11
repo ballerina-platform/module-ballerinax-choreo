@@ -121,6 +121,7 @@ task createServerZip(type: Zip) {
 test {
     dependsOn createServerZip
     finalizedBy jacocoTestReport
+    finalizedBy jacocoTestCoverageVerification
 
     testLogging {
         showStackTraces true
@@ -141,17 +142,37 @@ test {
     }
 }
 
+def nativeModuleDir = "${rootProject.projectDir}/choreo-extension-native"
+def nativeModuleClasses = "${nativeModuleDir}/build/classes/java/main"
+def nativeModuleResources = "${nativeModuleDir}/build/resources/main"
+def nativeModuleSources = "${nativeModuleDir}/src/main/java"
+
 jacocoTestReport {
     dependsOn test
 
     afterEvaluate {
-        def nativeProjectDir = "${rootProject.projectDir}/choreo-extension-native";
-        classDirectories.setFrom(files(
-                file("${nativeProjectDir}/build/classes/java/main"),
-                file("${nativeProjectDir}/build/resources/main")
-        ).collect {
+        classDirectories.setFrom(files(file(nativeModuleClasses), file(nativeModuleResources)).collect {
             fileTree(dir: it, exclude: 'io/ballerina/observe/choreo/gen/**')
         })
-        sourceDirectories.setFrom(file("${nativeProjectDir}/src/main/java"))
+        sourceDirectories.setFrom(file(nativeModuleSources))
+    }
+}
+
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.80
+            }
+        }
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(file(nativeModuleClasses), file(nativeModuleResources)).collect {
+            fileTree(dir: it, exclude: 'io/ballerina/observe/choreo/gen/**')
+        })
+        sourceDirectories.setFrom(file(nativeModuleSources))
     }
 }
