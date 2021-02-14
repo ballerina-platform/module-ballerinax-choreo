@@ -152,7 +152,7 @@ task generateChoreoGrpcTestBackend {
     def protoFilesDir = "${project.projectDir}/../choreo-extension-native/src/main/proto"
     def choreoBackendModulesDir = "${project.projectDir}/src/test/resources/bal/choreo_periscope_backend/modules"
     doLast {
-        generateGrpcServer("${protoFilesDir}/negotiator.proto", "${choreoBackendModulesDir}/negotiator")
+        generateGrpcServer("${protoFilesDir}/handshake.proto", "${choreoBackendModulesDir}/handshake")
         generateGrpcServer("${protoFilesDir}/telemetry.proto", "${choreoBackendModulesDir}/telemetry")
     }
 }

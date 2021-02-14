@@ -21,9 +21,9 @@ package io.ballerina.observe.choreo.client;
 import io.ballerina.observe.choreo.client.error.ChoreoClientException;
 import io.ballerina.observe.choreo.client.error.ChoreoErrors;
 import io.ballerina.observe.choreo.gen.HandshakeGrpc;
-import io.ballerina.observe.choreo.gen.NegotiatorOuterClass;
-import io.ballerina.observe.choreo.gen.NegotiatorOuterClass.PublishAstRequest;
-import io.ballerina.observe.choreo.gen.NegotiatorOuterClass.RegisterRequest;
+import io.ballerina.observe.choreo.gen.HandshakeOuterClass;
+import io.ballerina.observe.choreo.gen.HandshakeOuterClass.PublishAstRequest;
+import io.ballerina.observe.choreo.gen.HandshakeOuterClass.RegisterRequest;
 import io.ballerina.observe.choreo.gen.TelemetryGrpc;
 import io.ballerina.observe.choreo.gen.TelemetryOuterClass;
 import io.ballerina.observe.choreo.logging.LogFactory;
@@ -53,11 +53,11 @@ public class ChoreoClient implements AutoCloseable {
     private String id;      // ID received from the handshake
     private String nodeId;
     private String version;
-    private String projectSecret;
+    private final String projectSecret;
 
-    private ManagedChannel channel;
-    private HandshakeGrpc.HandshakeBlockingStub registrationClient;
-    private TelemetryGrpc.TelemetryBlockingStub telemetryClient;
+    private final ManagedChannel channel;
+    private final HandshakeGrpc.HandshakeBlockingStub registrationClient;
+    private final TelemetryGrpc.TelemetryBlockingStub telemetryClient;
     private Thread uploadingThread;
 
     public ChoreoClient(String hostname, int port, boolean useSSL, String projectSecret) {
@@ -81,7 +81,7 @@ public class ChoreoClient implements AutoCloseable {
                                                           .setNodeId(nodeId)
                                                           .build();
 
-        NegotiatorOuterClass.RegisterResponse registerResponse = null;
+        HandshakeOuterClass.RegisterResponse registerResponse;
         try {
             registerResponse = registrationClient.withCompression("gzip").register(handshakeRequest);
         } catch (StatusRuntimeException e) {
@@ -120,8 +120,8 @@ public class ChoreoClient implements AutoCloseable {
      * Data holder for register response call.
      */
     public static class RegisterResponse {
-        private String obsUrl;
-        private String obsId;
+        private final String obsUrl;
+        private final String obsId;
 
         public RegisterResponse(String obsUrl, String obsId) {
             this.obsUrl = obsUrl;
