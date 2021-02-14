@@ -94,6 +94,12 @@ task copyStdlibs(type: Copy) {
     /* Standard Libraries */
     configurations.ballerinaStdLibs.resolvedConfiguration.resolvedArtifacts.each { artifact ->
         def artifactExtractedPath = "${buildDir}/extracted-distributions/" + artifact.name + "-zip"
+        into("bre/lib") {
+            from "${artifactExtractedPath}/libs"
+        }
+        into("docs") {
+            from "${artifactExtractedPath}/docs"
+        }
         into("repo/bala") {
             from "${artifactExtractedPath}/bala"
         }

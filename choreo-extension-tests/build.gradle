@@ -1,3 +1,5 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 /*
  * Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
@@ -81,6 +83,12 @@ def copyDistributions (distributionConfigurations) {
         /* Standard Libraries */
         distributionConfigurations.resolvedConfiguration.resolvedArtifacts.each { artifact ->
             def artifactExtractedPath = "${project.buildDir}/extracted-distributions/" + artifact.name + "-zip"
+            into("bre/lib") {
+                from "${artifactExtractedPath}/libs"
+            }
+            into("docs") {
+                from "${artifactExtractedPath}/docs"
+            }
             into("repo/bala") {
                 from "${artifactExtractedPath}/bala"
             }
@@ -118,8 +126,40 @@ task createServerZip(type: Zip) {
     from "${project.buildDir}/extracted-distributions/jballerina-tools-zip/"
 }
 
+def generateGrpcServer (protoFile, outputDir) {
+    def protoNameMatcher = protoFile =~ /.*\\/([^\/]+)\.proto/
+    def protoName = protoNameMatcher[0][1]
+
+    def generatedSourcesDir = "${project.buildDir}/tmp/generated/sources/${protoName}"
+    def distributionBinPath = "${project.buildDir.absolutePath}/extracted-distributions/jballerina-tools-zip/jballerina-tools-${ballerinaLangVersion}/bin"
+    exec {
+        workingDir project.projectDir
+        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            commandLine 'cmd', '/c', "${distributionBinPath}/bal.bat grpc --input ${protoFile} --output ${generatedSourcesDir} --mode service && exit %%ERRORLEVEL%%"
+        } else {
+            commandLine 'sh', '-c', "${distributionBinPath}/bal grpc --input ${protoFile} --output ${generatedSourcesDir} --mode service"
+        }
+    }
+    copy {
+        from "${generatedSourcesDir}/${protoName}_pb.bal"
+        into outputDir
+    }
+}
+
+task generateChoreoGrpcTestBackend {
+    dependsOn copyStdlibs
+
+    def protoFilesDir = "${project.projectDir}/../choreo-extension-native/src/main/proto"
+    def choreoBackendModulesDir = "${project.projectDir}/src/test/resources/bal/choreo_periscope_backend/modules"
+    doLast {
+        generateGrpcServer("${protoFilesDir}/negotiator.proto", "${choreoBackendModulesDir}/negotiator")
+        generateGrpcServer("${protoFilesDir}/telemetry.proto", "${choreoBackendModulesDir}/telemetry")
+    }
+}
+
 test {
     dependsOn createServerZip
+    dependsOn generateChoreoGrpcTestBackend
     finalizedBy jacocoTestReport
     finalizedBy jacocoTestCoverageVerification
 
