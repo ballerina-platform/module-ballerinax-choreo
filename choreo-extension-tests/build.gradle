@@ -43,6 +43,21 @@ dependencies {
     testUtils "org.ballerinalang:ballerina-test-utils:${ballerinaLangVersion}"
 }
 
+def cleanUpBalProject (projectDir) {
+    delete "${projectDir}/target"
+    delete "${projectDir}/Ballerina.lock"
+    delete "${projectDir}/ballerina-internal.log"
+}
+
+clean {
+    def testBalProjectsDir = "${project.projectDir}/src/test/resources/bal"
+    cleanUpBalProject "${testBalProjectsDir}/choreo_ext_test"
+    def testMockPeriscopeProjectDir = "${testBalProjectsDir}/choreo_periscope_backend"
+    cleanUpBalProject testMockPeriscopeProjectDir
+    delete "${testMockPeriscopeProjectDir}/modules/handshake/handshake_pb.bal"
+    delete "${testMockPeriscopeProjectDir}/modules/telemetry/telemetry_pb.bal"
+}
+
 jar {
     enabled = false
 }
