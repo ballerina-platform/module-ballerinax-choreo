@@ -37,8 +37,8 @@ message TracesPublishRequest {
 }
 
 message TraceSpan {
-    uint64 traceId = 1;
-    uint64 spanId = 2;
+    string traceId = 1;
+    string spanId = 2;
     string serviceName = 3;
     string operationName = 4;
     int64 timestamp = 5;
@@ -49,8 +49,8 @@ message TraceSpan {
 }
 
 message TraceSpanReference {
-    uint64 traceId = 1;
-    uint64 spanId = 2;
+    string traceId = 1;
+    string spanId = 2;
     TraceReferenceType refType = 3;
 }
 
