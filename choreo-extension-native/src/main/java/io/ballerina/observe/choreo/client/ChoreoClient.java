@@ -185,8 +185,8 @@ public class ChoreoClient implements AutoCloseable {
                 ChoreoTraceSpan traceSpan = traceSpans.get(i);
                 TelemetryOuterClass.TraceSpan.Builder traceSpanBuilder
                         = TelemetryOuterClass.TraceSpan.newBuilder()
-                                                       .setTraceId(traceSpan.getTraceId())
-                                                       .setSpanId(traceSpan.getSpanId())
+                                                       .setTraceId(Long.toString(traceSpan.getTraceId()))
+                                                       .setSpanId(Long.toString(traceSpan.getSpanId()))
                                                        .setServiceName(traceSpan.getServiceName())
                                                        .setOperationName(traceSpan.getOperationName())
                                                        .setTimestamp(traceSpan.getTimestamp())
@@ -194,8 +194,8 @@ public class ChoreoClient implements AutoCloseable {
                                                        .putAllTags(traceSpan.getTags());
                 for (ChoreoTraceSpan.Reference reference : traceSpan.getReferences()) {
                     traceSpanBuilder.addReferences(TelemetryOuterClass.TraceSpanReference.newBuilder()
-                            .setTraceId(reference.getTraceId())
-                            .setSpanId(reference.getSpanId())
+                            .setTraceId(Long.toString(reference.getTraceId()))
+                            .setSpanId(Long.toString(reference.getSpanId()))
                             .setRefType(reference.getRefType() == ChoreoTraceSpan.Reference.Type.CHILD_OF
                                     ? TelemetryOuterClass.TraceReferenceType.CHILD_OF
                                     : TelemetryOuterClass.TraceReferenceType.FOLLOWS_FROM));
