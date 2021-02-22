@@ -22,12 +22,16 @@ import org.ballerinalang.test.context.LogLeecher;
 import org.ballerinalang.test.context.Utils;
 import org.ballerinalang.test.util.HttpClientRequest;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,9 +40,11 @@ import java.util.Map;
  */
 public class ChoreoTracesTestCase extends BaseTestCase {
     private BServerInstance serverInstance;
+    private Path projectFilesDir;
 
-    private static final File RESOURCES_DIR = Paths.get("src", "test", "resources", "bal").toFile();
     private static final String TEST_RESOURCE_URL = "http://localhost:9091/test/sum";
+    private static final String CHOREO_PROJECT_FILE_NAME = ".choreoproject";
+    private static final String RESTART_TEST_PROJECT_FILE = "restart_test_project_file";
 
     private static final String CHOREO_EXTENSION_LOG_PREFIX = "ballerina: initializing connection with observability " +
             "backend ";
@@ -48,18 +54,52 @@ public class ChoreoTracesTestCase extends BaseTestCase {
     private static final String CHOREO_EXTENSION_URL_LOG_PREFIX = "ballerina: visit ";
     private static final String SAMPLE_SERVER_LOG = "[ballerina/http] started HTTP/WS listener 0.0.0.0:9091";
 
+    @BeforeClass
+    public void setupTestCase() throws Exception {
+        projectFilesDir = Files.createTempDirectory("choreo-test-project-files-");
+    }
+
+    @AfterClass
+    public void cleanUpTestCase() throws Exception {
+        Files.deleteIfExists(Paths.get(projectFilesDir.toFile().getAbsolutePath(), RESTART_TEST_PROJECT_FILE));
+        Files.deleteIfExists(projectFilesDir);
+    }
+
     @BeforeMethod
-    public void setup() throws Exception {
+    public void setupTest() throws Exception {
         serverInstance = new BServerInstance(balServer);
     }
 
     @AfterMethod
-    public void cleanUpServer() throws Exception {
+    public void cleanUpTest() throws Exception {
         serverInstance.shutdownServer();
     }
 
     @Test
     public void testPublishDataToChoreo() throws Exception {
+        testSimpleRun(Collections.emptyMap());
+
+        // Storing the choreo project file for dependent test testRestartBallerinaService
+        Path projectFile = Paths.get(serverInstance.getServerHome(), CHOREO_PROJECT_FILE_NAME);
+        Path storedProjectFile = Paths.get(projectFilesDir.toFile().getAbsolutePath(), RESTART_TEST_PROJECT_FILE);
+        Files.copy(projectFile, storedProjectFile);
+    }
+
+    @Test(dependsOnMethods = "testPublishDataToChoreo")
+    public void testRestartBallerinaService() throws Exception {
+        // Validating if dependant test testRestartBallerinaService choreo project file is present
+        Path projectFile = Paths.get(serverInstance.getServerHome(), CHOREO_PROJECT_FILE_NAME);
+        Path storedProjectFile = Paths.get(projectFilesDir.toFile().getAbsolutePath(), RESTART_TEST_PROJECT_FILE);
+        Assert.assertTrue(Files.exists(storedProjectFile), "Dependent test run Choreo Project file not present");
+
+        testSimpleRun(Collections.emptyMap());
+
+        // Validate final choreo project file with previous test choreo project file
+        Assert.assertEquals(Files.readString(projectFile), Files.readString(storedProjectFile),
+                "Unexpected changes in Choreo Project file");
+    }
+
+    public void testSimpleRun(Map<String, String> additionalEnvVars) throws Exception {
         LogLeecher choreoExtLogLeecher = new LogLeecher(CHOREO_EXTENSION_LOG_PREFIX + "periscope.choreo.dev:443");
         serverInstance.addLogLeecher(choreoExtLogLeecher);
         LogLeecher choreoObservabilityUrlLogLeecher = new LogLeecher(CHOREO_EXTENSION_URL_LOG_PREFIX);
@@ -77,7 +117,7 @@ public class ChoreoTracesTestCase extends BaseTestCase {
 
         String configFile = Paths.get("src", "test", "resources", "bal", "choreo_ext_test", "Config.toml")
                 .toFile().getAbsolutePath();
-        Map<String, String> env = new HashMap<>();
+        Map<String, String> env = new HashMap<>(additionalEnvVars);
         env.put("BALCONFIGFILE", configFile);
 
         final String projectDir = Paths.get(RESOURCES_DIR.getAbsolutePath(), "choreo_ext_test").toFile()
@@ -100,6 +140,10 @@ public class ChoreoTracesTestCase extends BaseTestCase {
 
         Assert.assertFalse(errorLogLeecher.isTextFound(), "Unexpected error log found");
         Assert.assertFalse(exceptionLogLeecher.isTextFound(), "Unexpected exception log found");
+
+        // Validating generated project files
+        Path projectFile = Paths.get(serverInstance.getServerHome(), CHOREO_PROJECT_FILE_NAME);
+        Assert.assertTrue(Files.exists(projectFile), "Choreo Project file not generated");
     }
 
     @Test
