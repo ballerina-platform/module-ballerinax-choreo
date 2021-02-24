@@ -99,6 +99,13 @@ public class ChoreoTracesTestCase extends BaseTestCase {
                 "Unexpected changes in Choreo Project file");
     }
 
+    @Test
+    public void testDebugLogsEnabled() throws Exception {
+        Map<String, String> envVars = new HashMap<>();
+        envVars.put("CHOREO_TRACING_EXT_DEBUG", "true");
+        testSimpleRun(envVars);
+    }
+
     public void testSimpleRun(Map<String, String> additionalEnvVars) throws Exception {
         LogLeecher choreoExtLogLeecher = new LogLeecher(CHOREO_EXTENSION_LOG_PREFIX + "periscope.choreo.dev:443");
         serverInstance.addLogLeecher(choreoExtLogLeecher);
