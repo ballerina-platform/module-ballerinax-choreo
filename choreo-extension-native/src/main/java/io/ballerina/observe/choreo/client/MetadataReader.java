@@ -75,9 +75,8 @@ public class MetadataReader {
         String programHash = props.getProperty(PROGRAM_HASH_KEY);
 
         if (Objects.isNull(programHash)) {
-            String hashString = Integer.toString(getAstData().hashCode());
-            props.setProperty("PROGRAM_HASH", hashString);
-            return hashString;
+            programHash = Integer.toString(getAstData().hashCode());
+            props.setProperty("PROGRAM_HASH", programHash);
         }
 
         return programHash;
