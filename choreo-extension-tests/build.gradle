@@ -34,6 +34,7 @@ configurations {
 dependencies {
     observabilityExtensions project(path: ':choreo-extension-ballerina', configuration: 'distribution')
 
+    testImplementation project(":choreo-extension-native")
     testImplementation "org.ballerinalang:ballerina-runtime:${ballerinaLangVersion}"
     testImplementation "org.ballerinalang:ballerina-logging:${ballerinaLangVersion}"
     testImplementation "org.ballerinalang:ballerina-test-utils:${ballerinaLangVersion}"

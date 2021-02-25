@@ -22,9 +22,7 @@ import org.ballerinalang.test.context.LogLeecher;
 import org.ballerinalang.test.context.Utils;
 import org.ballerinalang.test.util.HttpClientRequest;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -40,7 +38,6 @@ import java.util.Map;
  */
 public class ChoreoTracesTestCase extends BaseTestCase {
     private BServerInstance serverInstance;
-    private Path projectFilesDir;
 
     private static final String TEST_RESOURCE_URL = "http://localhost:9091/test/sum";
     private static final String CHOREO_PROJECT_FILE_NAME = ".choreoproject";
@@ -54,17 +51,6 @@ public class ChoreoTracesTestCase extends BaseTestCase {
     private static final String CHOREO_EXTENSION_URL_LOG_PREFIX = "ballerina: visit ";
     private static final String SAMPLE_SERVER_LOG = "[ballerina/http] started HTTP/WS listener 0.0.0.0:9091";
 
-    @BeforeClass
-    public void setupTestCase() throws Exception {
-        projectFilesDir = Files.createTempDirectory("choreo-test-project-files-");
-    }
-
-    @AfterClass
-    public void cleanUpTestCase() throws Exception {
-        Files.deleteIfExists(Paths.get(projectFilesDir.toFile().getAbsolutePath(), RESTART_TEST_PROJECT_FILE));
-        Files.deleteIfExists(projectFilesDir);
-    }
-
     @BeforeMethod
     public void setupTest() throws Exception {
         serverInstance = new BServerInstance(balServer);
@@ -77,11 +63,13 @@ public class ChoreoTracesTestCase extends BaseTestCase {
 
     @Test
     public void testPublishDataToChoreo() throws Exception {
+        Path projectFile = Paths.get(serverInstance.getServerHome(), CHOREO_PROJECT_FILE_NAME);
+        Path storedProjectFile = tempFilesDir.resolve(RESTART_TEST_PROJECT_FILE);
+
+        Files.deleteIfExists(projectFile);  // To test fresh project
         testSimpleRun(Collections.emptyMap());
 
         // Storing the choreo project file for dependent test testRestartBallerinaService
-        Path projectFile = Paths.get(serverInstance.getServerHome(), CHOREO_PROJECT_FILE_NAME);
-        Path storedProjectFile = Paths.get(projectFilesDir.toFile().getAbsolutePath(), RESTART_TEST_PROJECT_FILE);
         Files.copy(projectFile, storedProjectFile);
     }
 
@@ -89,9 +77,11 @@ public class ChoreoTracesTestCase extends BaseTestCase {
     public void testRestartBallerinaService() throws Exception {
         // Validating if dependant test testRestartBallerinaService choreo project file is present
         Path projectFile = Paths.get(serverInstance.getServerHome(), CHOREO_PROJECT_FILE_NAME);
-        Path storedProjectFile = Paths.get(projectFilesDir.toFile().getAbsolutePath(), RESTART_TEST_PROJECT_FILE);
+        Path storedProjectFile = tempFilesDir.resolve(RESTART_TEST_PROJECT_FILE);
         Assert.assertTrue(Files.exists(storedProjectFile), "Dependent test run Choreo Project file not present");
 
+        Files.deleteIfExists(projectFile);
+        Files.copy(storedProjectFile, projectFile);     // To test existing project
         testSimpleRun(Collections.emptyMap());
 
         // Validate final choreo project file with previous test choreo project file
@@ -104,6 +94,20 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         Map<String, String> envVars = new HashMap<>();
         envVars.put("CHOREO_TRACING_EXT_DEBUG", "true");
         testSimpleRun(envVars);
+    }
+
+    @Test
+    public void testProvidedNodeId() throws Exception {
+        Path nodeIdFile = getNodeIdFilePath();
+        Files.writeString(nodeIdFile, "ext-test-node-id-1");
+        testSimpleRun(Collections.emptyMap());
+    }
+
+    @Test
+    public void testMissingNodeId() throws Exception {
+        Path nodeIdFile = getNodeIdFilePath();
+        Files.deleteIfExists(nodeIdFile);
+        testSimpleRun(Collections.emptyMap());
     }
 
     public void testSimpleRun(Map<String, String> additionalEnvVars) throws Exception {
