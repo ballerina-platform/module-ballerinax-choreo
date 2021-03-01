@@ -37,6 +37,9 @@ import java.util.UUID;
  * @since 2.0.0
  */
 public class ChoreoClientHolder {
+    private ChoreoClientHolder() {  // Prevent initialization
+    }
+
     private static final Logger LOGGER = LogFactory.getLogger();
 
     private static ChoreoClient choreoClient;

@@ -28,6 +28,9 @@ import java.nio.file.Paths;
  * @since 2.0.0
  */
 public class ChoreoConfigHelper {
+    private ChoreoConfigHelper() {  // Prevent initialization
+    }
+
     public static Path getGlobalChoreoConfigDir() {
         final String userHome = System.getProperty("user.home");
         return Paths.get(userHome + File.separator + ".config" + File.separator + "choreo");

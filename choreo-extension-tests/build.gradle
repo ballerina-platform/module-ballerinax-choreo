@@ -1,3 +1,5 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 /*
  * Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
@@ -32,6 +34,7 @@ configurations {
 dependencies {
     observabilityExtensions project(path: ':choreo-extension-ballerina', configuration: 'distribution')
 
+    testImplementation project(":choreo-extension-native")
     testImplementation "org.ballerinalang:ballerina-runtime:${ballerinaLangVersion}"
     testImplementation "org.ballerinalang:ballerina-logging:${ballerinaLangVersion}"
     testImplementation "org.ballerinalang:ballerina-test-utils:${ballerinaLangVersion}"
@@ -39,6 +42,21 @@ dependencies {
     testImplementation "org.slf4j:slf4j-jdk14:${slf4jVersion}"
 
     testUtils "org.ballerinalang:ballerina-test-utils:${ballerinaLangVersion}"
+}
+
+def cleanUpBalProject (projectDir) {
+    delete "${projectDir}/target"
+    delete "${projectDir}/Ballerina.lock"
+    delete "${projectDir}/ballerina-internal.log"
+}
+
+clean {
+    def testBalProjectsDir = "${project.projectDir}/src/test/resources/bal"
+    cleanUpBalProject "${testBalProjectsDir}/choreo_ext_test"
+    def testMockPeriscopeProjectDir = "${testBalProjectsDir}/choreo_periscope_backend"
+    cleanUpBalProject testMockPeriscopeProjectDir
+    delete "${testMockPeriscopeProjectDir}/modules/handshake/handshake_pb.bal"
+    delete "${testMockPeriscopeProjectDir}/modules/telemetry/telemetry_pb.bal"
 }
 
 jar {
@@ -81,6 +99,12 @@ def copyDistributions (distributionConfigurations) {
         /* Standard Libraries */
         distributionConfigurations.resolvedConfiguration.resolvedArtifacts.each { artifact ->
             def artifactExtractedPath = "${project.buildDir}/extracted-distributions/" + artifact.name + "-zip"
+            into("bre/lib") {
+                from "${artifactExtractedPath}/libs"
+            }
+            into("docs") {
+                from "${artifactExtractedPath}/docs"
+            }
             into("repo/bala") {
                 from "${artifactExtractedPath}/bala"
             }
@@ -118,9 +142,42 @@ task createServerZip(type: Zip) {
     from "${project.buildDir}/extracted-distributions/jballerina-tools-zip/"
 }
 
+def generateGrpcServer (protoFile, outputDir) {
+    def protoNameMatcher = protoFile =~ /.*\\/([^\/]+)\.proto/
+    def protoName = protoNameMatcher[0][1]
+
+    def generatedSourcesDir = "${project.buildDir}/tmp/generated/sources/${protoName}"
+    def distributionBinPath = "${project.buildDir.absolutePath}/extracted-distributions/jballerina-tools-zip/jballerina-tools-${ballerinaLangVersion}/bin"
+    exec {
+        workingDir project.projectDir
+        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            commandLine 'cmd', '/c', "${distributionBinPath}/bal.bat grpc --input ${protoFile} --output ${generatedSourcesDir} --mode service && exit %%ERRORLEVEL%%"
+        } else {
+            commandLine 'sh', '-c', "${distributionBinPath}/bal grpc --input ${protoFile} --output ${generatedSourcesDir} --mode service"
+        }
+    }
+    copy {
+        from "${generatedSourcesDir}/${protoName}_pb.bal"
+        into outputDir
+    }
+}
+
+task generateChoreoGrpcTestBackend {
+    dependsOn copyStdlibs
+
+    def protoFilesDir = "${project.projectDir}/../choreo-extension-native/src/main/proto"
+    def choreoBackendModulesDir = "${project.projectDir}/src/test/resources/bal/choreo_periscope_backend/modules"
+    doLast {
+        generateGrpcServer("${protoFilesDir}/handshake.proto", "${choreoBackendModulesDir}/handshake")
+        generateGrpcServer("${protoFilesDir}/telemetry.proto", "${choreoBackendModulesDir}/telemetry")
+    }
+}
+
 test {
     dependsOn createServerZip
+    dependsOn generateChoreoGrpcTestBackend
     finalizedBy jacocoTestReport
+    finalizedBy jacocoTestCoverageVerification
 
     testLogging {
         showStackTraces true
@@ -141,16 +198,42 @@ test {
     }
 }
 
+def nativeModuleDir = "${rootProject.projectDir}/choreo-extension-native"
+def nativeModuleClasses = "${nativeModuleDir}/build/classes/java/main"
+def nativeModuleResources = "${nativeModuleDir}/build/resources/main"
+def nativeModuleSources = "${nativeModuleDir}/src/main/java"
+
 jacocoTestReport {
     dependsOn test
 
+    reports {
+        html.enabled true
+        xml.enabled true
+    }
+
     afterEvaluate {
-        def nativeBuildDir = "${rootProject.projectDir}/choreo-extension-native/build";
-        classDirectories.setFrom(files(
-                file("${nativeBuildDir}/classes/java/main"),
-                file("${nativeBuildDir}/resources/main")
-        ).collect {
+        classDirectories.setFrom(files(file(nativeModuleClasses), file(nativeModuleResources)).collect {
             fileTree(dir: it, exclude: 'io/ballerina/observe/choreo/gen/**')
         })
+        sourceDirectories.setFrom(file(nativeModuleSources))
+    }
+}
+
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.70
+            }
+        }
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(file(nativeModuleClasses), file(nativeModuleResources)).collect {
+            fileTree(dir: it, exclude: 'io/ballerina/observe/choreo/gen/**')
+        })
+        sourceDirectories.setFrom(file(nativeModuleSources))
     }
 }

@@ -22,6 +22,8 @@ package io.ballerina.observe.choreo.logging;
  * @since 2.0.0
  */
 public class LogFactory {
+    private LogFactory() {  // Prevent initialization
+    }
 
     private static final Logger logger = new ConsoleLogger();
 

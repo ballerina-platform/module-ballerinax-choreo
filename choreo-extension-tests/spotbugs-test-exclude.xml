@@ -23,9 +23,12 @@
         <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"/>
     </Match>
 
-    <!-- "serverInstance" instance is initialized by setup methods called by TestNG -->
+    <!-- "serverInstance", "projectFilesDir" instances are initialized by setup methods called by TestNG -->
     <Match>
-        <Field name="serverInstance"/>
+        <Or>
+            <Field name="serverInstance"/>
+            <Field name="projectFilesDir"/>
+        </Or>
         <Bug pattern="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR"/>
     </Match>
 </FindBugsFilter>

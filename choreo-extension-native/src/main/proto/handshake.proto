@@ -1,0 +1,37 @@
+syntax = "proto3";
+package v0_1_2;
+
+option java_package = "io.ballerina.observe.choreo.gen";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+service Handshake {
+    rpc register (RegisterRequest) returns (RegisterResponse);
+    rpc publishAst (PublishAstRequest) returns (google.protobuf.Empty);
+}
+
+message RegisterRequest {
+    // This is the hash of the Ballerina program's AST
+    string astHash = 1; // obsId = f(astHash, projectSecret)
+
+    // This is unique for an anonymous project. This maps to a obsId, which can be public.
+    string projectSecret = 2;
+
+    // This is a unique ID for node/machine on which programs run.
+    // if two programs run in the same machine(node), they will have the same node ID
+    string nodeId = 3;
+}
+
+message RegisterResponse {
+    string obsId = 1; // When publishing, you need to send the obsId
+    string version = 2; // version of the program
+    string obsUrl = 3; // This will contain the obsid & version
+    bool sendAst = 4;
+}
+
+message PublishAstRequest {
+    string obsId = 1;
+    string projectSecret = 2;
+    string ast = 3;
+}

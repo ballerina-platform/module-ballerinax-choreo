@@ -94,6 +94,12 @@ task copyStdlibs(type: Copy) {
     /* Standard Libraries */
     configurations.ballerinaStdLibs.resolvedConfiguration.resolvedArtifacts.each { artifact ->
         def artifactExtractedPath = "${buildDir}/extracted-distributions/" + artifact.name + "-zip"
+        into("bre/lib") {
+            from "${artifactExtractedPath}/libs"
+        }
+        into("docs") {
+            from "${artifactExtractedPath}/docs"
+        }
         into("repo/bala") {
             from "${artifactExtractedPath}/bala"
         }
@@ -103,8 +109,8 @@ task copyStdlibs(type: Copy) {
     }
 }
 
-def packageName = "choreo"
 def packageOrg = "ballerinax"
+def packageName = "choreo"
 def ballerinaConfigFile = new File("${project.projectDir}/Ballerina.toml")
 def ballerinaDependencyFile = new File("$project.projectDir/Dependencies.toml")
 def artifactBallerinaDocs = file("${project.projectDir}/build/docs_parent/")
