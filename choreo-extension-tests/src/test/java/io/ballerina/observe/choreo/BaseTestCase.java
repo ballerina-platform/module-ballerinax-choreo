@@ -69,7 +69,7 @@ public class BaseTestCase {
         final String projectDir = Paths.get(RESOURCES_DIR.getAbsolutePath(), "choreo_periscope_backend").toFile()
                 .getAbsolutePath();
         int[] requiredPorts = {10090};
-        periscopeBackendServerInstance.startServer(projectDir, "choreo_periscope_backend-0.1.0", null, null,
+        periscopeBackendServerInstance.startServer(projectDir, "choreo_periscope_backend", null, null,
                 requiredPorts);
         Utils.waitForPortsToOpen(requiredPorts, 1000 * 60, false, "localhost");
     }
