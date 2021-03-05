@@ -1,0 +1,2 @@
+fixes:
+  - "ballerinax/choreo/*/::choreo-extension-ballerina/"
