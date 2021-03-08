@@ -19,6 +19,7 @@ plugins {
     id "com.github.spotbugs" version "4.5.1"
     id "net.researchgate.release" version "2.8.0"
     id "de.undercouch.download" version "4.0.4"
+    id "jacoco"
 }
 
 allprojects {
@@ -262,4 +263,27 @@ release {
 
 task build {
     dependsOn('choreo-extension-ballerina:build')
+}
+
+task codeCoverageReport(type: JacocoReport) {
+    dependsOn('choreo-extension-ballerina:extractBallerinaClassFiles')
+    dependsOn('choreo-extension-native:copyJavaClassFiles')
+
+    executionData fileTree(project.rootDir.absolutePath).include("**/*.exec")
+    additionalClassDirs files("${buildDir}/classes")
+
+    subprojects.each {
+        sourceSets it.sourceSets.main
+    }
+
+    reports {
+        xml.enabled = true
+        html.enabled = true
+        xml.destination = new File("${buildDir}/reports/jacoco/report.xml")
+        html.destination = new File("${buildDir}/reports/jacoco/report.html")
+    }
+
+    onlyIf = {
+        true
+    }
 }
