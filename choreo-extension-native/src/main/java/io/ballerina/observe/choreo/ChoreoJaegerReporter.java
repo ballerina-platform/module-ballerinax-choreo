@@ -24,14 +24,16 @@ import io.ballerina.observe.choreo.logging.LogFactory;
 import io.ballerina.observe.choreo.logging.Logger;
 import io.ballerina.observe.choreo.model.ChoreoTraceSpan;
 import io.ballerina.observe.choreo.model.SpanEvent;
-import io.jaegertracing.internal.JaegerSpan;
-import io.jaegertracing.internal.JaegerSpanContext;
-import io.jaegertracing.internal.LogData;
-import io.jaegertracing.internal.Reference;
-import io.jaegertracing.spi.Reporter;
-import io.opentracing.References;
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.sdk.common.CompletableResultCode;
+import io.opentelemetry.sdk.trace.SdkTracerProvider;
+import io.opentelemetry.sdk.trace.data.EventData;
+import io.opentelemetry.sdk.trace.data.SpanData;
+import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
+import io.opentelemetry.sdk.trace.export.SpanExporter;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -45,13 +47,14 @@ import java.util.concurrent.TimeUnit;
 import static io.ballerina.runtime.observability.ObservabilityConstants.CHECKPOINT_EVENT_NAME;
 import static io.ballerina.runtime.observability.ObservabilityConstants.TAG_KEY_SRC_MODULE;
 import static io.ballerina.runtime.observability.ObservabilityConstants.TAG_KEY_SRC_POSITION;
+import static io.opentelemetry.semconv.resource.attributes.ResourceAttributes.SERVICE_NAME;
 
 /**
  * Custom Jaeger tracing reporter for publishing stats to Choreo cloud.
  *
  * @since 2.0.0
  */
-public class ChoreoJaegerReporter implements Reporter, AutoCloseable {
+public class ChoreoJaegerReporter implements SpanExporter {
     private static final int PUBLISH_INTERVAL_SECS = 10;
     private static final int SPAN_LIST_BOUND = 50000;
     private static final int SPANS_TO_REMOVE = 5000; // 10% of the SPAN_LIST_BOUND
@@ -71,13 +74,42 @@ public class ChoreoJaegerReporter implements Reporter, AutoCloseable {
         executorService.scheduleAtFixedRate(task, PUBLISH_INTERVAL_SECS, PUBLISH_INTERVAL_SECS, TimeUnit.SECONDS);
     }
 
+    /**
+     * Called to export sampled {@code Span}s. Note that export operations can be performed
+     * simultaneously depending on the type of span processor being used. However, the {@link
+     * BatchSpanProcessor} will ensure that only one export can occur at a time.
+     *
+     * @param spans the collection of sampled Spans to be exported.
+     * @return the result of the export, which is often an asynchronous operation.
+     */
     @Override
-    public void report(JaegerSpan jaegerSpan) {
-        task.append(jaegerSpan);
+    public CompletableResultCode export(Collection<SpanData> spans) {
+        task.append(spans);
+        return CompletableResultCode.ofSuccess();
     }
 
+    /**
+     * Exports the collection of sampled {@code Span}s that have not yet been exported. Note that
+     * export operations can be performed simultaneously depending on the type of span processor being
+     * used. However, the {@link BatchSpanProcessor} will ensure that only one export can occur at a
+     * time.
+     *
+     * @return the result of the flush, which is often an asynchronous operation.
+     */
     @Override
-    public void close() {
+    public CompletableResultCode flush() {
+        executorService.execute(task);
+        return CompletableResultCode.ofSuccess();
+    }
+
+    /**
+     * Called when {@link SdkTracerProvider#shutdown()} is called, if this {@code SpanExporter} is
+     * registered to a {@link SdkTracerProvider} object.
+     *
+     * @return a {@link CompletableResultCode} which is completed when shutdown completes.
+     */
+    @Override
+    public CompletableResultCode shutdown() {
         LOGGER.info("sending all remaining traces to Choreo");
         executorService.execute(task);
         executorService.shutdown();
@@ -85,7 +117,9 @@ public class ChoreoJaegerReporter implements Reporter, AutoCloseable {
             executorService.awaitTermination(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             LOGGER.error("failed to wait for publishing traces to complete due to " + e.getMessage());
+            return CompletableResultCode.ofFailure();
         }
+        return CompletableResultCode.ofSuccess();
     }
 
     /**
@@ -100,47 +134,44 @@ public class ChoreoJaegerReporter implements Reporter, AutoCloseable {
             this.traceSpans = new ArrayList<>();
         }
 
-        void append(JaegerSpan jaegerSpan) {
-            Map<String, String> tags = new HashMap<>();
-            for (Map.Entry<String, Object> tagEntry : jaegerSpan.getTags().entrySet()) {
-                tags.put(tagEntry.getKey(), tagEntry.getValue().toString());
-            }
-            List<ChoreoTraceSpan.Reference> references = new ArrayList<>(jaegerSpan.getReferences().size());
-            for (Reference jaegerReference : jaegerSpan.getReferences()) {
-                ChoreoTraceSpan.Reference reference = new ChoreoTraceSpan.Reference(
-                        jaegerReference.getSpanContext().getTraceId(),
-                        jaegerReference.getSpanContext().getSpanId(),
-                        Objects.equals(jaegerReference.getType(), References.CHILD_OF)
-                                ? ChoreoTraceSpan.Reference.Type.CHILD_OF
-                                : ChoreoTraceSpan.Reference.Type.FOLLOWS_FROM
-                );
-                references.add(reference);
-            }
-            List<SpanEvent> events;
-            if (jaegerSpan.getLogs() != null) {
-                events = new ArrayList<>(jaegerSpan.getLogs().size());
-                for (LogData eventLog : jaegerSpan.getLogs()) {
-                    SpanEvent event = new SpanEvent(
-                            eventLog.getTime(),
-                            (((Map) eventLog.getFields().get(CHECKPOINT_EVENT_NAME)).
-                                    get(TAG_KEY_SRC_MODULE)).toString(),
-                            (((Map) eventLog.getFields().get(CHECKPOINT_EVENT_NAME)).
-                                    get(TAG_KEY_SRC_POSITION)).toString()
-                    );
-                    events.add(event);
-                }
-            } else {
-                events = null;
-            }
+        void append(Collection<SpanData> spans) {
 
-            JaegerSpanContext spanContext = jaegerSpan.context();
-            long timestamp = jaegerSpan.getStart() / 1000;  // Jaeger stores timestamp in microseconds by default
-            long duration = jaegerSpan.getDuration() / 1000;    // Jaeger stores duration in microseconds by default
-            ChoreoTraceSpan traceSpan = new ChoreoTraceSpan(spanContext.getTraceId(), spanContext.getSpanId(),
-                    jaegerSpan.getServiceName(), jaegerSpan.getOperationName(), timestamp, duration, tags, references,
-                    events);
-            synchronized (this) {
-                traceSpans.add(traceSpan);
+            for (SpanData spanData : spans) {
+
+                Map<String, String> tags = new HashMap<>();
+                spanData.getAttributes().forEach((attributeKey, o) -> tags.put(attributeKey.getKey(), (String) o));
+
+                List<ChoreoTraceSpan.Reference> references = new ArrayList<>();
+                if (spanData.getParentSpanContext() != null) {
+                    ChoreoTraceSpan.Reference reference = new ChoreoTraceSpan.Reference(
+                            spanData.getParentSpanContext().getTraceId(),
+                            spanData.getParentSpanContext().getSpanId(),
+                            ChoreoTraceSpan.Reference.Type.CHILD_OF
+                    );
+                    references.add(reference);
+                }
+
+                List<SpanEvent> events = new ArrayList<>();
+                for (EventData eventData : spanData.getEvents()) {
+                    if (eventData.getName().equals(CHECKPOINT_EVENT_NAME)) {
+                        SpanEvent event = new SpanEvent(
+                                eventData.getEpochNanos(),
+                                eventData.getAttributes().get(AttributeKey.stringKey(TAG_KEY_SRC_MODULE)),
+                                eventData.getAttributes().get(AttributeKey.stringKey(TAG_KEY_SRC_POSITION))
+                        );
+                        events.add(event);
+                    }
+                }
+
+                long timestamp = spanData.getStartEpochNanos() / 1000000; // in millis
+                long duration = (spanData.getEndEpochNanos() - spanData.getStartEpochNanos()) / 1000000; // in millis
+                ChoreoTraceSpan traceSpan = new ChoreoTraceSpan(spanData.getTraceId(), spanData.getSpanId(),
+                        spanData.getResource().getAttributes().get(SERVICE_NAME), spanData.getName(),
+                        timestamp, duration, tags, references,
+                        events);
+                synchronized (this) {
+                    traceSpans.add(traceSpan);
+                }
             }
         }
 
@@ -169,9 +200,9 @@ public class ChoreoJaegerReporter implements Reporter, AutoCloseable {
                                 while (spanCount < SPANS_TO_REMOVE) {
                                     if (swappedTraceSpans.size() > 0) {
                                         int randomSpanPos = random.nextInt(swappedTraceSpans.size());
-                                        long traceID = swappedTraceSpans.get(randomSpanPos).getTraceId();
+                                        String traceID = swappedTraceSpans.get(randomSpanPos).getTraceId();
                                         for (int j = 0; j < swappedTraceSpans.size(); j++) {
-                                            if (swappedTraceSpans.get(j).getTraceId() == traceID) {
+                                            if (swappedTraceSpans.get(j).getTraceId().equals(traceID)) {
                                                 swappedTraceSpans.remove(j);
                                                 // Reduce the count as well since the size of the arrayList shrink
                                                 j--;

@@ -35,8 +35,13 @@ dependencies {
     nativeJar project(':choreo-extension-native')
 
     externalJars "io.jaegertracing:jaeger-core:${jaegerVersion}"
-    externalJars "io.opentracing:opentracing-util:${openTracingVersion}"
-    externalJars "io.opentracing:opentracing-noop:${openTracingVersion}"
+    externalJars "io.opentelemetry:opentelemetry-api:${openTelemetryVersion}"
+    externalJars "io.opentelemetry:opentelemetry-context:${openTelemetryVersion}"
+    externalJars "io.opentelemetry:opentelemetry-sdk-common:${openTelemetryVersion}"
+    externalJars "io.opentelemetry:opentelemetry-sdk-trace:${openTelemetryVersion}"
+    externalJars "io.opentelemetry:opentelemetry-semconv:${openTelemetryAlphaVersion}"
+    externalJars "io.opentelemetry:opentelemetry-api-metrics:${openTelemetryAlphaVersion}"
+    externalJars "io.opentelemetry:opentelemetry-extension-trace-propagators:${openTelemetryVersion}"
     externalJars "io.grpc:grpc-protobuf:${grpcVersion}"
     externalJars "io.grpc:grpc-stub:${grpcVersion}"
     externalJars "io.grpc:grpc-netty-shaded:${grpcVersion}"
@@ -45,6 +50,7 @@ dependencies {
     externalJars "io.grpc:grpc-protobuf-lite:${grpcVersion}"
     externalJars "io.grpc:grpc-context:${grpcVersion}"
     externalJars "com.google.guava:guava:${guavaVersion}"
+    externalJars "com.google.guava:failureaccess:${failureAccessVersion}"
     externalJars "com.google.protobuf:protobuf-java:${protobufVersion}"
     externalJars "io.perfmark:perfmark-api:${perfmarkVersion}"
 }
@@ -128,19 +134,23 @@ task updateTomlVerions {
         def stdlibDependentIoVersion = project.stdlibIoVersion.replace("${snapshotVersion}", "")
 
         def jaegerVersion = project.jaegerVersion
-        def openTracingVersion = project.openTracingVersion
+        def openTelemetryVersion = project.openTelemetryVersion
+        def openTelemetryAlphaVersion = project.openTelemetryAlphaVersion
         def grpcVersion = project.grpcVersion
         def protobufVersion = project.protobufVersion
         def guavaVersion = project.guavaVersion
+        def failureAccessVersion = project.failureAccessVersion
         def perfmarkVersion = project.perfmarkVersion
 
         def newConfig = ballerinaConfigFile.text.replace("@project.version@", project.version)
         newConfig = newConfig.replace("@toml.version@", tomlVersion)
         newConfig = newConfig.replace("@jaeger.version@", jaegerVersion)
-        newConfig = newConfig.replace("@opentracing.version@", openTracingVersion)
+        newConfig = newConfig.replace("@opentelemetry.version@", openTelemetryVersion)
+        newConfig = newConfig.replace("@openTelemetryAlpha.version@", openTelemetryAlphaVersion)
         newConfig = newConfig.replace("@grpc.version@", grpcVersion)
         newConfig = newConfig.replace("@protobuf.version@", protobufVersion)
         newConfig = newConfig.replace("@guava.version@", guavaVersion)
+        newConfig = newConfig.replace("@failureAccess.version@", failureAccessVersion)
         newConfig = newConfig.replace("@perfmark.version@", perfmarkVersion)
         ballerinaConfigFile.text = newConfig
 
