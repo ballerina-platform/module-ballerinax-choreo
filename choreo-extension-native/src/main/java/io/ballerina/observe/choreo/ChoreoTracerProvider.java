@@ -72,7 +72,7 @@ public class ChoreoTracerProvider implements TracerProvider {
 
         return tracerProviderBuilder.setResource(
                 Resource.create(Attributes.of(SERVICE_NAME, serviceName)))
-                .build().get(serviceName);
+                .build().get("choreo");
     }
 
     @Override
