@@ -17,6 +17,7 @@ package io.ballerina.observe.choreo;
 
 import io.ballerina.observe.choreo.logging.LogFactory;
 import io.ballerina.observe.choreo.logging.Logger;
+import io.ballerina.observe.choreo.sampler.RateLimitingSampler;
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.observability.tracer.spi.TracerProvider;
@@ -40,6 +41,7 @@ import static io.opentelemetry.semconv.resource.attributes.ResourceAttributes.SE
 public class ChoreoTracerProvider implements TracerProvider {
     private static final Logger LOGGER = LogFactory.getLogger();
     private static final String CHOREO_EXTENSION_NAME = "choreo";
+    private static final int MAX_TRACES_PER_SECOND = 2;
     private volatile SpanExporter reporterInstance;
 
     @Override
@@ -69,6 +71,7 @@ public class ChoreoTracerProvider implements TracerProvider {
                 .addSpanProcessor(BatchSpanProcessor
                         .builder(reporterInstance)
                         .build());
+        tracerProviderBuilder.setSampler(new RateLimitingSampler(MAX_TRACES_PER_SECOND));
 
         return tracerProviderBuilder.setResource(
                 Resource.create(Attributes.of(SERVICE_NAME, serviceName)))
