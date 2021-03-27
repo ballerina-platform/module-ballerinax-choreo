@@ -129,7 +129,7 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         String configFile = Paths.get("src", "test", "resources", "bal", "choreo_ext_test", "Config.toml")
                 .toFile().getAbsolutePath();
         Map<String, String> env = new HashMap<>(additionalEnvVars);
-        env.put("BALCONFIGFILE", configFile);
+        env.put("BAL_CONFIG_FILES", configFile);
 
         final String projectDir = Paths.get(RESOURCES_DIR.getAbsolutePath(), "choreo_ext_test").toFile()
                 .getAbsolutePath();
