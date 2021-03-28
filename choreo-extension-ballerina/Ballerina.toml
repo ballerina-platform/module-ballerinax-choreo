@@ -32,16 +32,46 @@ artifactId = "jaeger-core"
 version = "@jaeger.version@"
 
 [[platform.java11.dependency]]
-path = "./lib/opentracing-util-@opentracing.version@.jar"
-groupId = "io.opentracing"
-artifactId = "opentracing-util"
-version = "@opentracing.version@"
+path = "./lib/opentelemetry-api-@opentelemetry.version@.jar"
+groupId = "io.opentelemetry"
+artifactId = "opentelemetry-api"
+version = "@opentelemetry.version@"
 
 [[platform.java11.dependency]]
-path = "./lib/opentracing-noop-@opentracing.version@.jar"
-groupId = "io.opentracing"
-artifactId = "opentracing-noop"
-version = "@opentracing.version@"
+path = "./lib/opentelemetry-context-@opentelemetry.version@.jar"
+groupId = "io.opentelemetry"
+artifactId = "opentelemetry-context"
+version = "@opentelemetry.version@"
+
+[[platform.java11.dependency]]
+path = "./lib/opentelemetry-sdk-trace-@opentelemetry.version@.jar"
+groupId = "io.opentelemetry"
+artifactId = "opentelemetry-sdk-trace"
+version = "@opentelemetry.version@"
+
+[[platform.java11.dependency]]
+path = "./lib/opentelemetry-sdk-common-@opentelemetry.version@.jar"
+groupId = "io.opentelemetry"
+artifactId = "opentelemetry-sdk-common"
+version = "@opentelemetry.version@"
+
+[[platform.java11.dependency]]
+path = "./lib/opentelemetry-semconv-@openTelemetryAlpha.version@.jar"
+groupId = "io.opentelemetry"
+artifactId = "opentelemetry-semconv"
+version = "@openTelemetryAlpha.version@"
+
+[[platform.java11.dependency]]
+path = "./lib/opentelemetry-api-metrics-@openTelemetryAlpha.version@.jar"
+groupId = "io.opentelemetry"
+artifactId = "opentelemetry-api-metrics"
+version = "@openTelemetryAlpha.version@"
+
+[[platform.java11.dependency]]
+path = "./lib/opentelemetry-extension-trace-propagators-@opentelemetry.version@.jar"
+groupId = "io.opentelemetry"
+artifactId = "opentelemetry-extension-trace-propagators"
+version = "@opentelemetry.version@"
 
 [[platform.java11.dependency]]
 path = "./lib/grpc-protobuf-@grpc.version@.jar"
@@ -90,6 +120,12 @@ path = "./lib/guava-@guava.version@.jar"
 groupId = "com.google.guava"
 artifactId = "guava"
 version = "@guava.version@"
+
+[[platform.java11.dependency]]
+path = "./lib/failureaccess-@failureAccess.version@.jar"
+groupId = "com.google.guava"
+artifactId = "failureaccess"
+version = "@failureAccess.version@"
 
 [[platform.java11.dependency]]
 path = "./lib/protobuf-java-@protobuf.version@.jar"
