@@ -23,7 +23,18 @@ description = 'Ballerina - Choreo Extension - Native Module'
 
 dependencies {
     implementation "org.ballerinalang:ballerina-runtime:${ballerinaLangVersion}"
+    implementation "io.opentelemetry:opentelemetry-api:${openTelemetryVersion}"
+    implementation "io.opentelemetry:opentelemetry-context:${openTelemetryVersion}"
+    implementation "io.opentelemetry:opentelemetry-sdk-common:${openTelemetryVersion}"
+    implementation "io.opentelemetry:opentelemetry-sdk-trace:${openTelemetryVersion}"
+    implementation "io.opentelemetry:opentelemetry-semconv:${openTelemetryAlphaVersion}"
+    implementation "io.opentelemetry:opentelemetry-api-metrics:${openTelemetryAlphaVersion}"
+    implementation "io.opentelemetry:opentelemetry-extension-trace-propagators:${openTelemetryVersion}"
     implementation "io.jaegertracing:jaeger-core:${jaegerVersion}"
+    implementation("com.google.guava:guava:${guavaVersion}") {
+        exclude group: 'com.google.code.findbugs', module: 'jsr305'
+    }
+    implementation("com.google.guava:failureaccess:${failureAccessVersion}")
     implementation("io.grpc:grpc-protobuf:${grpcVersion}") {
         exclude group: 'io.grpc', module: 'grpc-context'
         exclude group: 'com.google.code.findbugs', module: 'jsr305'

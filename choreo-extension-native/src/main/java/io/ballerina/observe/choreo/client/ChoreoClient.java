@@ -76,10 +76,10 @@ public class ChoreoClient implements AutoCloseable {
     public RegisterResponse register(final MetadataReader metadataReader, String nodeId) throws
             ChoreoClientException {
         RegisterRequest handshakeRequest = RegisterRequest.newBuilder()
-                                                          .setAstHash(metadataReader.getAstHash())
-                                                          .setProjectSecret(projectSecret)
-                                                          .setNodeId(nodeId)
-                                                          .build();
+                .setAstHash(metadataReader.getAstHash())
+                .setProjectSecret(projectSecret)
+                .setNodeId(nodeId)
+                .build();
 
         HandshakeOuterClass.RegisterResponse registerResponse;
         try {
@@ -102,10 +102,10 @@ public class ChoreoClient implements AutoCloseable {
         if (sendProgramJson) {
             uploadingThread = new Thread(() -> {
                 PublishAstRequest programRequest = PublishAstRequest.newBuilder()
-                                                                    .setAst(metadataReader.getAstData())
-                                                                    .setObsId(id)
-                                                                    .setProjectSecret(projectSecret)
-                                                                    .build();
+                        .setAst(metadataReader.getAstData())
+                        .setObsId(id)
+                        .setProjectSecret(projectSecret)
+                        .build();
                 registrationClient.withCompression("gzip").publishAst(programRequest);
                 // TODO add debug log to indicate success
             }, "AST Uploading Thread");
@@ -147,11 +147,11 @@ public class ChoreoClient implements AutoCloseable {
                 ChoreoMetric metric = metrics[i];
                 TelemetryOuterClass.Metric metricMessage
                         = TelemetryOuterClass.Metric.newBuilder()
-                                                    .setTimestamp(metric.getTimestamp())
-                                                    .setName(metric.getName())
-                                                    .setValue(metric.getValue())
-                                                    .putAllTags(metric.getTags())
-                                                    .build();
+                        .setTimestamp(metric.getTimestamp())
+                        .setName(metric.getName())
+                        .setValue(metric.getValue())
+                        .putAllTags(metric.getTags())
+                        .build();
 
                 int currentMessageSize = metricMessage.getSerializedSize();
                 if (currentMessageSize >= SERVER_MAX_FRAME_SIZE_BYTES) {
@@ -167,10 +167,10 @@ public class ChoreoClient implements AutoCloseable {
                 }
             }
             telemetryClient.withCompression("gzip").publishMetrics(requestBuilder.setObservabilityId(id)
-                                                         .setNodeId(nodeId)
-                                                         .setVersion(version)
-                                                         .setProjectSecret(projectSecret)
-                                                         .build());
+                    .setNodeId(nodeId)
+                    .setVersion(version)
+                    .setProjectSecret(projectSecret)
+                    .build());
         }
         LOGGER.debug("Successfully published " + metrics.length + " metrics to Choreo");
     }
@@ -185,24 +185,24 @@ public class ChoreoClient implements AutoCloseable {
                 ChoreoTraceSpan traceSpan = traceSpans.get(i);
                 TelemetryOuterClass.TraceSpan.Builder traceSpanBuilder
                         = TelemetryOuterClass.TraceSpan.newBuilder()
-                                                       .setTraceId(Long.toString(traceSpan.getTraceId()))
-                                                       .setSpanId(Long.toString(traceSpan.getSpanId()))
-                                                       .setServiceName(traceSpan.getServiceName())
-                                                       .setOperationName(traceSpan.getOperationName())
-                                                       .setTimestamp(traceSpan.getTimestamp())
-                                                       .setDuration(traceSpan.getDuration())
-                                                       .putAllTags(traceSpan.getTags());
+                        .setTraceId(traceSpan.getTraceId())
+                        .setSpanId(traceSpan.getSpanId())
+                        .setServiceName(traceSpan.getServiceName())
+                        .setOperationName(traceSpan.getOperationName())
+                        .setTimestamp(traceSpan.getTimestamp())
+                        .setDuration(traceSpan.getDuration())
+                        .putAllTags(traceSpan.getTags());
                 for (ChoreoTraceSpan.Reference reference : traceSpan.getReferences()) {
                     traceSpanBuilder.addReferences(TelemetryOuterClass.TraceSpanReference.newBuilder()
-                            .setTraceId(Long.toString(reference.getTraceId()))
-                            .setSpanId(Long.toString(reference.getSpanId()))
+                            .setTraceId(reference.getTraceId())
+                            .setSpanId(reference.getSpanId())
                             .setRefType(reference.getRefType() == ChoreoTraceSpan.Reference.Type.CHILD_OF
                                     ? TelemetryOuterClass.TraceReferenceType.CHILD_OF
                                     : TelemetryOuterClass.TraceReferenceType.FOLLOWS_FROM));
                 }
 
                 if (traceSpan.getEvents() != null) {
-                    for (SpanEvent spanEvent: traceSpan.getEvents()) {
+                    for (SpanEvent spanEvent : traceSpan.getEvents()) {
                         traceSpanBuilder.addCheckpoints(TelemetryOuterClass.Checkpoint.newBuilder()
                                 .setTimestamp(spanEvent.getTime())
                                 .setModuleID(spanEvent.getModuleID())
@@ -225,10 +225,10 @@ public class ChoreoClient implements AutoCloseable {
                 }
             }
             telemetryClient.withCompression("gzip").publishTraces(requestBuilder.setObservabilityId(id)
-                                                        .setNodeId(nodeId)
-                                                        .setVersion(version)
-                                                        .setProjectSecret(projectSecret)
-                                                        .build());
+                    .setNodeId(nodeId)
+                    .setVersion(version)
+                    .setProjectSecret(projectSecret)
+                    .build());
         }
         LOGGER.debug("Successfully published " + traceSpans.size() + " traces to Choreo");
     }

@@ -17,13 +17,21 @@ package io.ballerina.observe.choreo;
 
 import io.ballerina.observe.choreo.logging.LogFactory;
 import io.ballerina.observe.choreo.logging.Logger;
+import io.ballerina.observe.choreo.sampler.RateLimitingSampler;
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.observability.tracer.spi.TracerProvider;
-import io.jaegertracing.internal.JaegerTracer;
-import io.jaegertracing.internal.samplers.RateLimitingSampler;
-import io.jaegertracing.spi.Reporter;
-import io.opentracing.Tracer;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.propagation.ContextPropagators;
+import io.opentelemetry.extension.trace.propagation.B3Propagator;
+import io.opentelemetry.sdk.resources.Resource;
+import io.opentelemetry.sdk.trace.SdkTracerProvider;
+import io.opentelemetry.sdk.trace.SdkTracerProviderBuilder;
+import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
+import io.opentelemetry.sdk.trace.export.SpanExporter;
+
+import static io.opentelemetry.semconv.resource.attributes.ResourceAttributes.SERVICE_NAME;
 
 /**
  * This is the open tracing extension class for {@link TracerProvider}.
@@ -33,7 +41,8 @@ import io.opentracing.Tracer;
 public class ChoreoTracerProvider implements TracerProvider {
     private static final Logger LOGGER = LogFactory.getLogger();
     private static final String CHOREO_EXTENSION_NAME = "choreo";
-    private volatile Reporter reporterInstance;
+    private static final int MAX_TRACES_PER_SECOND = 2;
+    private volatile SpanExporter reporterInstance;
 
     @Override
     public String getName() {
@@ -57,9 +66,20 @@ public class ChoreoTracerProvider implements TracerProvider {
                 }
             }
         }
-        return new JaegerTracer.Builder(serviceName)
-                .withSampler(new RateLimitingSampler(2))
-                .withReporter(reporterInstance)
-                .build();
+
+        SdkTracerProviderBuilder tracerProviderBuilder = SdkTracerProvider.builder()
+                .addSpanProcessor(BatchSpanProcessor
+                        .builder(reporterInstance)
+                        .build());
+        tracerProviderBuilder.setSampler(new RateLimitingSampler(MAX_TRACES_PER_SECOND));
+
+        return tracerProviderBuilder.setResource(
+                Resource.create(Attributes.of(SERVICE_NAME, serviceName)))
+                .build().get("choreo");
+    }
+
+    @Override
+    public ContextPropagators getPropagators() {
+        return ContextPropagators.create(B3Propagator.injectingMultiHeaders());
     }
 }
