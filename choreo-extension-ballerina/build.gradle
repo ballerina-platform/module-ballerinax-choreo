@@ -222,7 +222,8 @@ task ballerinaBuild {
         }
 
         // Publish to central
-        if (!project.version.endsWith('-SNAPSHOT') && ballerinaCentralAccessToken != null && project.hasProperty("publishToCentral")) {
+        if (!project.version.endsWith('-SNAPSHOT') && project.version.matches(project.ext.timestampedVersionRegex) &&
+                ballerinaCentralAccessToken != null && project.hasProperty("publishToCentral")) {
             println("Publishing to the ballerina central..")
             exec {
                 workingDir project.projectDir
