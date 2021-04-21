@@ -27,15 +27,15 @@ import java.util.Map;
  * @since 2.0.0
  */
 public class ChoreoTraceSpan {
-    private String traceId;
-    private String spanId;
-    private String serviceName;
-    private String operationName;
-    private long timestamp;
-    private long duration;
-    private Map<String, String> tags;
-    private List<Reference> references;
-    private List<SpanEvent> events;
+    private final String traceId;
+    private final String spanId;
+    private final String serviceName;
+    private final String operationName;
+    private final long timestamp;
+    private final long duration;
+    private final Map<String, String> tags;
+    private final List<Reference> references;
+    private final List<SpanEvent> events;
 
     public ChoreoTraceSpan(String traceId, String spanId, String serviceName, String operationName,
                            long timestamp, long duration, Map<String, String> tags, List<Reference> references,
@@ -91,9 +91,9 @@ public class ChoreoTraceSpan {
      * Trace reference.
      */
     public static class Reference {
-        private String traceId;
-        private String spanId;
-        private Type refType;
+        private final String traceId;
+        private final String spanId;
+        private final Type refType;
 
         public Reference(String traceId, String spanId, Type refType) {
             this.traceId = traceId;

@@ -24,9 +24,9 @@ package io.ballerina.observe.choreo.model;
  * @since 2.0.0
  */
 public class SpanEvent {
-    private long time;
-    private String moduleID;
-    private String positionID;
+    private final long time;
+    private final String moduleID;
+    private final String positionID;
 
     public SpanEvent(long time, String moduleID, String positionID) {
         this.time = time;

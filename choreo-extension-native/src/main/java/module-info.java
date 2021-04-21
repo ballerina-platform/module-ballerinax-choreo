@@ -15,4 +15,8 @@ module io.ballerina.observe.trace.extension.choreo {
 
     provides io.ballerina.runtime.observability.tracer.spi.TracerProvider
             with io.ballerina.observe.choreo.ChoreoTracerProvider;
+
+    exports io.ballerina.observe.choreo.client;
+    exports io.ballerina.observe.choreo.client.error;
+    exports io.ballerina.observe.choreo.model;
 }

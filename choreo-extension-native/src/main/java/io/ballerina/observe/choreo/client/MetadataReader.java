@@ -42,7 +42,7 @@ public class MetadataReader {
     public static final String PROGRAM_HASH_KEY = "PROGRAM_HASH";
 
     private String astData = null;
-    private Properties props = new Properties();
+    private final Properties props = new Properties();
 
     public MetadataReader() throws IOException {
         try (InputStream metaFileStream = BallerinaPackageResourceReader.getResourceAsStream(AST_META_FILE_PATH)) {
