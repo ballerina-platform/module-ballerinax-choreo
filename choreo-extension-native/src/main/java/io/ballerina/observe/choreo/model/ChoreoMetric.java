@@ -24,10 +24,10 @@ import java.util.Map;
  * @since 2.0.0
  */
 public class ChoreoMetric {
-    private long timestamp;
-    private String name;
-    private double value;
-    private Map<String, String> tags;
+    private final long timestamp;
+    private final String name;
+    private final double value;
+    private final Map<String, String> tags;
 
     public ChoreoMetric(long timestamp, String name, double value, Map<String, String> tags) {
         this.timestamp = timestamp;

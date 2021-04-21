@@ -151,13 +151,13 @@ public class ChoreoClientHolder {
             try {
                 Files.write(instanceIdConfigFilePath, instanceId.getBytes(StandardCharsets.UTF_8));
             } catch (IOException e) {
-                LOGGER.error("could not write to " + instanceIdConfigFilePath.toString());
+                LOGGER.error("could not write to " + instanceIdConfigFilePath);
             }
         } else {
             try {
                 instanceId = Files.readString(instanceIdConfigFilePath);
             } catch (IOException e) {
-                LOGGER.error("could not read from " + instanceIdConfigFilePath.toString());
+                LOGGER.error("could not read from " + instanceIdConfigFilePath);
                 instanceId = UUID.randomUUID().toString();
             }
         }
