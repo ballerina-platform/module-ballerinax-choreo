@@ -35,7 +35,6 @@ dependencies {
     nativeJar project(':choreo-extension-native')
 
     externalJars "io.jaegertracing:jaeger-core:${jaegerVersion}"
-    externalJars "io.opentelemetry:opentelemetry-api:${openTelemetryVersion}"
     externalJars "io.opentelemetry:opentelemetry-context:${openTelemetryVersion}"
     externalJars "io.opentelemetry:opentelemetry-sdk-common:${openTelemetryVersion}"
     externalJars "io.opentelemetry:opentelemetry-sdk-trace:${openTelemetryVersion}"
