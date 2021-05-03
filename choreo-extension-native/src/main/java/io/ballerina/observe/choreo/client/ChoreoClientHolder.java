@@ -66,6 +66,7 @@ public class ChoreoClientHolder {
             AppSecretHandler appSecretHandler;
             try {
                 appSecretHandler = getAppSecretHandler(applicationSecret);
+                LOGGER.debug("Using App Secret Handler " + appSecretHandler.getName());
             } catch (IOException e) {
                 LOGGER.error("Failed to initialize Choreo client. " + e.getMessage());
                 return null;

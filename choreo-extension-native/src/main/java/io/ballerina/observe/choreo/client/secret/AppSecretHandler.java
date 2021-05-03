@@ -26,6 +26,9 @@ import java.io.IOException;
  * @since 2.0.0
  */
 public interface AppSecretHandler {
+    String getName();
+
     String getAppSecret();
+
     void associate(String obsId) throws IOException;
 }

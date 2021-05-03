@@ -24,10 +24,15 @@ package io.ballerina.observe.choreo.client.secret;
  * @since 2.0.0
  */
 public class LinkedAppSecretHandler implements AppSecretHandler {
-    private String appSecret;
+    private final String appSecret;
 
     public LinkedAppSecretHandler(String appSecret) {
         this.appSecret = appSecret;
+    }
+
+    @Override
+    public String getName() {
+        return "linked";
     }
 
     @Override

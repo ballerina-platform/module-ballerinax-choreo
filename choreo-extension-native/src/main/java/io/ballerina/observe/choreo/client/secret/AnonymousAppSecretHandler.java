@@ -71,12 +71,11 @@ public class AnonymousAppSecretHandler implements AppSecretHandler {
         final Path projectSecretPath = getProjectSecretPath(obsId);
 
         if (!Files.exists(projectSecretPath)) {
-            throw ChoreoErrors.createValidationError(projectSecretPath.toString() + " is missing");
+            throw ChoreoErrors.createValidationError(projectSecretPath + " is missing");
         }
 
         try (BufferedReader reader = Files.newBufferedReader(projectSecretPath)) {
-            final String projectSecret = validateSecret(reader.readLine());
-            return projectSecret;
+            return validateSecret(reader.readLine());
         }
     }
 
@@ -103,6 +102,11 @@ public class AnonymousAppSecretHandler implements AppSecretHandler {
 
     private String generateSecret() {
         return UUID.randomUUID().toString();
+    }
+
+    @Override
+    public String getName() {
+        return "anonymous";
     }
 
     @Override
