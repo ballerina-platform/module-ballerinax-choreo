@@ -87,9 +87,9 @@ public class ChoreoClient implements AutoCloseable {
         } catch (StatusRuntimeException e) {
             switch (e.getStatus().getCode()) {
                 case UNAVAILABLE:
-                    throw ChoreoErrors.getUnavailableError();
+                    throw ChoreoErrors.getUnavailableError(e);
                 case UNKNOWN:
-                    throw ChoreoErrors.getIncompatibleServiceError();
+                    throw ChoreoErrors.getIncompatibleServiceError(e);
             }
 
             throw e;

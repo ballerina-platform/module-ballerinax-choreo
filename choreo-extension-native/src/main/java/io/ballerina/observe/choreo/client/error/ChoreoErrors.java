@@ -25,15 +25,15 @@ package io.ballerina.observe.choreo.client.error;
  */
 public class ChoreoErrors {
 
-    public static ChoreoClientException getUnavailableError() {
+    public static ChoreoClientException getUnavailableError(Throwable throwable) {
         return new ChoreoClientException(
-                new ChoreoError(ChoreoError.Code.UNAVAILABLE, "Choreo services are not accessible.", null)
+                new ChoreoError(ChoreoError.Code.UNAVAILABLE, "Choreo services are not accessible.", throwable)
         );
     }
 
-    public static ChoreoClientException getIncompatibleServiceError() {
+    public static ChoreoClientException getIncompatibleServiceError(Throwable throwable) {
         return new ChoreoClientException(
-                new ChoreoError(ChoreoError.Code.UNAVAILABLE, "Choreo backend is not compatible.", null)
+                new ChoreoError(ChoreoError.Code.UNAVAILABLE, "Choreo backend is not compatible.", throwable)
         );
     }
 

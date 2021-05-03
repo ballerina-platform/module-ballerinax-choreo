@@ -32,10 +32,6 @@ public class ChoreoError implements Serializable {
     private final String description;
     private final Throwable cause;
 
-    public ChoreoError(Code code) {
-        this(code, null, null);
-    }
-
     public ChoreoError(Code code, String description, Throwable cause) {
         this.code = code;
         this.description = description;
