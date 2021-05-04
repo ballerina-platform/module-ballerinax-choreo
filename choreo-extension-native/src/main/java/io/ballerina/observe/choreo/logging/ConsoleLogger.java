@@ -25,14 +25,18 @@ import java.io.PrintStream;
  */
 public class ConsoleLogger implements Logger {
     private static final PrintStream console = System.out;
+
     private static final String prefix = "ballerina: ";
     private static final String errorPrefix = "error: ";
     private static final String postfix = "\n";
+
+    private static final String DEBUG_LOG_LEVEL = "DEBUG";
+
     private final LogPrinter debugLogPrinter;
 
     public ConsoleLogger() {
-        boolean debugEnabled = Boolean.parseBoolean(System.getenv("CHOREO_TRACING_EXT_DEBUG"));
-        if (debugEnabled) {
+        String logLevel = System.getenv("CHOREO_EXT_LOG_LEVEL");
+        if (DEBUG_LOG_LEVEL.equalsIgnoreCase(logLevel)) {
             debugLogPrinter = new PrintStreamPrinter(console);
         } else {
             debugLogPrinter = new EmptyPrinter();
@@ -66,8 +70,7 @@ public class ConsoleLogger implements Logger {
     }
 
     private static class PrintStreamPrinter implements LogPrinter {
-
-        private PrintStream printStream;
+        private final PrintStream printStream;
 
         private PrintStreamPrinter(PrintStream printStream) {
             this.printStream = printStream;
