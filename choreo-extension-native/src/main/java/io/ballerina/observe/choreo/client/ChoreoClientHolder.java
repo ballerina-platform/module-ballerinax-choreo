@@ -151,12 +151,14 @@ public class ChoreoClientHolder {
             instanceId = UUID.randomUUID().toString();
             try {
                 Files.write(instanceIdConfigFilePath, instanceId.getBytes(StandardCharsets.UTF_8));
+                LOGGER.debug("Written new node ID to file " + instanceIdConfigFilePath.toAbsolutePath());
             } catch (IOException e) {
                 LOGGER.error("could not write to " + instanceIdConfigFilePath);
             }
         } else {
             try {
                 instanceId = Files.readString(instanceIdConfigFilePath);
+                LOGGER.debug("Read node ID from existing file " + instanceIdConfigFilePath.toAbsolutePath());
             } catch (IOException e) {
                 LOGGER.error("could not read from " + instanceIdConfigFilePath);
                 instanceId = UUID.randomUUID().toString();

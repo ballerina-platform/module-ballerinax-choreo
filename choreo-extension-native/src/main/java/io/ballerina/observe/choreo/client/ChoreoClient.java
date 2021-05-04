@@ -84,6 +84,10 @@ public class ChoreoClient implements AutoCloseable {
         HandshakeOuterClass.RegisterResponse registerResponse;
         try {
             registerResponse = registrationClient.withCompression("gzip").register(handshakeRequest);
+            this.id = registerResponse.getObsId();
+            this.version = registerResponse.getVersion();
+            LOGGER.debug("Registered with Periscope with observability ID: " + this.id + ", version: " + this.version
+                    + " and node ID: " + nodeId);
         } catch (StatusRuntimeException e) {
             switch (e.getStatus().getCode()) {
                 case UNAVAILABLE:
@@ -95,10 +99,7 @@ public class ChoreoClient implements AutoCloseable {
             throw e;
         }
 
-        this.id = registerResponse.getObsId();
-        this.version = registerResponse.getVersion();
         boolean sendProgramJson = registerResponse.getSendAst();
-
         if (sendProgramJson) {
             uploadingThread = new Thread(() -> {
                 PublishAstRequest programRequest = PublishAstRequest.newBuilder()
@@ -107,8 +108,10 @@ public class ChoreoClient implements AutoCloseable {
                         .setProjectSecret(projectSecret)
                         .build();
                 registrationClient.withCompression("gzip").publishAst(programRequest);
-                // TODO add debug log to indicate success
+                uploadingThread = null;
+                LOGGER.debug("Uploading AST completed");
             }, "AST Uploading Thread");
+            LOGGER.debug("Starting AST upload with AST hash " + metadataReader.getAstHash());
             uploadingThread.start();
         }
 
@@ -237,6 +240,7 @@ public class ChoreoClient implements AutoCloseable {
     public void close() throws Exception {
         channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         if (Objects.nonNull(uploadingThread)) {
+            LOGGER.debug("Waiting for AST upload to complete");
             uploadingThread.join(5000);
         }
     }
