@@ -114,7 +114,10 @@ public class ChoreoJaegerReporter implements SpanExporter {
         executorService.execute(task);
         executorService.shutdown();
         try {
-            executorService.awaitTermination(10, TimeUnit.SECONDS);
+            boolean terminated = executorService.awaitTermination(10, TimeUnit.SECONDS);
+            if (!terminated) {
+                LOGGER.info("Waiting for trace reporter shutdown timed out");
+            }
         } catch (InterruptedException e) {
             LOGGER.error("failed to wait for publishing traces to complete due to " + e.getMessage());
             return CompletableResultCode.ofFailure();
