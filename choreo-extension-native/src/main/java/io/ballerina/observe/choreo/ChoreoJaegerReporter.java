@@ -138,9 +138,7 @@ public class ChoreoJaegerReporter implements SpanExporter {
         }
 
         void append(Collection<SpanData> spans) {
-
             for (SpanData spanData : spans) {
-
                 Map<String, String> tags = new HashMap<>();
                 spanData.getAttributes().forEach((attributeKey, o) -> tags.put(attributeKey.getKey(), (String) o));
 
@@ -181,7 +179,6 @@ public class ChoreoJaegerReporter implements SpanExporter {
         @Override
         public void run() {
             List<ChoreoTraceSpan> swappedTraceSpans;
-
             synchronized (this) {
                 if (traceSpans.size() > 0) {
                     swappedTraceSpans = traceSpans;
@@ -190,6 +187,7 @@ public class ChoreoJaegerReporter implements SpanExporter {
                     swappedTraceSpans = Collections.emptyList();
                 }
             }
+
             if (swappedTraceSpans.size() > 0) {
                 if (!Objects.isNull(choreoClient)) {
                     try {
@@ -225,6 +223,5 @@ public class ChoreoJaegerReporter implements SpanExporter {
                 }
             }
         }
-
     }
 }

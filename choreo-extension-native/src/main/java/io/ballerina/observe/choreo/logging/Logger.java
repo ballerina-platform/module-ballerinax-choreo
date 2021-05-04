@@ -23,6 +23,8 @@ package io.ballerina.observe.choreo.logging;
  */
 public interface Logger {
     void debug(String format, Object... args);
+
     void info(String format, Object... args);
+
     void error(String format, Object... args);
 }

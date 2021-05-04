@@ -24,7 +24,6 @@ package io.ballerina.observe.choreo.client.error;
  * @since 2.0.0
  */
 public class ChoreoClientException extends Exception {
-
     private final ChoreoError code;
 
     /**

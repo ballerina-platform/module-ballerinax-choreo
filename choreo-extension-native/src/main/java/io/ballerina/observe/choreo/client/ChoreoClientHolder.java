@@ -76,7 +76,6 @@ public class ChoreoClientHolder {
                     appSecretHandler.getAppSecret());
 
             String nodeId = getNodeId();
-
             ChoreoClient.RegisterResponse registerResponse = newChoreoClient.register(metadataReader, nodeId);
             try {
                 appSecretHandler.associate(registerResponse.getObsId());
