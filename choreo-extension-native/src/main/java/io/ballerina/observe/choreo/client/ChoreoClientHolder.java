@@ -66,6 +66,7 @@ public class ChoreoClientHolder {
             AppSecretHandler appSecretHandler;
             try {
                 appSecretHandler = getAppSecretHandler(applicationSecret);
+                LOGGER.debug("Using App Secret Handler " + appSecretHandler.getName());
             } catch (IOException e) {
                 LOGGER.error("Failed to initialize Choreo client. " + e.getMessage());
                 return null;
@@ -75,7 +76,6 @@ public class ChoreoClientHolder {
                     appSecretHandler.getAppSecret());
 
             String nodeId = getNodeId();
-
             ChoreoClient.RegisterResponse registerResponse = newChoreoClient.register(metadataReader, nodeId);
             try {
                 appSecretHandler.associate(registerResponse.getObsId());
@@ -150,12 +150,14 @@ public class ChoreoClientHolder {
             instanceId = UUID.randomUUID().toString();
             try {
                 Files.write(instanceIdConfigFilePath, instanceId.getBytes(StandardCharsets.UTF_8));
+                LOGGER.debug("Written new node ID to file " + instanceIdConfigFilePath.toAbsolutePath());
             } catch (IOException e) {
                 LOGGER.error("could not write to " + instanceIdConfigFilePath);
             }
         } else {
             try {
                 instanceId = Files.readString(instanceIdConfigFilePath);
+                LOGGER.debug("Read node ID from existing file " + instanceIdConfigFilePath.toAbsolutePath());
             } catch (IOException e) {
                 LOGGER.error("could not read from " + instanceIdConfigFilePath);
                 instanceId = UUID.randomUUID().toString();

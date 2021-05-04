@@ -24,6 +24,8 @@ import java.io.InputStream;
  * @since 2.0.0
  */
 public class BallerinaPackageResourceReader {
+    private BallerinaPackageResourceReader() {  // Prevent initialization
+    }
 
     /**
      * Get resource as stream from Ballerina program package.

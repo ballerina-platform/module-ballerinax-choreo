@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.ballerina.observe.choreo;
 
 import io.ballerina.observe.choreo.client.ChoreoClient;
@@ -29,6 +30,9 @@ import java.util.Objects;
  * Native functions used by the Choreo extension objects.
  */
 public class InitUtils {
+    private InitUtils() {   // Prevent initialization
+    }
+
     /**
      * Initialize the Choreo extension.
      *
