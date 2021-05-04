@@ -26,10 +26,9 @@ import java.io.PrintStream;
 public class ConsoleLogger implements Logger {
     private static final PrintStream console = System.out;
 
-    private static final String prefix = "ballerina: ";
-    private static final String errorPrefix = "error: ";
-    private static final String postfix = "\n";
-
+    private static final String PREFIX = "ballerina: ";
+    private static final String ERROR_PREFIX = "error: ";
+    private static final String POSTFIX = "\n";
     private static final String DEBUG_LOG_LEVEL = "DEBUG";
 
     private final LogPrinter debugLogPrinter;
@@ -45,17 +44,17 @@ public class ConsoleLogger implements Logger {
 
     @Override
     public void debug(String format, Object... args) {
-        debugLogPrinter.printf(prefix + format + postfix, args);
+        debugLogPrinter.printf(PREFIX + format + POSTFIX, args);
     }
 
     @Override
     public void info(String format, Object... args) {
-        console.printf(prefix + format + postfix, args);
+        console.printf(PREFIX + format + POSTFIX, args);
     }
 
     @Override
     public void error(String format, Object... args) {
-        console.printf(errorPrefix + format + postfix, args);
+        console.printf(ERROR_PREFIX + format + POSTFIX, args);
     }
 
     private interface LogPrinter {
