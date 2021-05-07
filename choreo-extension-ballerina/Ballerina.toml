@@ -32,12 +32,6 @@ artifactId = "jaeger-core"
 version = "@jaeger.version@"
 
 [[platform.java11.dependency]]
-path = "./lib/opentelemetry-context-@opentelemetry.version@.jar"
-groupId = "io.opentelemetry"
-artifactId = "opentelemetry-context"
-version = "@opentelemetry.version@"
-
-[[platform.java11.dependency]]
 path = "./lib/opentelemetry-sdk-trace-@opentelemetry.version@.jar"
 groupId = "io.opentelemetry"
 artifactId = "opentelemetry-sdk-trace"
