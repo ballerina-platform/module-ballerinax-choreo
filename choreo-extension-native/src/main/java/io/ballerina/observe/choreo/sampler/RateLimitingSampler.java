@@ -5,6 +5,8 @@
 package io.ballerina.observe.choreo.sampler;
 
 import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanContext;
 import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.sdk.internal.SystemClock;
@@ -50,6 +52,13 @@ public class RateLimitingSampler implements Sampler {
             SpanKind spanKind,
             Attributes attributes,
             List<LinkData> parentLinks) {
+        final Span parentSpan = Span.fromContext(parentContext);
+        final SpanContext parentSpanContext = parentSpan.getSpanContext();
+        if (parentSpanContext.isValid()) {
+            // child span
+            return parentSpanContext.isSampled() ? onSamplingResult : offSamplingResult;
+        }
+        // root span
         return this.rateLimiter.checkCredit(1.0) ? onSamplingResult : offSamplingResult;
     }
 
