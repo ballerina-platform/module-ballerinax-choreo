@@ -29,7 +29,7 @@ import io.opentelemetry.extension.trace.propagation.B3Propagator;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.SdkTracerProviderBuilder;
-import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
+import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
 
 import static io.opentelemetry.semconv.resource.attributes.ResourceAttributes.SERVICE_NAME;
@@ -69,9 +69,8 @@ public class ChoreoTracerProvider implements TracerProvider {
         }
 
         SdkTracerProviderBuilder tracerProviderBuilder = SdkTracerProvider.builder()
-                .addSpanProcessor(BatchSpanProcessor
-                        .builder(reporterInstance)
-                        .build());
+                .addSpanProcessor(SimpleSpanProcessor
+                        .create(reporterInstance));
         tracerProviderBuilder.setSampler(new RateLimitingSampler(MAX_TRACES_PER_SECOND));
 
         return tracerProviderBuilder.setResource(
