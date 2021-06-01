@@ -1,6 +1,6 @@
 ## Package Overview
 
-The Choreo Observability Extension is one of the observability extensions of the<a target="_blank" href="https://ballerina.io/"> Ballerina</a> language.
+The Choreo Observability Extension is one of the observability extensions of the [Ballerina](https://ballerina.io/) language.
 
 It provides an implementation for publishing traces & metrics to Choreo.
 
