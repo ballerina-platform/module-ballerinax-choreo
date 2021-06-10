@@ -92,7 +92,7 @@ public class ChoreoTracesTestCase extends BaseTestCase {
     @Test
     public void testDebugLogsEnabled() throws Exception {
         Map<String, String> envVars = new HashMap<>();
-        envVars.put("CHOREO_TRACING_EXT_DEBUG", "true");
+        envVars.put("CHOREO_EXT_LOG_LEVEL", "DEBUG");
         testSimpleRun(envVars);
     }
 
