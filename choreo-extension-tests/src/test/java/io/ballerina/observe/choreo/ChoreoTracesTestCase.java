@@ -104,6 +104,13 @@ public class ChoreoTracesTestCase extends BaseTestCase {
     }
 
     @Test
+    public void testProvidedNodeIdEnvVar() throws Exception {
+        Map<String, String> envVars = new HashMap<>();
+        envVars.put("CHOREO_EXT_NODE_ID", "ext-test-node-id-2");
+        testSimpleRun(envVars);
+    }
+
+    @Test
     public void testMissingNodeId() throws Exception {
         Path nodeIdFile = getNodeIdFilePath();
         Files.deleteIfExists(nodeIdFile);
