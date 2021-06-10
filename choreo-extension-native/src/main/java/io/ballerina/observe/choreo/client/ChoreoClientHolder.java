@@ -44,6 +44,7 @@ public class ChoreoClientHolder {
 
     private static ChoreoClient choreoClient;
     private static final Set<AutoCloseable> choreoClientDependents = new HashSet<>();
+    private static final String NODE_ID_ENV_VAR = "CHOREO_EXT_NODE_ID";
 
     /**
      * Initialize the Choreo client.
@@ -145,7 +146,10 @@ public class ChoreoClientHolder {
         Path instanceIdConfigFilePath = ChoreoConfigHelper.getGlobalChoreoConfigDir().resolve("nodeId");
 
         String instanceId;
-        if (!Files.exists(instanceIdConfigFilePath)) {
+        if (System.getenv().containsKey(NODE_ID_ENV_VAR)) {
+            instanceId = System.getenv(NODE_ID_ENV_VAR);
+            LOGGER.debug("Read node ID from environment variable " + NODE_ID_ENV_VAR);
+        } else if (!Files.exists(instanceIdConfigFilePath)) {
             instanceIdConfigFilePath.getParent().toFile().mkdirs();
             instanceId = UUID.randomUUID().toString();
             try {

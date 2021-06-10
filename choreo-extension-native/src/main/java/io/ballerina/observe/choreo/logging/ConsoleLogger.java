@@ -27,6 +27,7 @@ public class ConsoleLogger implements Logger {
     private static final PrintStream console = System.out;
 
     private static final String PREFIX = "ballerina: ";
+    private static final String DEBUG_PREFIX = PREFIX + "debug: ";
     private static final String ERROR_PREFIX = "error: ";
     private static final String POSTFIX = "\n";
     private static final String DEBUG_LOG_LEVEL = "DEBUG";
@@ -44,7 +45,7 @@ public class ConsoleLogger implements Logger {
 
     @Override
     public void debug(String format, Object... args) {
-        debugLogPrinter.printf(PREFIX + format + POSTFIX, args);
+        debugLogPrinter.printf(DEBUG_PREFIX + format + POSTFIX, args);
     }
 
     @Override
