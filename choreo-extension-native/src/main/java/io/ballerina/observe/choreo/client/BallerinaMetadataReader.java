@@ -34,7 +34,7 @@ import java.util.Properties;
  *
  * @since 2.0.0
  */
-public class MetadataReader {
+public class BallerinaMetadataReader {
     private static final Logger LOGGER = LogFactory.getLogger();
 
     private static final String AST_DATA_FILE_PATH = "syntax-tree/syntax-tree.json";
@@ -44,7 +44,7 @@ public class MetadataReader {
     private String astData = null;
     private final Properties props = new Properties();
 
-    public MetadataReader() throws IOException {
+    public BallerinaMetadataReader() throws IOException {
         try (InputStream metaFileStream = BallerinaPackageResourceReader.getResourceAsStream(AST_META_FILE_PATH)) {
             if (Objects.isNull(metaFileStream)) {
                 throw new FileNotFoundException("Sequence diagram information cannot be found in the binary");

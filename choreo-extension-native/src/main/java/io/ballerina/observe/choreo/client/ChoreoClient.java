@@ -73,7 +73,7 @@ public class ChoreoClient implements AutoCloseable {
         this.projectSecret = projectSecret;
     }
 
-    public RegisterResponse register(final MetadataReader metadataReader, String nodeId) throws
+    public RegisterResponse register(final BallerinaMetadataReader metadataReader, String nodeId) throws
             ChoreoClientException {
         RegisterRequest handshakeRequest = RegisterRequest.newBuilder()
                 .setAstHash(metadataReader.getAstHash())
