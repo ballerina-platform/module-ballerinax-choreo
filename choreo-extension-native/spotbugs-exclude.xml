@@ -32,7 +32,7 @@
         <Class name="io.ballerina.observe.choreo.client.secret.AnonymousAppSecretHandler"/>
     </Match>
     <Match>
-        <Class name="io.ballerina.observe.choreo.ChoreoJaegerReporter"/>
+        <Class name="io.ballerina.observe.choreo.client.ChoreoSpanExporter"/>
     </Match>
     <Match>
         <Package name="org.ballerinalang.observe.trace.extension.choreo"/>

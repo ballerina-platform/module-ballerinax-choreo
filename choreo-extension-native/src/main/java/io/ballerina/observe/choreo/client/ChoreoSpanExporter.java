@@ -16,10 +16,8 @@
  * under the License.
  */
 
-package io.ballerina.observe.choreo;
+package io.ballerina.observe.choreo.client;
 
-import io.ballerina.observe.choreo.client.ChoreoClient;
-import io.ballerina.observe.choreo.client.ChoreoClientHolder;
 import io.ballerina.observe.choreo.logging.LogFactory;
 import io.ballerina.observe.choreo.logging.Logger;
 import io.ballerina.observe.choreo.model.ChoreoTraceSpan;
@@ -50,11 +48,11 @@ import static io.ballerina.runtime.observability.ObservabilityConstants.TAG_KEY_
 import static io.opentelemetry.semconv.resource.attributes.ResourceAttributes.SERVICE_NAME;
 
 /**
- * Custom Jaeger tracing reporter for publishing stats to Choreo cloud.
+ * Custom Span Exporter for publishing traces to Choreo cloud.
  *
  * @since 2.0.0
  */
-public class ChoreoJaegerReporter implements SpanExporter {
+public class ChoreoSpanExporter implements SpanExporter {
     private static final int PUBLISH_INTERVAL_SECS = 10;
     private static final int SPAN_LIST_BOUND = 50000;
     private static final int SPANS_TO_REMOVE = 5000; // 10% of the SPAN_LIST_BOUND
@@ -63,7 +61,7 @@ public class ChoreoJaegerReporter implements SpanExporter {
     private final ScheduledExecutorService executorService;
     private final Task task;
 
-    public ChoreoJaegerReporter() {
+    public ChoreoSpanExporter() {
         ChoreoClient choreoClient = ChoreoClientHolder.getChoreoClient(this);
         if (Objects.isNull(choreoClient)) {
             throw new IllegalStateException("Choreo client is not initialized");
