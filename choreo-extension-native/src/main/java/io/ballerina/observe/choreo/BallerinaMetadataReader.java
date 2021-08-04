@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package io.ballerina.observe.choreo.client;
+package io.ballerina.observe.choreo;
 
-import io.ballerina.observe.choreo.BallerinaPackageResourceReader;
+import io.ballerina.observe.choreo.client.MetadataReader;
 import io.ballerina.observe.choreo.logging.LogFactory;
 import io.ballerina.observe.choreo.logging.Logger;
 

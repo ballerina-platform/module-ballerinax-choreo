@@ -51,19 +51,11 @@ public class ChoreoClientHolder {
      *
      * @return ChoreoClient
      */
-    public static synchronized ChoreoClient initChoreoClient(String reporterHostname, int reporterPort,
-                                                             boolean reporterUseSSL, String applicationSecret)
+    public static synchronized ChoreoClient initChoreoClient(MetadataReader metadataReader, String reporterHostname,
+                                                             int reporterPort, boolean reporterUseSSL,
+                                                             String applicationSecret)
             throws ChoreoClientException {
         if (choreoClient == null) {
-            MetadataReader metadataReader;
-            try {
-                metadataReader = new BallerinaMetadataReader();
-                LOGGER.debug("Successfully read sequence diagram symbols");
-            } catch (IOException e) {
-                LOGGER.error("Failed to initialize Choreo client. " + e.getMessage());
-                return null;
-            }
-
             AppSecretHandler appSecretHandler;
             try {
                 appSecretHandler = getAppSecretHandler(applicationSecret);

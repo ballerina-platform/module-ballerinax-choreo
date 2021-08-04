@@ -18,12 +18,16 @@ package io.ballerina.observe.choreo;
 
 import io.ballerina.observe.choreo.client.ChoreoClient;
 import io.ballerina.observe.choreo.client.ChoreoClientHolder;
+import io.ballerina.observe.choreo.client.MetadataReader;
 import io.ballerina.observe.choreo.client.error.ChoreoClientException;
+import io.ballerina.observe.choreo.logging.LogFactory;
+import io.ballerina.observe.choreo.logging.Logger;
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BString;
 
+import java.io.IOException;
 import java.util.Objects;
 
 /**
@@ -33,6 +37,8 @@ public class InitUtils {
     private InitUtils() {   // Prevent initialization
     }
 
+    private static final Logger LOGGER = LogFactory.getLogger();
+
     /**
      * Initialize the Choreo extension.
      *
@@ -40,10 +46,19 @@ public class InitUtils {
      */
     public static BError initializeChoreoExtension(BString reporterHostname, int reporterPort,
                                                    boolean reporterUseSSL, BString applicationSecret) {
+        MetadataReader metadataReader;
+        try {
+            metadataReader = new BallerinaMetadataReader();
+            LOGGER.debug("Successfully read sequence diagram symbols");
+        } catch (IOException e) {
+            LOGGER.error("Failed to initialize Choreo client. " + e.getMessage());
+            return null;
+        }
+
         ChoreoClient choreoClient;
         try {
-            choreoClient = ChoreoClientHolder.initChoreoClient(reporterHostname.getValue(), reporterPort,
-                    reporterUseSSL, applicationSecret.getValue());
+            choreoClient = ChoreoClientHolder.initChoreoClient(metadataReader, reporterHostname.getValue(),
+                    reporterPort, reporterUseSSL, applicationSecret.getValue());
         } catch (ChoreoClientException e) {
             return ErrorCreator.createError(StringUtils.fromString("Choreo client is not initialized. " +
                     "Please check Ballerina configurations."), e);

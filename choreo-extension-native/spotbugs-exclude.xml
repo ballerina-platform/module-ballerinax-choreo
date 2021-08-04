@@ -38,6 +38,6 @@
         <Package name="org.ballerinalang.observe.trace.extension.choreo"/>
     </Match>
     <Match>
-        <Class name="io.ballerina.observe.choreo.client.BallerinaMetadataReader"/>
+        <Class name="io.ballerina.observe.choreo.BallerinaMetadataReader"/>
     </Match>
 </FindBugsFilter>
