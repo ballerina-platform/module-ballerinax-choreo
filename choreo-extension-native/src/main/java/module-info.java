@@ -18,5 +18,5 @@ module io.ballerina.observe.trace.extension.choreo {
 
     exports io.ballerina.observe.choreo.client;
     exports io.ballerina.observe.choreo.client.error;
-    exports io.ballerina.observe.choreo.model;
+    exports io.ballerina.observe.choreo.client.model;
 }

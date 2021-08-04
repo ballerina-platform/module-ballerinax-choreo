@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.observe.choreo.model;
+package io.ballerina.observe.choreo.client.model;
 
 import java.util.List;
 import java.util.Map;

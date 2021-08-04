@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.ballerina.observe.choreo.model;
+package io.ballerina.observe.choreo.client.model;
 
 import java.util.Map;
 
