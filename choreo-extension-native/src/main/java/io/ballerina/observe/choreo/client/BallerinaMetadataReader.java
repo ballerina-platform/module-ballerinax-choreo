@@ -34,7 +34,7 @@ import java.util.Properties;
  *
  * @since 2.0.0
  */
-public class BallerinaMetadataReader {
+public class BallerinaMetadataReader implements MetadataReader {
     private static final Logger LOGGER = LogFactory.getLogger();
 
     private static final String AST_DATA_FILE_PATH = "syntax-tree/syntax-tree.json";

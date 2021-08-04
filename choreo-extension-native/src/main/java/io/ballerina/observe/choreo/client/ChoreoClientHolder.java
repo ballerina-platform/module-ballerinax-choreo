@@ -55,7 +55,7 @@ public class ChoreoClientHolder {
                                                              boolean reporterUseSSL, String applicationSecret)
             throws ChoreoClientException {
         if (choreoClient == null) {
-            BallerinaMetadataReader metadataReader;
+            MetadataReader metadataReader;
             try {
                 metadataReader = new BallerinaMetadataReader();
                 LOGGER.debug("Successfully read sequence diagram symbols");
