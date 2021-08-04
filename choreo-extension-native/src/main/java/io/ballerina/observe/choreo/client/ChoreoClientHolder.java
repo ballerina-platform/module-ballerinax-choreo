@@ -17,9 +17,10 @@
 package io.ballerina.observe.choreo.client;
 
 import io.ballerina.observe.choreo.client.error.ChoreoClientException;
-import io.ballerina.observe.choreo.client.secret.AnonymousAppSecretHandler;
-import io.ballerina.observe.choreo.client.secret.AppSecretHandler;
-import io.ballerina.observe.choreo.client.secret.LinkedAppSecretHandler;
+import io.ballerina.observe.choreo.client.internal.ClientUtils;
+import io.ballerina.observe.choreo.client.internal.secret.AnonymousAppSecretHandler;
+import io.ballerina.observe.choreo.client.internal.secret.AppSecretHandler;
+import io.ballerina.observe.choreo.client.internal.secret.LinkedAppSecretHandler;
 import io.ballerina.observe.choreo.logging.LogFactory;
 import io.ballerina.observe.choreo.logging.Logger;
 
@@ -135,7 +136,7 @@ public class ChoreoClientHolder {
     }
 
     private static String getNodeId() {
-        Path instanceIdConfigFilePath = ChoreoConfigHelper.getGlobalChoreoConfigDir().resolve("nodeId");
+        Path instanceIdConfigFilePath = ClientUtils.getGlobalChoreoConfigDir().resolve("nodeId");
 
         String instanceId;
         if (System.getenv().containsKey(NODE_ID_ENV_VAR)) {

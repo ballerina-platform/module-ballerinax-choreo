@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.observe.choreo.client;
+package io.ballerina.observe.choreo.client.internal;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -27,8 +27,8 @@ import java.nio.file.Paths;
  *
  * @since 2.0.0
  */
-public class ChoreoConfigHelper {
-    private ChoreoConfigHelper() {  // Prevent initialization
+public class ClientUtils {
+    private ClientUtils() {  // Prevent initialization
     }
 
     public static Path getGlobalChoreoConfigDir() {

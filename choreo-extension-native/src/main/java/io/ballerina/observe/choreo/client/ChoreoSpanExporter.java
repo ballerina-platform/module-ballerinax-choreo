@@ -18,10 +18,10 @@
 
 package io.ballerina.observe.choreo.client;
 
-import io.ballerina.observe.choreo.logging.LogFactory;
-import io.ballerina.observe.choreo.logging.Logger;
 import io.ballerina.observe.choreo.client.model.ChoreoTraceSpan;
 import io.ballerina.observe.choreo.client.model.SpanEvent;
+import io.ballerina.observe.choreo.logging.LogFactory;
+import io.ballerina.observe.choreo.logging.Logger;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;

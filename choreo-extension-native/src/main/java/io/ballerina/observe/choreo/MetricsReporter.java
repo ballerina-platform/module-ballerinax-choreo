@@ -18,9 +18,9 @@ package io.ballerina.observe.choreo;
 
 import io.ballerina.observe.choreo.client.ChoreoClient;
 import io.ballerina.observe.choreo.client.ChoreoClientHolder;
+import io.ballerina.observe.choreo.client.model.ChoreoMetric;
 import io.ballerina.observe.choreo.logging.LogFactory;
 import io.ballerina.observe.choreo.logging.Logger;
-import io.ballerina.observe.choreo.client.model.ChoreoMetric;
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BError;
