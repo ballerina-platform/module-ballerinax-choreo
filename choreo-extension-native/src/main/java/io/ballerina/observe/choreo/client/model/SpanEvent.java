@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.observe.choreo.model;
+package io.ballerina.observe.choreo.client.model;
 
 /**
  * Represents a Choreo Trace Span Event.

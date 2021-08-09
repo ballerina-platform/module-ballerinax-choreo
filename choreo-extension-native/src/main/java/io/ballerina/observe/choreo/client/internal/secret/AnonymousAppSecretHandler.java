@@ -16,12 +16,12 @@
  * under the License.
  */
 
-package io.ballerina.observe.choreo.client.secret;
+package io.ballerina.observe.choreo.client.internal.secret;
 
 import com.google.common.base.Strings;
-import io.ballerina.observe.choreo.client.ChoreoConfigHelper;
 import io.ballerina.observe.choreo.client.error.ChoreoClientException;
 import io.ballerina.observe.choreo.client.error.ChoreoErrors;
+import io.ballerina.observe.choreo.client.internal.ClientUtils;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -144,7 +144,7 @@ public class AnonymousAppSecretHandler implements AppSecretHandler {
     }
 
     private Path getProjectSecretPath(String obsId) {
-        return ChoreoConfigHelper.getGlobalChoreoConfigDir()
+        return ClientUtils.getGlobalChoreoConfigDir()
                                  .resolve(obsId)
                                  .resolve("projectsecret");
     }

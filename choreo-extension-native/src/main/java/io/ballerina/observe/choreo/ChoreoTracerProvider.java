@@ -16,6 +16,7 @@
 
 package io.ballerina.observe.choreo;
 
+import io.ballerina.observe.choreo.client.ChoreoSpanExporter;
 import io.ballerina.observe.choreo.logging.LogFactory;
 import io.ballerina.observe.choreo.logging.Logger;
 import io.ballerina.observe.choreo.sampler.RateLimitingSampler;
@@ -59,7 +60,7 @@ public class ChoreoTracerProvider implements TracerProvider {
         synchronized (this) {
             if (reporterInstance == null) {
                 if (InitUtils.isChoreoClientInitialized()) {
-                    reporterInstance = new ChoreoJaegerReporter();
+                    reporterInstance = new ChoreoSpanExporter();
                     LOGGER.info("started publishing traces to Choreo");
                 } else {
                     throw ErrorCreator.createError(StringUtils.fromString(

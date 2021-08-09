@@ -16,32 +16,19 @@
  * under the License.
  */
 
-package io.ballerina.observe.choreo.client.secret;
+package io.ballerina.observe.choreo.client.internal.secret;
+
+import java.io.IOException;
 
 /**
- * Manages app secret for linked applications.
+ * Mangers an application secret.
  *
  * @since 2.0.0
  */
-public class LinkedAppSecretHandler implements AppSecretHandler {
-    private final String appSecret;
+public interface AppSecretHandler {
+    String getName();
 
-    public LinkedAppSecretHandler(String appSecret) {
-        this.appSecret = appSecret;
-    }
+    String getAppSecret();
 
-    @Override
-    public String getName() {
-        return "linked";
-    }
-
-    @Override
-    public String getAppSecret() {
-        return appSecret;
-    }
-
-    @Override
-    public void associate(String obsId) {
-        // Do nothing
-    }
+    void associate(String obsId) throws IOException;
 }

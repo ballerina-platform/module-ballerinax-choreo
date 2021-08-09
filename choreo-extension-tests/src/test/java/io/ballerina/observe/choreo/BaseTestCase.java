@@ -17,7 +17,7 @@
  */
 package io.ballerina.observe.choreo;
 
-import io.ballerina.observe.choreo.client.ChoreoConfigHelper;
+import io.ballerina.observe.choreo.client.internal.ClientUtils;
 import org.ballerinalang.test.context.BServerInstance;
 import org.ballerinalang.test.context.BalServer;
 import org.ballerinalang.test.context.BallerinaTestException;
@@ -102,6 +102,6 @@ public class BaseTestCase {
     }
 
     protected Path getNodeIdFilePath() {
-        return ChoreoConfigHelper.getGlobalChoreoConfigDir().resolve(NODE_ID_FILE_NAME);
+        return ClientUtils.getGlobalChoreoConfigDir().resolve(NODE_ID_FILE_NAME);
     }
 }

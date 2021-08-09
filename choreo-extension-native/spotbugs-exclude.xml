@@ -17,27 +17,23 @@
   -->
 
 <FindBugsFilter>
+    <!-- Generated gRPC client code -->
     <Match>
         <Package name="io.ballerina.observe.choreo.gen"/>
     </Match>
+
     <Match>
         <Class name="io.ballerina.observe.choreo.client.ChoreoClientHolder" />
         <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE,NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
     </Match>
     <Match>
-        <Class name="io.ballerina.observe.choreo.client.secret.AnonymousAppSecretHandler" />
+        <Class name="io.ballerina.observe.choreo.client.internal.secret.AnonymousAppSecretHandler" />
         <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE,NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
     </Match>
     <Match>
-        <Class name="io.ballerina.observe.choreo.client.secret.AnonymousAppSecretHandler"/>
+        <Class name="io.ballerina.observe.choreo.client.internal.secret.AnonymousAppSecretHandler"/>
     </Match>
     <Match>
-        <Class name="io.ballerina.observe.choreo.ChoreoJaegerReporter"/>
-    </Match>
-    <Match>
-        <Package name="org.ballerinalang.observe.trace.extension.choreo"/>
-    </Match>
-    <Match>
-        <Class name="io.ballerina.observe.choreo.client.MetadataReader"/>
+        <Class name="io.ballerina.observe.choreo.BallerinaMetadataReader"/>
     </Match>
 </FindBugsFilter>
