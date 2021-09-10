@@ -129,6 +129,7 @@ public class MetricsReporter implements AutoCloseable {
                         choreoMetrics.add(gaugeMetric);
                         for (Snapshot snapshot : gauge.getSnapshots()) {
                             Map<String, String> snapshotTags = new HashMap<>(tags.size() + 1);
+                            snapshotTags.putAll(tags);
                             snapshotTags.put(TIME_WINDOW_TAG_KEY, String.valueOf(snapshot.getTimeWindow().toMillis()));
 
                             ChoreoMetric meanMetric = new ChoreoMetric(currentTimestamp, metricName
