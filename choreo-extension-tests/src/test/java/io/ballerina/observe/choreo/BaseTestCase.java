@@ -18,10 +18,8 @@
 package io.ballerina.observe.choreo;
 
 import io.ballerina.observe.choreo.client.ChoreoConfigHelper;
-import org.ballerinalang.test.context.BServerInstance;
 import org.ballerinalang.test.context.BalServer;
 import org.ballerinalang.test.context.BallerinaTestException;
-import org.ballerinalang.test.context.Utils;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 
@@ -42,7 +40,7 @@ public class BaseTestCase {
     private static final Logger LOGGER = Logger.getLogger(BaseTestCase.class.getName());
     static final File RESOURCES_DIR = Paths.get("src", "test", "resources", "bal").toFile();
 
-    private BServerInstance periscopeBackendServerInstance;
+//    private BServerInstance periscopeBackendServerInstance;
     protected Path tempFilesDir;
     static BalServer balServer;
 
@@ -65,18 +63,19 @@ public class BaseTestCase {
             Files.deleteIfExists(nodeIdFile);
         }
 
-        periscopeBackendServerInstance = new BServerInstance(balServer);
-        final String projectDir = Paths.get(RESOURCES_DIR.getAbsolutePath(), "choreo_periscope_backend").toFile()
-                .getAbsolutePath();
-        int[] requiredPorts = {10090};
-        periscopeBackendServerInstance.startServer(projectDir, "choreo_periscope_backend", null, null,
-                requiredPorts);
-        Utils.waitForPortsToOpen(requiredPorts, 1000 * 60, false, "localhost");
+        // TODO: Uncomment once the mock backend based tests are implemented
+//        periscopeBackendServerInstance = new BServerInstance(balServer);
+//        final String projectDir = Paths.get(RESOURCES_DIR.getAbsolutePath(), "choreo_periscope_backend").toFile()
+//                .getAbsolutePath();
+//        int[] requiredPorts = {10090};
+//        periscopeBackendServerInstance.startServer(projectDir, "choreo_periscope_backend", null, null,
+//                requiredPorts);
+//        Utils.waitForPortsToOpen(requiredPorts, 1000 * 60, false, "localhost");
     }
 
     @AfterSuite(alwaysRun = true)
     public void destroy() throws IOException, BallerinaTestException {
-        periscopeBackendServerInstance.shutdownServer();
+//        periscopeBackendServerInstance.shutdownServer();
 
         if (isNodeIdBackupRequired) {
             // Restoring backed up node ID file

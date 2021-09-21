@@ -20,10 +20,10 @@ import ballerina/observe;
 
 const EXTENSION_NAME = "choreo";
 
-final configurable string reporterHostname = "periscope.choreo.dev";
-final configurable int reporterPort = 443;
-final configurable boolean reporterUseSSL = true;
-final configurable string applicationSecret = "";
+configurable string reporterHostname = "periscope.choreo.dev";
+configurable int reporterPort = 443;
+configurable boolean reporterUseSSL = true;
+configurable string applicationSecret = "";
 
 function init() {
     if ((observe:isTracingEnabled() && observe:getTracingProvider() == EXTENSION_NAME)
