@@ -141,7 +141,7 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         final String projectDir = Paths.get(RESOURCES_DIR.getAbsolutePath(), "choreo_ext_test").toFile()
                 .getAbsolutePath();
         int[] requiredPorts = {9091};
-        serverInstance.startServer(projectDir, "choreo_ext_test", null, null, env, requiredPorts);
+        serverInstance.startServer(projectDir, "choreo_ext_test", new String[]{"--offline"}, null, env, requiredPorts);
         Utils.waitForPortsToOpen(requiredPorts, 1000 * 60, false, "localhost");
         choreoExtLogLeecher.waitForText(10000);
         choreoObservabilityUrlLogLeecher.waitForText(10000);
@@ -182,7 +182,7 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         final String projectDir = Paths.get(RESOURCES_DIR.getAbsolutePath(), "choreo_ext_test").toFile()
                 .getAbsolutePath();
         int[] requiredPorts = {9091};
-        serverInstance.startServer(projectDir, "choreo_ext_test", null, null, requiredPorts);
+        serverInstance.startServer(projectDir, "choreo_ext_test", new String[]{"--offline"}, null, requiredPorts);
         Utils.waitForPortsToOpen(requiredPorts, 1000 * 60, false, "localhost");
         sampleServerLogLeecher.waitForText(10000);
 
