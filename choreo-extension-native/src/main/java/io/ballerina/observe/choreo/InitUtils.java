@@ -29,6 +29,12 @@ import java.util.Objects;
  * Native functions used by the Choreo extension objects.
  */
 public class InitUtils {
+    private InitUtils() {   // Prevent initialization
+    }
+
+    private static final String APPLICATION_SECRET_ENV_VAR = "CHOREO_EXT_APPLICATION_SECRET";
+    private static final String REPORTER_HOSTNAME_ENV_VAR = "CHOREO_EXT_REPORTER_HOSTNAME";
+
     /**
      * Initialize the Choreo extension.
      *
@@ -36,10 +42,19 @@ public class InitUtils {
      */
     public static BError initializeChoreoExtension(BString reporterHostname, int reporterPort,
                                                    boolean reporterUseSSL, BString applicationSecret) {
+        String applicationToken = System.getenv(APPLICATION_SECRET_ENV_VAR);
+        if (applicationToken == null) {
+            applicationToken = applicationSecret.getValue();
+        }
+        String reporterHost = System.getenv(REPORTER_HOSTNAME_ENV_VAR);
+        if (reporterHost == null) {
+            reporterHost = reporterHostname.getValue();
+        }
+
         ChoreoClient choreoClient;
         try {
-            choreoClient = ChoreoClientHolder.initChoreoClient(reporterHostname.getValue(), reporterPort,
-                    reporterUseSSL, applicationSecret.getValue());
+            choreoClient = ChoreoClientHolder.initChoreoClient(reporterHost, reporterPort,
+                reporterUseSSL, applicationToken);
         } catch (ChoreoClientException e) {
             return ErrorCreator.createError(StringUtils.fromString("Choreo client is not initialized. " +
                     "Please check Ballerina configurations."), e);
