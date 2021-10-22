@@ -37,6 +37,9 @@ public class InitUtils {
     private InitUtils() {   // Prevent initialization
     }
 
+    private static final String APPLICATION_SECRET_ENV_VAR = "CHOREO_EXT_APPLICATION_SECRET";
+    private static final String REPORTER_HOSTNAME_ENV_VAR = "CHOREO_EXT_REPORTER_HOSTNAME";
+
     private static final Logger LOGGER = LogFactory.getLogger();
 
     /**
@@ -55,10 +58,19 @@ public class InitUtils {
             return null;
         }
 
+        String applicationToken = System.getenv(APPLICATION_SECRET_ENV_VAR);
+        if (applicationToken == null) {
+            applicationToken = applicationSecret.getValue();
+        }
+        String reporterHost = System.getenv(REPORTER_HOSTNAME_ENV_VAR);
+        if (reporterHost == null) {
+            reporterHost = reporterHostname.getValue();
+        }
+
         ChoreoClient choreoClient;
         try {
-            choreoClient = ChoreoClientHolder.initChoreoClient(metadataReader, reporterHostname.getValue(),
-                    reporterPort, reporterUseSSL, applicationSecret.getValue());
+            choreoClient = ChoreoClientHolder.initChoreoClient(metadataReader, reporterHost,
+                    reporterPort, reporterUseSSL, applicationToken);
         } catch (ChoreoClientException e) {
             return ErrorCreator.createError(StringUtils.fromString("Choreo client is not initialized. " +
                     "Please check Ballerina configurations."), e);
