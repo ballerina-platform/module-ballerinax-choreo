@@ -28,6 +28,7 @@ message RegisterResponse {
     string version = 2; // version of the program
     string obsUrl = 3; // This will contain the obsid & version
     bool sendAst = 4;
+    map<string, string> tags = 5; // Returns release Id, etc as tags
 }
 
 message PublishAstRequest {
