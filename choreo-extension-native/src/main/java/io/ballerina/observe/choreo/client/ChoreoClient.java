@@ -35,7 +35,9 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -54,6 +56,7 @@ public class ChoreoClient implements AutoCloseable {
     private String nodeId;
     private String version;
     private final String projectSecret;
+    private Map<String, String> additionalTags;
 
     private final ManagedChannel channel;
     private final HandshakeGrpc.HandshakeBlockingStub registrationClient;
@@ -71,6 +74,7 @@ public class ChoreoClient implements AutoCloseable {
         registrationClient = HandshakeGrpc.newBlockingStub(channel);
         telemetryClient = TelemetryGrpc.newBlockingStub(channel);
         this.projectSecret = projectSecret;
+        this.additionalTags = Collections.emptyMap();
     }
 
     public RegisterResponse register(final MetadataReader metadataReader, String nodeId) throws
@@ -97,6 +101,7 @@ public class ChoreoClient implements AutoCloseable {
 
         this.id = registerResponse.getObsId();
         this.version = registerResponse.getVersion();
+        this.additionalTags = registerResponse.getTagsMap();
         boolean sendProgramJson = registerResponse.getSendAst();
 
         if (sendProgramJson) {
@@ -151,6 +156,7 @@ public class ChoreoClient implements AutoCloseable {
                         .setName(metric.getName())
                         .setValue(metric.getValue())
                         .putAllTags(metric.getTags())
+                        .putAllTags(additionalTags)
                         .build();
 
                 int currentMessageSize = metricMessage.getSerializedSize();
@@ -191,7 +197,8 @@ public class ChoreoClient implements AutoCloseable {
                         .setOperationName(traceSpan.getOperationName())
                         .setTimestamp(traceSpan.getTimestamp())
                         .setDuration(traceSpan.getDuration())
-                        .putAllTags(traceSpan.getTags());
+                        .putAllTags(traceSpan.getTags())
+                        .putAllTags(additionalTags);
                 for (ChoreoTraceSpan.Reference reference : traceSpan.getReferences()) {
                     traceSpanBuilder.addReferences(TelemetryOuterClass.TraceSpanReference.newBuilder()
                             .setTraceId(reference.getTraceId())
