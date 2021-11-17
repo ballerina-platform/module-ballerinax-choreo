@@ -143,7 +143,6 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         choreoExtLogLeecher.waitForText(10000);
         choreoObservabilityUrlLogLeecher.waitForText(10000);
         choreoExtMetricsEnabledLogLeecher.waitForText(1000);
-        sampleServerLogLeecher.waitForText(1000);
 
         // Send requests to generate metrics
         String responseData = HttpClientRequest.doGet(TEST_RESOURCE_URL).getData();
@@ -179,7 +178,6 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         int[] requiredPorts = {9091};
         serverInstance.startServer(projectDir, "choreo_ext_test", null, null, requiredPorts);
         Utils.waitForPortsToOpen(requiredPorts, 1000 * 60, false, "localhost");
-        sampleServerLogLeecher.waitForText(10000);
 
         String responseData = HttpClientRequest.doGet(TEST_RESOURCE_URL).getData();
         Assert.assertEquals(responseData, "Sum: 53");
