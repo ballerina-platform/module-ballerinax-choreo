@@ -49,7 +49,6 @@ public class ChoreoTracesTestCase extends BaseTestCase {
             "ballerina: started publishing metrics to Choreo";
     private static final String CHOREO_EXTENSION_TRACES_ENABLED_LOG = "ballerina: started publishing traces to Choreo";
     private static final String CHOREO_EXTENSION_URL_LOG_PREFIX = "ballerina: visit ";
-    private static final String SAMPLE_SERVER_LOG = "[ballerina/http] started HTTP/WS listener 0.0.0.0:9091";
 
     @BeforeMethod
     public void setupTest() throws Exception {
@@ -126,8 +125,6 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         serverInstance.addLogLeecher(choreoExtMetricsEnabledLogLeecher);
         LogLeecher choreoExtTracesEnabledLogLeecher = new LogLeecher(CHOREO_EXTENSION_TRACES_ENABLED_LOG);
         serverInstance.addLogLeecher(choreoExtTracesEnabledLogLeecher);
-        LogLeecher sampleServerLogLeecher = new LogLeecher(SAMPLE_SERVER_LOG);
-        serverInstance.addLogLeecher(sampleServerLogLeecher);
         LogLeecher errorLogLeecher = new LogLeecher("error");
         serverInstance.addErrorLogLeecher(errorLogLeecher);
         LogLeecher exceptionLogLeecher = new LogLeecher("Exception");
@@ -166,8 +163,6 @@ public class ChoreoTracesTestCase extends BaseTestCase {
 
     @Test
     public void testChoreoDisabled() throws Exception {
-        LogLeecher sampleServerLogLeecher = new LogLeecher(SAMPLE_SERVER_LOG);
-        serverInstance.addLogLeecher(sampleServerLogLeecher);
         LogLeecher choreoExtLogLeecher = new LogLeecher(CHOREO_EXTENSION_LOG_PREFIX);
         serverInstance.addLogLeecher(choreoExtLogLeecher);
         LogLeecher choreoExtMetricsEnabledLogLeecher = new LogLeecher(CHOREO_EXTENSION_METRICS_ENABLED_LOG);
