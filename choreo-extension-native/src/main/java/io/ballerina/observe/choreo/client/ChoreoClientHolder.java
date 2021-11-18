@@ -24,11 +24,13 @@ import io.ballerina.observe.choreo.client.internal.secret.LinkedAppSecretHandler
 import io.ballerina.observe.choreo.logging.LogFactory;
 import io.ballerina.observe.choreo.logging.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -45,7 +47,10 @@ public class ChoreoClientHolder {
 
     private static ChoreoClient choreoClient;
     private static final Set<AutoCloseable> choreoClientDependents = new HashSet<>();
+
+    private static final String CGROUP_FILE_PATH = "/proc/self/cgroup";
     private static final String NODE_ID_ENV_VAR = "CHOREO_EXT_NODE_ID";
+    private static final String CONTAINERIZED_MODE_ENV_VAR = "CHOREO_EXT_CONTAINERIZED_MODE";
 
     /**
      * Initialize the Choreo client.
@@ -136,31 +141,51 @@ public class ChoreoClientHolder {
     }
 
     private static String getNodeId() {
-        Path instanceIdConfigFilePath = ClientUtils.getGlobalChoreoConfigDir().resolve("nodeId");
-
-        String instanceId;
+        // Reading directly from the provided enevironment variable
         if (System.getenv().containsKey(NODE_ID_ENV_VAR)) {
-            instanceId = System.getenv(NODE_ID_ENV_VAR);
-            LOGGER.debug("Read node ID from environment variable " + NODE_ID_ENV_VAR);
-        } else if (!Files.exists(instanceIdConfigFilePath)) {
-            instanceIdConfigFilePath.getParent().toFile().mkdirs();
-            instanceId = UUID.randomUUID().toString();
+            String instanceId = System.getenv(NODE_ID_ENV_VAR);
+            LOGGER.debug("Read node ID \"" + instanceId + "\" from environment variable \"" + NODE_ID_ENV_VAR + "\"");
+            return instanceId;
+        }
+
+        // Reading from /proc/self/cgroup file automatically
+        File cgroupFile = new File(CGROUP_FILE_PATH);
+        if ("true".equalsIgnoreCase(System.getenv(CONTAINERIZED_MODE_ENV_VAR)) && cgroupFile.exists()) {
             try {
-                Files.write(instanceIdConfigFilePath, instanceId.getBytes(StandardCharsets.UTF_8));
-                LOGGER.debug("Written new node ID to file " + instanceIdConfigFilePath.toAbsolutePath());
+                Optional<String> memoryLine = Files.readAllLines(cgroupFile.toPath(), StandardCharsets.UTF_8).stream()
+                    .filter(line -> line.startsWith("memory:/"))
+                    .findAny();
+                if (memoryLine.isPresent()) {
+                    String[] memoryLineSplit = memoryLine.get().split("/");
+                    return memoryLineSplit[memoryLineSplit.length - 1];
+                }
             } catch (IOException e) {
-                LOGGER.error("could not write to " + instanceIdConfigFilePath);
-            }
-        } else {
-            try {
-                instanceId = Files.readString(instanceIdConfigFilePath);
-                LOGGER.debug("Read node ID from existing file " + instanceIdConfigFilePath.toAbsolutePath());
-            } catch (IOException e) {
-                LOGGER.error("could not read from " + instanceIdConfigFilePath);
-                instanceId = UUID.randomUUID().toString();
+                LOGGER.error("Failed to read container ID from " + cgroupFile.getAbsolutePath() + " due to "
+                    + e.getMessage());
             }
         }
 
+        // Reading from an existing ~/.config/choreo/nodeId file
+        Path instanceIdConfigFilePath = ClientUtils.getGlobalChoreoConfigDir().resolve("nodeId");
+        if (Files.exists(instanceIdConfigFilePath)) {
+            try {
+                String instanceId = Files.readString(instanceIdConfigFilePath);
+                LOGGER.debug("Read node ID from existing file " + instanceIdConfigFilePath.toAbsolutePath());
+                return instanceId;
+            } catch (IOException e) {
+                LOGGER.error("Could not read from " + instanceIdConfigFilePath + " due to " + e.getMessage());
+            }
+        }
+
+        // Generating new random instance ID and setting it into ~/.config/choreo/nodeId file
+        String instanceId = UUID.randomUUID().toString();
+        try {
+            instanceIdConfigFilePath.getParent().toFile().mkdirs();
+            Files.write(instanceIdConfigFilePath, instanceId.getBytes(StandardCharsets.UTF_8));
+            LOGGER.debug("Wrote new node ID to file " + instanceIdConfigFilePath.toAbsolutePath());
+        } catch (IOException e) {
+            LOGGER.error("Could not write to " + instanceIdConfigFilePath + " due to " + e.getMessage());
+        }
         return instanceId;
     }
 }
