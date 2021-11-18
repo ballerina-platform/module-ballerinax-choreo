@@ -41,3 +41,4 @@ gradle-app.setting
 
 # Ballerina
 target/
+choreo-extension-*/bin/
