@@ -180,9 +180,13 @@ public class ChoreoClientHolder {
         // Generating new random node ID and setting it into ~/.config/choreo/nodeId file
         String nodeId = UUID.randomUUID().toString();
         try {
-            nodeIdConfigFilePath.getParent().toFile().mkdirs();
-            Files.write(nodeIdConfigFilePath, nodeId.getBytes(StandardCharsets.UTF_8));
-            LOGGER.debug("Wrote new node ID to file " + nodeIdConfigFilePath.toAbsolutePath());
+            Path nodeIdConfigFileParentPath = nodeIdConfigFilePath.getParent();
+            if (nodeIdConfigFileParentPath == null || nodeIdConfigFileParentPath.toFile().mkdirs()) {
+                Files.write(nodeIdConfigFilePath, nodeId.getBytes(StandardCharsets.UTF_8));
+                LOGGER.debug("Wrote new node ID to file " + nodeIdConfigFilePath.toAbsolutePath());
+            } else {
+                LOGGER.error("Failed to create " + nodeIdConfigFileParentPath.toAbsolutePath() + " directory");
+            }
         } catch (IOException e) {
             LOGGER.error("Could not write to " + nodeIdConfigFilePath + " due to " + e.getMessage());
         }
