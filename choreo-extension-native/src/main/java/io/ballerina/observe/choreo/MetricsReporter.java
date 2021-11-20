@@ -23,7 +23,6 @@ import io.ballerina.observe.choreo.logging.LogFactory;
 import io.ballerina.observe.choreo.logging.Logger;
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
-import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.observability.metrics.Counter;
 import io.ballerina.runtime.observability.metrics.DefaultMetricRegistry;
 import io.ballerina.runtime.observability.metrics.Gauge;
@@ -66,17 +65,16 @@ public class MetricsReporter implements AutoCloseable {
     private ScheduledExecutorService executorService;
     private Task task;
 
-    public BError init() {
+    public void init() {
         ChoreoClient choreoClient = ChoreoClientHolder.getChoreoClient(this);
         if (Objects.isNull(choreoClient)) {
-            return ErrorCreator.createError(StringUtils.fromString("Choreo client is not initialized"));
+            throw ErrorCreator.createError(StringUtils.fromString("Choreo client is not initialized"));
         }
 
         executorService = new ScheduledThreadPoolExecutor(1);
         task = new Task(choreoClient);
         executorService.scheduleWithFixedDelay(task, 0, PUBLISH_INTERVAL_SECS, TimeUnit.SECONDS);
         LOGGER.info("started publishing metrics to Choreo");
-        return null;
     }
 
     @Override
