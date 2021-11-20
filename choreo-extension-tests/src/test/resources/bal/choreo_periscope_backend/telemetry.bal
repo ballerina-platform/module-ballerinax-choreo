@@ -17,16 +17,54 @@
 import ballerina/grpc;
 import ballerina_test/choreo_periscope_backend.telemetry;
 
+type PublishMetricsCall record {|
+    telemetry:MetricsPublishRequest request;
+    error? response;
+|};
+
+PublishMetricsCall[] recordedPublishMetricsCall = [];
+
+type PublishTracesCall record {|
+    telemetry:TracesPublishRequest request;
+    error? response;
+|};
+
+PublishTracesCall[] recordedPublishTracesCall = [];
+
 @grpc:ServiceDescriptor {
     descriptor: telemetry:DESCRIPTOR,
     descMap: telemetry:descriptorMap()
 }
 service "Telemetry" on periscopeEndpoint {
-    remote function publishMetrics(telemetry:MetricsPublishRequest value) returns error? {
-        return error("Not Implemented");
+    # Mock publish metrics remote endpoint.
+    #
+    # + request - gRPC publish metrics request
+    # + return - error if publishing the metrics fails
+    remote function publishMetrics(telemetry:MetricsPublishRequest request) returns error? {
+        error? response = ();
+        if (request.observabilityId.startsWith(PUBLISH_METRICS_ERROR_PROJECT_SECRET_PREFIX)) {
+            response = error("test error for publish metrics using obs ID " + request.observabilityId);
+        }
+        recordedPublishMetricsCall.push({
+            request: request,
+            response: response
+        });
+        return response;
     }
 
-    remote function publishTraces(telemetry:TracesPublishRequest value) returns error? {
-        return error("Not Implemented");
+    # Mock publish traces remote endpoint.
+    #
+    # + request - gRPC publish traces request
+    # + return - error if publishing the traces fails
+    remote function publishTraces(telemetry:TracesPublishRequest request) returns error? {
+        error? response = ();
+        if (request.observabilityId.startsWith(PUBLISH_TRACES_ERROR_PROJECT_SECRET_PREFIX)) {
+            response = error("test error for publish traces using obs ID " + request.observabilityId);
+        }
+        recordedPublishTracesCall.push({
+            request: request,
+            response: response
+        });
+        return response;
     }
 }
