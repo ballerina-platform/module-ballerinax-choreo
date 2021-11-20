@@ -66,7 +66,7 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         Path storedProjectFile = tempFilesDir.resolve(RESTART_TEST_PROJECT_FILE);
 
         Files.deleteIfExists(projectFile);  // To test fresh project
-        testSimpleRun(Collections.emptyMap());
+        testExtensionWithLocalPeriscope(Collections.emptyMap());
 
         // Storing the choreo project file for dependent test testRestartBallerinaService
         Files.copy(projectFile, storedProjectFile);
@@ -81,7 +81,7 @@ public class ChoreoTracesTestCase extends BaseTestCase {
 
         Files.deleteIfExists(projectFile);
         Files.copy(storedProjectFile, projectFile);     // To test existing project
-        testSimpleRun(Collections.emptyMap());
+        testExtensionWithLocalPeriscope(Collections.emptyMap());
 
         // Validate final choreo project file with previous test choreo project file
         Assert.assertEquals(Files.readString(projectFile), Files.readString(storedProjectFile),
@@ -92,32 +92,44 @@ public class ChoreoTracesTestCase extends BaseTestCase {
     public void testDebugLogsEnabled() throws Exception {
         Map<String, String> envVars = new HashMap<>();
         envVars.put("CHOREO_EXT_LOG_LEVEL", "DEBUG");
-        testSimpleRun(envVars);
+        testExtensionWithLocalPeriscope(envVars);
     }
 
     @Test
     public void testProvidedNodeId() throws Exception {
         Path nodeIdFile = getNodeIdFilePath();
         Files.writeString(nodeIdFile, "ext-test-node-id-1");
-        testSimpleRun(Collections.emptyMap());
+        testExtensionWithLocalPeriscope(Collections.emptyMap());
     }
 
     @Test
     public void testProvidedNodeIdEnvVar() throws Exception {
         Map<String, String> envVars = new HashMap<>();
         envVars.put("CHOREO_EXT_NODE_ID", "ext-test-node-id-2");
-        testSimpleRun(envVars);
+        testExtensionWithLocalPeriscope(envVars);
     }
 
     @Test
     public void testMissingNodeId() throws Exception {
         Path nodeIdFile = getNodeIdFilePath();
         Files.deleteIfExists(nodeIdFile);
-        testSimpleRun(Collections.emptyMap());
+        testExtensionWithLocalPeriscope(Collections.emptyMap());
     }
 
-    public void testSimpleRun(Map<String, String> additionalEnvVars) throws Exception {
-        LogLeecher choreoExtLogLeecher = new LogLeecher(CHOREO_EXTENSION_LOG_PREFIX + "periscope.choreo.dev:443");
+    @Test
+    public void testExtensionWithChoreoCloud() throws Exception {
+        Path nodeIdFile = getNodeIdFilePath();
+        Files.deleteIfExists(nodeIdFile);
+        testExtension(Collections.emptyMap(), "periscope.choreo.dev:443", "Config.cloud.toml");
+    }
+
+    public void testExtensionWithLocalPeriscope(Map<String, String> additionalEnvVars) throws Exception {
+        testExtension(additionalEnvVars, "localhost:10090", "Config.toml");
+    }
+
+    public void testExtension(Map<String, String> additionalEnvVars, String reporterHost, String configFileName)
+            throws Exception {
+        LogLeecher choreoExtLogLeecher = new LogLeecher(CHOREO_EXTENSION_LOG_PREFIX + reporterHost);
         serverInstance.addLogLeecher(choreoExtLogLeecher);
         LogLeecher choreoObservabilityUrlLogLeecher = new LogLeecher(CHOREO_EXTENSION_URL_LOG_PREFIX);
         serverInstance.addLogLeecher(choreoObservabilityUrlLogLeecher);
@@ -130,7 +142,7 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         LogLeecher exceptionLogLeecher = new LogLeecher("Exception");
         serverInstance.addErrorLogLeecher(exceptionLogLeecher);
 
-        String configFile = Paths.get("src", "test", "resources", "bal", "choreo_ext_test", "Config.toml")
+        String configFile = Paths.get("src", "test", "resources", "bal", "choreo_ext_test", configFileName)
                 .toFile().getAbsolutePath();
         Map<String, String> env = new HashMap<>(additionalEnvVars);
         env.put("BAL_CONFIG_FILES", configFile);

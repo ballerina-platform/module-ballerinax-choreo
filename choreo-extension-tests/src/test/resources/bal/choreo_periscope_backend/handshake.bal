@@ -124,10 +124,10 @@ service "Handshake" on periscopeEndpoint {
     }
 }
 
-int idCounter = 0;
+float idCounter = 0;
 
 function generateId(string projectSecret) returns string {
-    idCounter += 1;
+    idCounter += 1f;
     int? lastDashIndex = projectSecret.lastIndexOf("-");
     string prefix = lastDashIndex is () ? "" : projectSecret.substring(lastDashIndex, projectSecret.length());
     return prefix + "-" + idCounter.toString();
