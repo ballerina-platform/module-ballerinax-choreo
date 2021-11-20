@@ -172,6 +172,20 @@ task generateChoreoGrpcTestBackend {
     }
 }
 
+task commitTomlFiles {
+    doLast {
+        project.exec {
+            def dependenciesTomlFile = "src${File.separator}resources${File.separator}bal${File.separator}**${File.separator}Dependencies.toml"
+
+            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                commandLine 'cmd', '/c', "git add ${dependenciesTomlFile} && git commit -m '[Automated] Update the native jar versions' ${dependenciesTomlFile}"
+            } else {
+                commandLine 'sh', '-c', "git add ${dependenciesTomlFile} && git commit -m '[Automated] Update the native jar versions' ${dependenciesTomlFile}"
+            }
+        }
+    }
+}
+
 test {
     dependsOn createServerZip
     dependsOn generateChoreoGrpcTestBackend
