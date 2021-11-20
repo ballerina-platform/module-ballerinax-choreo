@@ -14,8 +14,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-public const string DESCRIPTOR = ROOT_DESCRIPTOR;
+public const string DESCRIPTOR = ROOT_DESCRIPTOR_TELEMETRY;
 
 public isolated function descriptorMap() returns map<string> {
-    return getDescriptorMap();
+    return getDescriptorMapTelemetry();
 }
