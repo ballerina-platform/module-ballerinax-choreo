@@ -135,7 +135,7 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         Map<String, String> env = new HashMap<>(additionalEnvVars);
         env.put("BAL_CONFIG_FILES", configFile);
 
-        // Cleaning up Dependencies.toml o avoid dependencies issues in dependency updates
+        // Cleaning up Dependencies.toml to avoid dependency issues in dependency updates
         final String projectDir = Paths.get(RESOURCES_DIR.getAbsolutePath(), "choreo_ext_test").toFile()
                 .getAbsolutePath();
         Files.deleteIfExists(Paths.get(projectDir, "Dependencies.toml"));

@@ -174,9 +174,10 @@ task generateChoreoGrpcTestBackend {
 
 task commitTomlFiles {
     doLast {
-        project.exec {
+        exec {
             def dependenciesTomlFile = "src${File.separator}resources${File.separator}bal${File.separator}**${File.separator}Dependencies.toml"
 
+            ignoreExitValue true
             if (Os.isFamily(Os.FAMILY_WINDOWS)) {
                 commandLine 'cmd', '/c', "git add ${dependenciesTomlFile} && git commit -m '[Automated] Update the native jar versions' ${dependenciesTomlFile}"
             } else {

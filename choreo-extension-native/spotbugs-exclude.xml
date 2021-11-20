@@ -22,6 +22,7 @@
         <Package name="io.ballerina.observe.choreo.gen"/>
     </Match>
 
+    <!-- False positives when Files.newOutputStream is used -->
     <Match>
         <Class name="io.ballerina.observe.choreo.client.internal.secret.AnonymousAppSecretHandler"/>
         <Or>
