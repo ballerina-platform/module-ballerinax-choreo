@@ -140,7 +140,8 @@ public class AnonymousAppSecretHandler implements AppSecretHandler {
     private void createProjectSecretFile(String obsId) throws IOException {
         final Path projectSecretPath = getProjectSecretPath(obsId);
         Path projectSecretFileParentPath = projectSecretPath.getParent();
-        if (projectSecretFileParentPath == null || projectSecretFileParentPath.toFile().mkdirs()) {
+        if (projectSecretFileParentPath == null || projectSecretFileParentPath.toFile().exists()
+                || projectSecretFileParentPath.toFile().mkdirs()) {
             try (BufferedWriter writer = Files.newBufferedWriter(projectSecretPath)) {
                 writer.write(appSecret);
                 writer.newLine();

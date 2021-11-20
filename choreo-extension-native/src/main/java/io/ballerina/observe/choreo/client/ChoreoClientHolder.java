@@ -181,7 +181,8 @@ public class ChoreoClientHolder {
         String nodeId = UUID.randomUUID().toString();
         try {
             Path nodeIdConfigFileParentPath = nodeIdConfigFilePath.getParent();
-            if (nodeIdConfigFileParentPath == null || nodeIdConfigFileParentPath.toFile().mkdirs()) {
+            if (nodeIdConfigFileParentPath == null || nodeIdConfigFileParentPath.toFile().exists()
+                    || nodeIdConfigFileParentPath.toFile().mkdirs()) {
                 Files.write(nodeIdConfigFilePath, nodeId.getBytes(StandardCharsets.UTF_8));
                 LOGGER.debug("Wrote new node ID to file " + nodeIdConfigFilePath.toAbsolutePath());
             } else {
