@@ -116,7 +116,7 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         testExtensionWithLocalPeriscope(Collections.emptyMap());
     }
 
-    @Test
+    @Test(retryAnalyzer = RetryFailedTestRetryAnalyzer.class)
     public void testExtensionWithChoreoCloud() throws Exception {
         Path nodeIdFile = getNodeIdFilePath();
         Files.deleteIfExists(nodeIdFile);
@@ -159,7 +159,7 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         choreoObservabilityUrlLogLeecher.waitForText(10000);
         choreoExtMetricsEnabledLogLeecher.waitForText(1000);
 
-        // Send requests to generate metrics
+        // Send requests to generate metrics & traces
         String responseData = HttpClientRequest.doGet(TEST_RESOURCE_URL).getData();
         Assert.assertEquals(responseData, "Sum: 53");
         Thread.sleep(11000);    // Data is published every 10 seconds
