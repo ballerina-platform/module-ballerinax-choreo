@@ -22,6 +22,8 @@ import com.google.common.base.Strings;
 import io.ballerina.observe.choreo.client.error.ChoreoClientException;
 import io.ballerina.observe.choreo.client.error.ChoreoErrors;
 import io.ballerina.observe.choreo.client.internal.ClientUtils;
+import io.ballerina.observe.choreo.logging.LogFactory;
+import io.ballerina.observe.choreo.logging.Logger;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -41,6 +43,8 @@ import java.util.UUID;
  * @since 2.0.0
  */
 public class AnonymousAppSecretHandler implements AppSecretHandler {
+    private static final Logger LOGGER = LogFactory.getLogger();
+
     public static final String PROJECT_OBSERVABILITY_ID_CONFIG_KEY = "PROJECT_OBSERVABILITY_ID";
 
     private final String appSecret;
@@ -135,11 +139,15 @@ public class AnonymousAppSecretHandler implements AppSecretHandler {
 
     private void createProjectSecretFile(String obsId) throws IOException {
         final Path projectSecretPath = getProjectSecretPath(obsId);
-        projectSecretPath.getParent().toFile().mkdirs();
-
-        try (BufferedWriter writer = Files.newBufferedWriter(projectSecretPath)) {
-            writer.write(appSecret);
-            writer.newLine();
+        Path projectSecretFileParentPath = projectSecretPath.getParent();
+        if (projectSecretFileParentPath == null || projectSecretFileParentPath.toFile().exists()
+                || projectSecretFileParentPath.toFile().mkdirs()) {
+            try (BufferedWriter writer = Files.newBufferedWriter(projectSecretPath)) {
+                writer.write(appSecret);
+                writer.newLine();
+            }
+        } else {
+            LOGGER.error("Failed to create the " + projectSecretFileParentPath.toAbsolutePath() + " directory");
         }
     }
 

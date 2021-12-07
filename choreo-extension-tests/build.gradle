@@ -172,6 +172,21 @@ task generateChoreoGrpcTestBackend {
     }
 }
 
+task commitTomlFiles {
+    doLast {
+        exec {
+            def dependenciesTomlFile = "src${File.separator}resources${File.separator}bal${File.separator}**${File.separator}Dependencies.toml"
+
+            ignoreExitValue true
+            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                commandLine 'cmd', '/c', "git add ${dependenciesTomlFile} && git commit -m '[Automated] Update the native jar versions' ${dependenciesTomlFile}"
+            } else {
+                commandLine 'sh', '-c', "git add ${dependenciesTomlFile} && git commit -m '[Automated] Update the native jar versions' ${dependenciesTomlFile}"
+            }
+        }
+    }
+}
+
 test {
     dependsOn createServerZip
     dependsOn generateChoreoGrpcTestBackend
@@ -190,7 +205,6 @@ test {
     systemProperty 'server.zip', createServerZip.outputs.files.singleFile
     systemProperty 'jballerina.server.zip', createServerZip.outputs.files.singleFile
     systemProperty 'java.util.logging.config.file', "${buildDir}/resources/test/logging.properties"
-    systemProperty 'java.util.logging.manager', 'org.ballerinalang.logging.BLogManager'
     systemProperty 'ballerina.agent.path', configurations.testUtils.asPath
     useTestNG() {
         suites 'src/test/resources/testng.xml'

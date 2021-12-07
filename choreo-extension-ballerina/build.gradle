@@ -276,6 +276,19 @@ task ballerinaPublish {
     }
 }
 
+task commitTomlFiles {
+    doLast {
+        exec {
+            ignoreExitValue true
+            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                commandLine 'cmd', '/c', "git add Dependencies.toml && git commit -m '[Automated] Update the native jar versions' Dependencies.toml"
+            } else {
+                commandLine 'sh', '-c', "git add Dependencies.toml && git commit -m '[Automated] Update the native jar versions' Dependencies.toml"
+            }
+        }
+    }
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
