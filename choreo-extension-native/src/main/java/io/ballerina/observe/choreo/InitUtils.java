@@ -24,7 +24,6 @@ import io.ballerina.observe.choreo.logging.LogFactory;
 import io.ballerina.observe.choreo.logging.Logger;
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
-import io.ballerina.runtime.api.values.BError;
 import io.ballerina.runtime.api.values.BString;
 
 import java.io.IOException;
@@ -47,15 +46,15 @@ public class InitUtils {
      *
      * @return error if initialization failed
      */
-    public static BError initializeChoreoExtension(BString reporterHostname, int reporterPort,
+    public static Object initializeChoreoExtension(BString reporterHostname, int reporterPort,
                                                    boolean reporterUseSSL, BString applicationSecret) {
         MetadataReader metadataReader;
         try {
             metadataReader = new BallerinaMetadataReader();
             LOGGER.debug("Successfully read sequence diagram symbols");
         } catch (IOException e) {
-            LOGGER.error("Failed to initialize Choreo client. " + e.getMessage());
-            return null;
+            throw ErrorCreator.createError(StringUtils.fromString("Failed to initialize Choreo client. Please check " +
+                "Ballerina.toml"), e);
         }
 
         String applicationToken = System.getenv(APPLICATION_SECRET_ENV_VAR);
@@ -72,12 +71,12 @@ public class InitUtils {
             choreoClient = ChoreoClientHolder.initChoreoClient(metadataReader, reporterHost,
                     reporterPort, reporterUseSSL, applicationToken);
         } catch (ChoreoClientException e) {
-            return ErrorCreator.createError(StringUtils.fromString("Choreo client is not initialized. " +
-                    "Please check Ballerina configurations."), e);
+            throw ErrorCreator.createError(StringUtils.fromString("Choreo client is not initialized. " +
+                    "Please check Config.toml"), e);
         }
         if (Objects.isNull(choreoClient)) {
-            return ErrorCreator.createError(StringUtils.fromString("Choreo client is not initialized. " +
-                    "Please check Ballerina configurations."));
+            throw ErrorCreator.createError(StringUtils.fromString("Choreo client is not initialized. " +
+                    "Please check Config.toml"));
         }
         return null;
     }
@@ -88,12 +87,13 @@ public class InitUtils {
      *
      * @return Error if initializing metrics reporter fails
      */
-    public static BError initializeMetricReporter() {
+    public static Object initializeMetricReporter() {
         if (isChoreoClientInitialized()) {
             MetricsReporter metricsExtension = new MetricsReporter();
-            return metricsExtension.init();
+            metricsExtension.init();
+            return null;
         } else {
-            return ErrorCreator.createError(StringUtils.fromString(
+            throw ErrorCreator.createError(StringUtils.fromString(
                     "Unable to start publishing metrics as Choreo Client is not initialized"));
         }
     }

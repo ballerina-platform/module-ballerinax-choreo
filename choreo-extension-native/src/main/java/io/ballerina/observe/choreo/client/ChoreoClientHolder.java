@@ -146,23 +146,39 @@ public class ChoreoClientHolder {
             String nodeId = System.getenv(NODE_ID_ENV_VAR);
             LOGGER.debug("Read node ID \"" + nodeId + "\" from environment variable \"" + NODE_ID_ENV_VAR + "\"");
             return nodeId;
+        } else {
+            LOGGER.debug("Node ID environment variable (" + NODE_ID_ENV_VAR + ") not present");
         }
 
         // Reading from /proc/self/cgroup file automatically
         File cgroupFile = new File(CGROUP_FILE_PATH);
-        if ("true".equalsIgnoreCase(System.getenv(CONTAINERIZED_MODE_ENV_VAR)) && cgroupFile.exists()) {
-            try {
-                Optional<String> memoryLine = Files.readAllLines(cgroupFile.toPath(), StandardCharsets.UTF_8).stream()
-                    .filter(line -> line.startsWith("memory:/"))
-                    .findAny();
-                if (memoryLine.isPresent()) {
-                    String[] memoryLineSplit = memoryLine.get().split("/");
-                    return memoryLineSplit[memoryLineSplit.length - 1];
+        if ("true".equalsIgnoreCase(System.getenv(CONTAINERIZED_MODE_ENV_VAR))) {
+            if (cgroupFile.exists()) {
+                try {
+                    Optional<String> memoryLine = Files.readAllLines(cgroupFile.toPath(), StandardCharsets.UTF_8)
+                        .stream()
+                        .filter(line -> line.startsWith("memory:/"))
+                        .findAny();
+                    if (memoryLine.isPresent()) {
+                        String[] memoryLineSplit = memoryLine.get().split("/");
+                        String nodeId = memoryLineSplit[memoryLineSplit.length - 1];
+                        LOGGER.debug("Read node ID " + nodeId + " from file " + cgroupFile);
+                        return nodeId;
+                    } else {
+                        LOGGER.debug("Skipping reading container node Id automatically from file " + cgroupFile +
+                            " due to missing memory line");
+                    }
+                } catch (IOException e) {
+                    LOGGER.error("Failed to read container ID from " + cgroupFile.getAbsolutePath() + " due to "
+                        + e.getMessage());
                 }
-            } catch (IOException e) {
-                LOGGER.error("Failed to read container ID from " + cgroupFile.getAbsolutePath() + " due to "
-                    + e.getMessage());
+            } else {
+                LOGGER.debug("Skipping reading container node Id automatically since " + cgroupFile +
+                    " file is missing");
             }
+        } else {
+            LOGGER.debug("Containerized mode not enabled (" + CONTAINERIZED_MODE_ENV_VAR + "=\"" +
+                System.getenv(CONTAINERIZED_MODE_ENV_VAR) + "\")");
         }
 
         // Reading from an existing ~/.config/choreo/nodeId file
@@ -170,11 +186,13 @@ public class ChoreoClientHolder {
         if (Files.exists(nodeIdConfigFilePath)) {
             try {
                 String nodeId = Files.readString(nodeIdConfigFilePath);
-                LOGGER.debug("Read node ID from existing file " + nodeIdConfigFilePath.toAbsolutePath());
+                LOGGER.debug("Read node ID " + nodeId + " from existing file " + nodeIdConfigFilePath.toAbsolutePath());
                 return nodeId;
             } catch (IOException e) {
                 LOGGER.error("Could not read from " + nodeIdConfigFilePath + " due to " + e.getMessage());
             }
+        } else {
+            LOGGER.debug("Node ID file (" + nodeIdConfigFilePath + ") not present");
         }
 
         // Generating new random node ID and setting it into ~/.config/choreo/nodeId file
@@ -184,7 +202,7 @@ public class ChoreoClientHolder {
             if (nodeIdConfigFileParentPath == null || nodeIdConfigFileParentPath.toFile().exists()
                     || nodeIdConfigFileParentPath.toFile().mkdirs()) {
                 Files.write(nodeIdConfigFilePath, nodeId.getBytes(StandardCharsets.UTF_8));
-                LOGGER.debug("Wrote new node ID to file " + nodeIdConfigFilePath.toAbsolutePath());
+                LOGGER.debug("Wrote new node ID " + nodeId + " to file " + nodeIdConfigFilePath.toAbsolutePath());
             } else {
                 LOGGER.error("Failed to create " + nodeIdConfigFileParentPath.toAbsolutePath() + " directory");
             }
