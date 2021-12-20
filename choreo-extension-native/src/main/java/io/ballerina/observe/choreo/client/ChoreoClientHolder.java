@@ -177,8 +177,8 @@ public class ChoreoClientHolder {
                     " file is missing");
             }
         } else {
-            LOGGER.debug("Containerized mode not enabled (" + CONTAINERIZED_MODE_ENV_VAR + "=" +
-                System.getenv(CONTAINERIZED_MODE_ENV_VAR) + ")");
+            LOGGER.debug("Containerized mode not enabled (" + CONTAINERIZED_MODE_ENV_VAR + "=\"" +
+                System.getenv(CONTAINERIZED_MODE_ENV_VAR) + "\")");
         }
 
         // Reading from an existing ~/.config/choreo/nodeId file
