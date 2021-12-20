@@ -157,7 +157,7 @@ public class ChoreoClientHolder {
                 try {
                     Optional<String> memoryLine = Files.readAllLines(cgroupFile.toPath(), StandardCharsets.UTF_8)
                         .stream()
-                        .filter(line -> line.startsWith("memory:/"))
+                        .filter(line -> line.contains(":memory:/"))
                         .findAny();
                     if (memoryLine.isPresent()) {
                         String[] memoryLineSplit = memoryLine.get().split("/");
