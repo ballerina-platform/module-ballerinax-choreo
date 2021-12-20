@@ -146,6 +146,8 @@ public class ChoreoClientHolder {
             String nodeId = System.getenv(NODE_ID_ENV_VAR);
             LOGGER.debug("Read node ID \"" + nodeId + "\" from environment variable \"" + NODE_ID_ENV_VAR + "\"");
             return nodeId;
+        } else {
+            LOGGER.debug("Node ID environment variable (" + NODE_ID_ENV_VAR + ") not present");
         }
 
         // Reading from /proc/self/cgroup file automatically
@@ -174,6 +176,9 @@ public class ChoreoClientHolder {
                 LOGGER.debug("Skipping reading container node Id automatically since " + cgroupFile +
                     " file is missing");
             }
+        } else {
+            LOGGER.debug("Containerized mode not enabled (" + CONTAINERIZED_MODE_ENV_VAR + "=" +
+                System.getenv(CONTAINERIZED_MODE_ENV_VAR) + ")");
         }
 
         // Reading from an existing ~/.config/choreo/nodeId file
@@ -186,6 +191,8 @@ public class ChoreoClientHolder {
             } catch (IOException e) {
                 LOGGER.error("Could not read from " + nodeIdConfigFilePath + " due to " + e.getMessage());
             }
+        } else {
+            LOGGER.debug("Node ID file (" + nodeIdConfigFilePath + ") not present");
         }
 
         // Generating new random node ID and setting it into ~/.config/choreo/nodeId file
