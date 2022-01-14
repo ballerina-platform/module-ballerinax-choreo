@@ -167,6 +167,7 @@ task generateChoreoGrpcTestBackend {
     def protoFilesDir = "${project.projectDir}/../choreo-extension-native/src/main/proto"
     def choreoBackendModulesDir = "${project.projectDir}/src/test/resources/bal/choreo_periscope_backend/modules"
     doLast {
+        delete "${project.projectDir}/src/test/resources/bal/choreo_periscope_backend/Dependencies.toml"
         generateGrpcServer("${protoFilesDir}/handshake.proto", "${choreoBackendModulesDir}/handshake")
         generateGrpcServer("${protoFilesDir}/telemetry.proto", "${choreoBackendModulesDir}/telemetry")
     }
@@ -175,13 +176,13 @@ task generateChoreoGrpcTestBackend {
 task commitTomlFiles {
     doLast {
         exec {
-            def dependenciesTomlFile = "src${File.separator}resources${File.separator}bal${File.separator}**${File.separator}Dependencies.toml"
+            def dependenciesTomlFile = "src/test/resources/bal/**/Dependencies.toml"
 
             ignoreExitValue true
             if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                commandLine 'cmd', '/c', "git add ${dependenciesTomlFile} && git commit -m '[Automated] Update the native jar versions' ${dependenciesTomlFile}"
+                commandLine 'cmd', '/c', "git add ${dependenciesTomlFile} && git commit -m '[Automated] Update the test ballerina package versions' ${dependenciesTomlFile}"
             } else {
-                commandLine 'sh', '-c', "git add ${dependenciesTomlFile} && git commit -m '[Automated] Update the native jar versions' ${dependenciesTomlFile}"
+                commandLine 'sh', '-c', "git add ${dependenciesTomlFile} && git commit -m '[Automated] Update the test ballerina package versions' ${dependenciesTomlFile}"
             }
         }
     }
@@ -190,8 +191,10 @@ task commitTomlFiles {
 test {
     dependsOn createServerZip
     dependsOn generateChoreoGrpcTestBackend
+
     finalizedBy jacocoTestReport
     finalizedBy jacocoTestCoverageVerification
+    finalizedBy commitTomlFiles
 
     testLogging {
         showStackTraces true

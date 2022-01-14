@@ -171,6 +171,19 @@ task revertTomlFile {
     }
 }
 
+task commitTomlFiles {
+    doLast {
+        exec {
+            ignoreExitValue true
+            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                commandLine 'cmd', '/c', "git add Dependencies.toml && git commit -m '[Automated] Update the bal build ballerina package versions' Dependencies.toml"
+            } else {
+                commandLine 'sh', '-c', "git add Dependencies.toml && git commit -m '[Automated] Update the bal build ballerina package versions' Dependencies.toml"
+            }
+        }
+    }
+}
+
 task ballerinaBuild {
     dependsOn copyExternalJarsToLib
     dependsOn copyStdlibs
@@ -178,15 +191,17 @@ task ballerinaBuild {
     dependsOn configurations.nativeJar
     dependsOn configurations.externalJars
 
-    inputs.dir file(project.projectDir)
-    finalizedBy(revertTomlFile)
+    finalizedBy revertTomlFile
+    finalizedBy commitTomlFiles
 
+    inputs.dir file(project.projectDir)
     doLast {
         def additionalBuildParams = ""
         if (project.hasProperty("debug")) {
             additionalBuildParams = "--debug ${project.findProperty("debug")}"
         }
 
+        delete "${project.projectDir}/Dependencies.toml"
         exec {
             workingDir project.projectDir
             environment "JAVA_OPTS", "-DBALLERINA_DEV_COMPILE_BALLERINA_ORG=true"
@@ -264,19 +279,6 @@ task ballerinaPublish {
             }
         } else {
             throw new InvalidUserDataException("Central Access Token is not present")
-        }
-    }
-}
-
-task commitTomlFiles {
-    doLast {
-        exec {
-            ignoreExitValue true
-            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                commandLine 'cmd', '/c', "git add Dependencies.toml && git commit -m '[Automated] Update the native jar versions' Dependencies.toml"
-            } else {
-                commandLine 'sh', '-c', "git add Dependencies.toml && git commit -m '[Automated] Update the native jar versions' Dependencies.toml"
-            }
         }
     }
 }

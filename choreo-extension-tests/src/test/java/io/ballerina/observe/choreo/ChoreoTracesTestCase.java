@@ -153,7 +153,7 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         Files.deleteIfExists(Paths.get(projectDir, "Dependencies.toml"));
 
         int[] requiredPorts = {9091};
-        serverInstance.startServer(projectDir, "choreo_ext_test", null, null, env, requiredPorts);
+        serverInstance.startServer(projectDir, "choreo_ext_test", new String[]{"--offline"}, null, env, requiredPorts);
         Utils.waitForPortsToOpen(requiredPorts, 1000 * 60, false, "localhost");
         choreoExtLogLeecher.waitForText(10000);
         choreoObservabilityUrlLogLeecher.waitForText(10000);
@@ -188,10 +188,13 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         LogLeecher exceptionLogLeecher = new LogLeecher("Exception");
         serverInstance.addErrorLogLeecher(exceptionLogLeecher);
 
+        // Cleaning up Dependencies.toml to avoid dependency issues in dependency updates
         final String projectDir = Paths.get(RESOURCES_DIR.getAbsolutePath(), "choreo_ext_test").toFile()
                 .getAbsolutePath();
+        Files.deleteIfExists(Paths.get(projectDir, "Dependencies.toml"));
+
         int[] requiredPorts = {9091};
-        serverInstance.startServer(projectDir, "choreo_ext_test", null, null, requiredPorts);
+        serverInstance.startServer(projectDir, "choreo_ext_test", new String[]{"--offline"}, null, requiredPorts);
         Utils.waitForPortsToOpen(requiredPorts, 1000 * 60, false, "localhost");
 
         String responseData = HttpClientRequest.doGet(TEST_RESOURCE_URL).getData();

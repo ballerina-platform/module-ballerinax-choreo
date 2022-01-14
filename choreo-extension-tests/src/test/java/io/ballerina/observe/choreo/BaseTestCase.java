@@ -65,12 +65,15 @@ public class BaseTestCase {
             Files.deleteIfExists(nodeIdFile);
         }
 
-        periscopeBackendServerInstance = new BServerInstance(balServer);
+        // Cleaning up Dependencies.toml to avoid dependency issues in dependency updates
         final String projectDir = Paths.get(RESOURCES_DIR.getAbsolutePath(), "choreo_periscope_backend").toFile()
                 .getAbsolutePath();
+        Files.deleteIfExists(Paths.get(projectDir, "Dependencies.toml"));
+
+        periscopeBackendServerInstance = new BServerInstance(balServer);
         int[] requiredPorts = {10090};
-        periscopeBackendServerInstance.startServer(projectDir, "choreo_periscope_backend", null, null,
-                requiredPorts);
+        periscopeBackendServerInstance.startServer(projectDir, "choreo_periscope_backend", new String[]{"--offline"},
+                null, requiredPorts);
         Utils.waitForPortsToOpen(requiredPorts, 1000 * 60, false, "localhost");
     }
 
