@@ -18,6 +18,9 @@ import ballerina/grpc;
 import ballerina/http;
 import ballerina_test/choreo_periscope_backend.telemetry;
 
+const string PUBLISH_METRICS_ERROR_PROJECT_SECRET_PREFIX = "publish-metrics-error-";
+const string PUBLISH_TRACES_ERROR_PROJECT_SECRET_PREFIX = "publish-traces-error-";
+
 type PublishMetricsCall record {|
     telemetry:MetricsPublishRequest request;
     string? responseErrorMessage;
@@ -48,7 +51,7 @@ service "Telemetry" on periscopeEndpoint {
         }
         recordedPublishMetricsCall.push({
             request: request,
-            responseErrorMessage: response is error ? response.toString() : response
+            responseErrorMessage: response is error ? response.toString() : ()
         });
         return response;
     }
@@ -64,7 +67,7 @@ service "Telemetry" on periscopeEndpoint {
         }
         recordedPublishTracesCall.push({
             request: request,
-            responseErrorMessage: response is error ? response.toString() : response
+            responseErrorMessage: response is error ? response.toString() : ()
         });
         return response;
     }

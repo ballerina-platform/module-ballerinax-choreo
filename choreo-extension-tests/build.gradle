@@ -144,6 +144,7 @@ task createServerZip(type: Zip) {
 def generateGrpcServer (protoFile, outputDir) {
     def protoNameMatcher = protoFile =~ /.*\\/([^\/]+)\.proto/
     def protoName = protoNameMatcher[0][1]
+    protoFile = new File(protoFile).getAbsolutePath()   // Resolve absolute path
 
     def generatedSourcesDir = "${project.buildDir}/tmp/generated/sources/${protoName}"
     def distributionBinPath = "${project.buildDir.absolutePath}/extracted-distributions/jballerina-tools-zip/jballerina-tools-${ballerinaLangVersion}/bin"

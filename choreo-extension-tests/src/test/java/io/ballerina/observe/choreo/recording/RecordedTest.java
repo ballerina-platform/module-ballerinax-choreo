@@ -15,18 +15,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.observe.choreo.model;
+package io.ballerina.observe.choreo.recording;
 
 import java.util.List;
 
 /**
  * Model class for holding all the recorded calls.
  */
-public class RecordedCalls {
+public class RecordedTest {
     private List<RegisterCall> registerCalls;
     private List<PublishAstCall> publishAstCalls;
     private List<PublishMetricsCall> publishMetricsCalls;
     private List<PublishTracesCall> publishTracesCalls;
+    private long startTimestamp;
+    private long endTimestamp;
 
     public List<RegisterCall> getRegisterCalls() {
         return registerCalls;
@@ -58,5 +60,30 @@ public class RecordedCalls {
 
     public void setPublishTracesCalls(List<PublishTracesCall> publishTracesCalls) {
         this.publishTracesCalls = publishTracesCalls;
+    }
+
+    public long getStartTimestamp() {
+        return startTimestamp;
+    }
+
+    public void recordStart() {
+        if (this.startTimestamp != 0) {
+            throw new IllegalStateException("Start already recorded");
+        }
+        this.startTimestamp = System.currentTimeMillis();
+    }
+
+    public long getEndTimestamp() {
+        return endTimestamp;
+    }
+
+    public void recordEnd() {
+        if (this.endTimestamp != 0) {
+            throw new IllegalStateException("End already recorded");
+        }
+        if (this.startTimestamp == 0) {
+            throw new IllegalStateException("Start not yet recorded");
+        }
+        this.endTimestamp = System.currentTimeMillis();
     }
 }
