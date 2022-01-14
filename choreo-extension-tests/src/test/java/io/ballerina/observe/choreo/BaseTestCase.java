@@ -18,12 +18,12 @@
 package io.ballerina.observe.choreo;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import io.ballerina.observe.choreo.client.internal.ClientUtils;
 import io.ballerina.observe.choreo.model.PublishAstCall;
 import io.ballerina.observe.choreo.model.PublishMetricsCall;
 import io.ballerina.observe.choreo.model.PublishTracesCall;
 import io.ballerina.observe.choreo.model.RegisterCall;
+import io.ballerina.observe.choreo.model.Tag;
 import org.ballerinalang.test.context.BServerInstance;
 import org.ballerinalang.test.context.BalServer;
 import org.ballerinalang.test.context.BallerinaTestException;
@@ -44,7 +44,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Parent test class for all extension integration tests cases. This will provide basic
@@ -134,31 +136,29 @@ public class BaseTestCase {
         return ClientUtils.getGlobalChoreoConfigDir().resolve(NODE_ID_FILE_NAME);
     }
 
+    protected List<Tag> findTag(List<Tag> tagsList, Tag tag) {
+        return tagsList.stream()
+                .filter(spanTag -> Objects.equals(spanTag, tag))
+                .collect(Collectors.toList());
+    }
+
     protected List<RegisterCall> getRegisterCalls() throws IOException {
-        return getRecordedCalls("Handshake/register");
+        HttpResponse response = HttpClientRequest.doGet(PERISCOPE_CALLS_SERVICE + "/Handshake/register/calls");
+        return new Gson().fromJson(response.getData(), new RegisterCall.CallsTypeToken().getType());
     }
 
     protected List<PublishAstCall> getPublishAstCalls() throws IOException {
-        return getRecordedCalls("Handshake/publishAst");
-    }
-
-    protected List<PublishMetricsCall> getPublishMetricsCalls() throws IOException {
-        return getRecordedCalls("Telemetry/publishMetrics");
+        HttpResponse response = HttpClientRequest.doGet(PERISCOPE_CALLS_SERVICE + "/Handshake/publishAst/calls");
+        return new Gson().fromJson(response.getData(), new PublishAstCall.CallsTypeToken().getType());
     }
 
     protected List<PublishTracesCall> getPublishTracesCalls() throws IOException {
-        return getRecordedCalls("Telemetry/publishTraces");
+        HttpResponse response = HttpClientRequest.doGet(PERISCOPE_CALLS_SERVICE + "/Telemetry/publishTraces/calls");
+        return new Gson().fromJson(response.getData(), new PublishTracesCall.CallsTypeToken().getType());
     }
 
-    private <T> List<T> getRecordedCalls(String call) throws IOException {
-        String response = HttpClientRequest.doGet(PERISCOPE_CALLS_SERVICE + "/" + call + "/calls").getData();
-        return new Gson().fromJson(response, new RecordedCallsTypeToken<T>() { }.getType());
-    }
-
-    /**
-     * The Gson type token class used for parsing JSON payloads.
-     * @param <T> The recorded class type
-     */
-    public static class RecordedCallsTypeToken<T> extends TypeToken<List<T>> {
+    protected List<PublishMetricsCall> getPublishMetricsCalls() throws IOException {
+        HttpResponse response = HttpClientRequest.doGet(PERISCOPE_CALLS_SERVICE + "/Telemetry/publishMetrics/calls");
+        return new Gson().fromJson(response.getData(), new PublishMetricsCall.CallsTypeToken().getType());
     }
 }

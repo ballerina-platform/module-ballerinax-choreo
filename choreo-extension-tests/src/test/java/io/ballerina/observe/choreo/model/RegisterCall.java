@@ -17,6 +17,8 @@
  */
 package io.ballerina.observe.choreo.model;
 
+import com.google.gson.reflect.TypeToken;
+
 import java.util.List;
 
 /**
@@ -133,5 +135,11 @@ public class RegisterCall {
         public void setTags(List<Tag> tags) {
             this.tags = tags;
         }
+    }
+
+    /**
+     * Gson type token to be used for parsing calls.
+     */
+    public static class CallsTypeToken extends TypeToken<List<RegisterCall>> {
     }
 }

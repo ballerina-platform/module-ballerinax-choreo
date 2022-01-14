@@ -17,20 +17,22 @@
  */
 package io.ballerina.observe.choreo.model;
 
+import com.google.gson.reflect.TypeToken;
+
 import java.util.List;
 
 /**
  * Model class for holding the recorded publish metrics calls.
  */
 public class PublishMetricsCall {
-    private PublishAstCall.Request request;
+    private Request request;
     private String responseErrorMessage;
 
-    public PublishAstCall.Request getRequest() {
+    public Request getRequest() {
         return request;
     }
 
-    public void setRequest(PublishAstCall.Request request) {
+    public void setRequest(Request request) {
         this.request = request;
     }
 
@@ -96,16 +98,16 @@ public class PublishMetricsCall {
          * Model class for holding the metrics of the request of the recorded publish metrics calls.
          */
         public static class Metric {
-            private int timestamp;
+            private long timestamp;
             private String name;
             private float value;
             private List<Tag> tags;
 
-            public int getTimestamp() {
+            public long getTimestamp() {
                 return timestamp;
             }
 
-            public void setTimestamp(int timestamp) {
+            public void setTimestamp(long timestamp) {
                 this.timestamp = timestamp;
             }
 
@@ -133,5 +135,11 @@ public class PublishMetricsCall {
                 this.tags = tags;
             }
         }
+    }
+
+    /**
+     * Gson type token to be used for parsing calls.
+     */
+    public static class CallsTypeToken extends TypeToken<List<PublishMetricsCall>> {
     }
 }

@@ -17,6 +17,8 @@
  */
 package io.ballerina.observe.choreo.model;
 
+import com.google.gson.reflect.TypeToken;
+
 import java.util.List;
 
 /**
@@ -100,8 +102,8 @@ public class PublishTracesCall {
             private String spanId;
             private String serviceName;
             private String operationName;
-            private int timestamp;
-            private int duration;
+            private long timestamp;
+            private long duration;
             private List<Reference> references;
             private List<Checkpoint> checkpoints;
             private List<Tag> tags;
@@ -138,19 +140,19 @@ public class PublishTracesCall {
                 this.operationName = operationName;
             }
 
-            public int getTimestamp() {
+            public long getTimestamp() {
                 return timestamp;
             }
 
-            public void setTimestamp(int timestamp) {
+            public void setTimestamp(long timestamp) {
                 this.timestamp = timestamp;
             }
 
-            public int getDuration() {
+            public long getDuration() {
                 return duration;
             }
 
-            public void setDuration(int duration) {
+            public void setDuration(long duration) {
                 this.duration = duration;
             }
 
@@ -226,15 +228,15 @@ public class PublishTracesCall {
              * calls.
              */
             public static class Checkpoint {
-                private int timestamp;
+                private long timestamp;
                 private String moduleID;
                 private String positionID;
 
-                public int getTimestamp() {
+                public long getTimestamp() {
                     return timestamp;
                 }
 
-                public void setTimestamp(int timestamp) {
+                public void setTimestamp(long timestamp) {
                     this.timestamp = timestamp;
                 }
 
@@ -255,5 +257,11 @@ public class PublishTracesCall {
                 }
             }
         }
+    }
+
+    /**
+     * Gson type token to be used for parsing calls.
+     */
+    public static class CallsTypeToken extends TypeToken<List<PublishTracesCall>> {
     }
 }

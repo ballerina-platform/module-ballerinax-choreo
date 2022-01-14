@@ -17,7 +17,14 @@
  */
 package io.ballerina.observe.choreo;
 
+import io.ballerina.observe.choreo.model.PublishAstCall;
+import io.ballerina.observe.choreo.model.PublishMetricsCall;
+import io.ballerina.observe.choreo.model.PublishTracesCall;
+import io.ballerina.observe.choreo.model.PublishTracesCall.Request.TraceSpan;
+import io.ballerina.observe.choreo.model.PublishTracesCall.Request.TraceSpan.Reference.ReferenceType;
 import io.ballerina.observe.choreo.model.RecordedCalls;
+import io.ballerina.observe.choreo.model.RegisterCall;
+import io.ballerina.observe.choreo.model.Tag;
 import org.ballerinalang.test.context.BServerInstance;
 import org.ballerinalang.test.context.LogLeecher;
 import org.ballerinalang.test.context.Utils;
@@ -32,6 +39,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -124,18 +132,102 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         testExtension(Collections.emptyMap(), "periscope.choreo.dev:443", "Config.cloud.toml");
     }
 
-    public RecordedCalls testExtensionWithLocalPeriscope(Map<String, String> additionalEnvVars) throws Exception {
+    private RecordedCalls testExtensionWithLocalPeriscope(Map<String, String> additionalEnvVars) throws Exception {
+        long startTimestamp = System.currentTimeMillis();
         testExtension(additionalEnvVars, "localhost:10090", "Config.toml");
+        long endTimestamp = System.currentTimeMillis();
 
         RecordedCalls recordedCalls = new RecordedCalls();
         recordedCalls.setRegisterCalls(getRegisterCalls());
         recordedCalls.setPublishAstCalls(getPublishAstCalls());
         recordedCalls.setPublishMetricsCalls(getPublishMetricsCalls());
         recordedCalls.setPublishTracesCalls(getPublishTracesCalls());
+
+        Assert.assertEquals(recordedCalls.getRegisterCalls().size(), 1);
+        RegisterCall registerCall = recordedCalls.getRegisterCalls().get(0);
+        String nodeId = registerCall.getRequest().getNodeId();
+        String projectSecret = registerCall.getRequest().getProjectSecret();
+        String obsId = registerCall.getResponse().getObsId();
+        String obsVersion = registerCall.getResponse().getVersion();
+        List<Tag> periscopeTags = registerCall.getResponse().getTags();
+        Assert.assertEquals(registerCall.getResponse().getObsUrl(),
+                "http://choreo.dev/obs/" + obsId + "/" + obsVersion);
+
+        Assert.assertEquals(recordedCalls.getPublishAstCalls().size(), 1);
+        PublishAstCall publishAstCall = recordedCalls.getPublishAstCalls().get(0);
+        Assert.assertEquals(publishAstCall.getRequest().getObsId(), obsId);
+        Assert.assertEquals(publishAstCall.getRequest().getProjectSecret(), projectSecret);
+
+        Assert.assertEquals(recordedCalls.getPublishTracesCalls().size(), 1);
+        PublishTracesCall publishTracesCall = recordedCalls.getPublishTracesCalls().get(0);
+        Assert.assertEquals(publishTracesCall.getRequest().getObservabilityId(), obsId);
+        Assert.assertEquals(publishTracesCall.getRequest().getVersion(), obsVersion);
+        Assert.assertEquals(publishTracesCall.getRequest().getNodeId(), nodeId);
+        Assert.assertEquals(publishTracesCall.getRequest().getProjectSecret(), projectSecret);
+
+        List<TraceSpan> traceSpans = publishTracesCall.getRequest().getSpans();
+        Assert.assertEquals(traceSpans.size(), 2);
+        traceSpans.forEach(span -> periscopeTags.forEach(
+                tag -> Assert.assertEquals(findTag(span.getTags(), tag).size(), 1)));
+        traceSpans.forEach(span -> {
+            Assert.assertTrue(span.getTimestamp() > startTimestamp);
+            Assert.assertTrue(span.getTimestamp() < endTimestamp);
+            Assert.assertTrue(span.getDuration() > 0);
+            Assert.assertEquals(span.getReferences().size(), 1);
+            Assert.assertEquals(span.getReferences().get(0).getRefType(), ReferenceType.CHILD_OF);
+        });
+
+        TraceSpan rootSpan;
+        TraceSpan childSpan;
+        if ("00000000000000000000000000000000".equals(traceSpans.get(0).getReferences().get(0).getTraceId())) {
+            rootSpan = traceSpans.get(0);
+            childSpan = traceSpans.get(1);
+        } else {
+            rootSpan = traceSpans.get(1);
+            childSpan = traceSpans.get(0);
+        }
+        Assert.assertEquals(rootSpan.getReferences().get(0).getSpanId(), "0000000000000000");
+        Assert.assertEquals(rootSpan.getTraceId(), childSpan.getTraceId());
+        Assert.assertEquals(rootSpan.getTraceId(), childSpan.getReferences().get(0).getTraceId());
+        Assert.assertEquals(rootSpan.getSpanId(), childSpan.getReferences().get(0).getSpanId());
+
+        Assert.assertEquals(rootSpan.getServiceName(), "/test");
+        Assert.assertEquals(rootSpan.getOperationName(), "get /sum");
+        Assert.assertEquals(rootSpan.getTags().size(), periscopeTags.size() + 16);
+        Assert.assertEquals(rootSpan.getCheckpoints().size(), 6);
+
+        Assert.assertEquals(childSpan.getServiceName(), "/test");
+        Assert.assertEquals(childSpan.getOperationName(), "ballerina_test/choreo_ext_test/ObservableAdder:getSum");
+        Assert.assertEquals(childSpan.getTags().size(), periscopeTags.size() + 9);
+        Assert.assertEquals(childSpan.getCheckpoints().size(), 0);
+
+        Assert.assertTrue(recordedCalls.getPublishMetricsCalls().size() > 0);
+        recordedCalls.getPublishMetricsCalls().forEach(publishMetricsCall -> {
+            Assert.assertEquals(publishMetricsCall.getRequest().getObservabilityId(), obsId);
+            Assert.assertEquals(publishMetricsCall.getRequest().getVersion(), obsVersion);
+            Assert.assertEquals(publishMetricsCall.getRequest().getNodeId(), nodeId);
+            Assert.assertEquals(publishMetricsCall.getRequest().getProjectSecret(), projectSecret);
+            publishMetricsCall.getRequest().getMetrics().forEach(metric -> periscopeTags.forEach(
+                    tag -> Assert.assertEquals(findTag(metric.getTags(), tag).size(), 1)));
+
+            publishMetricsCall.getRequest().getMetrics().forEach(metric -> {
+                Assert.assertTrue(metric.getTimestamp() > startTimestamp);
+                Assert.assertTrue(metric.getTimestamp() < endTimestamp);
+            });
+            if (publishMetricsCall.getRequest().getMetrics().size() == 1) {
+                PublishMetricsCall.Request.Metric metric = publishMetricsCall.getRequest().getMetrics().get(0);
+                Assert.assertEquals(metric.getName(), "up");
+                Assert.assertEquals(metric.getValue(), 1f);
+                Assert.assertEquals(metric.getTags(), periscopeTags);
+            } else {
+                Assert.assertEquals(publishMetricsCall.getRequest().getMetrics().size(), 75);
+            }
+        });
+
         return recordedCalls;
     }
 
-    public void testExtension(Map<String, String> additionalEnvVars, String reporterHost,
+    private void testExtension(Map<String, String> additionalEnvVars, String reporterHost,
                                        String configFileName) throws Exception {
         LogLeecher choreoExtLogLeecher = new LogLeecher(CHOREO_EXTENSION_LOG_PREFIX + reporterHost);
         serverInstance.addLogLeecher(choreoExtLogLeecher);

@@ -17,6 +17,8 @@
  */
 package io.ballerina.observe.choreo.model;
 
+import java.util.Objects;
+
 /**
  * Model class for holding tags in recorded calls.
  */
@@ -38,5 +40,22 @@ public class Tag {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Tag)) {
+            return false;
+        }
+        Tag tag = (Tag) o;
+        return Objects.equals(getKey(), tag.getKey()) && Objects.equals(getValue(), tag.getValue());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getKey(), getValue());
     }
 }

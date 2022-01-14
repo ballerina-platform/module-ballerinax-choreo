@@ -18,13 +18,10 @@ import ballerina/http;
 import ballerina/observe; import ballerinax/choreo as _;   // TODO: Remove extension module imports
 
 service /test on new http:Listener(9091) {
-    resource function get sum(http:Caller caller, http:Request req) {
+    resource function get sum() returns string {
         ObservableAdderClass adder = new ObservableAdder(20, 33);
         var sum = adder.getSum();
-
-        http:Response resp = new;
-        resp.setTextPayload(<@untainted> "Sum: " + sum.toString());
-        checkpanic caller->respond(resp);
+        return "Sum: " + sum.toString();
     }
 }
 

@@ -17,6 +17,10 @@
  */
 package io.ballerina.observe.choreo.model;
 
+import com.google.gson.reflect.TypeToken;
+
+import java.util.List;
+
 /**
  * Model class for holding the recorded publish ast calls.
  */
@@ -71,5 +75,11 @@ public class PublishAstCall {
         public void setAst(String ast) {
             this.ast = ast;
         }
+    }
+
+    /**
+     * Gson type token to be used for parsing calls.
+     */
+    public static class CallsTypeToken extends TypeToken<List<PublishAstCall>> {
     }
 }
