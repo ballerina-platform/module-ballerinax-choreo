@@ -168,8 +168,18 @@ task generateChoreoGrpcTestBackend {
     def choreoBackendModulesDir = "${project.projectDir}/src/test/resources/bal/choreo_periscope_backend/modules"
     doLast {
         delete "${project.projectDir}/src/test/resources/bal/choreo_periscope_backend/Dependencies.toml"
+
         generateGrpcServer("${protoFilesDir}/handshake.proto", "${choreoBackendModulesDir}/handshake")
         generateGrpcServer("${protoFilesDir}/telemetry.proto", "${choreoBackendModulesDir}/telemetry")
+
+        exec {
+            ignoreExitValue true
+            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                commandLine 'cmd', '/c', "git add ${choreoBackendModulesDir} && git commit -m '[Automated] Update the Periscope gRPC backend' ${choreoBackendModulesDir}"
+            } else {
+                commandLine 'sh', '-c', "git add ${choreoBackendModulesDir} && git commit -m '[Automated] Update the Periscope gRPC backend' ${choreoBackendModulesDir}"
+            }
+        }
     }
 }
 
