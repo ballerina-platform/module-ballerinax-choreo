@@ -15,6 +15,7 @@
 // under the License.
 
 import ballerina/grpc;
+import ballerina/http;
 import ballerina_test/choreo_periscope_backend.handshake;
 
 const string REGISTER_ERROR_PROJECT_SECRET_PREFIX = "register-error-";
@@ -24,14 +25,15 @@ const string PUBLISH_TRACES_ERROR_PROJECT_SECRET_PREFIX = "publish-traces-error-
 
 type RegisterCall record {|
     handshake:RegisterRequest request;
-    handshake:RegisterResponse|error response;
+    handshake:RegisterResponse? response;
+    string? responseErrorMessage;
 |};
 
 RegisterCall[] recordedRegisterCalls = [];
 
 type PublishAstCall record {|
     handshake:PublishAstRequest request;
-    error? response;
+    string? responseErrorMessage;
 |};
 
 PublishAstCall[] recordedPublishAstCalls = [];
@@ -53,7 +55,7 @@ service "Handshake" on periscopeEndpoint {
             RegisterCall? repeatedCall = ();
             foreach RegisterCall recordedCall in recordedRegisterCalls {
                 handshake:RegisterRequest recordedRequest = recordedCall.request;
-                handshake:RegisterResponse|error recordedResponse = recordedCall.response;
+                handshake:RegisterResponse? recordedResponse = recordedCall.response;
     
                 if (recordedRequest.projectSecret == request.projectSecret && recordedResponse is handshake:RegisterResponse
                         && (repeatedCall is null || recordedRequest.astHash == request.astHash)) {
@@ -78,14 +80,15 @@ service "Handshake" on periscopeEndpoint {
                     ]
                 };
             } else {
-                handshake:RegisterResponse|error repeastedResponse = repeatedCall.response;
-                if (repeastedResponse is error) {
-                    response = repeastedResponse;
-                } else {
-                    handshake:RegisterRequest repeastedRequqest = repeatedCall.request;
-                    boolean isSameAst = repeastedRequqest.astHash == request.astHash;
-                    string obsId = repeastedResponse.obsId;
-                    string obsVersion = isSameAst ? (repeastedResponse.'version) : generateId(request.projectSecret);
+                handshake:RegisterResponse? repeatedResponse = repeatedCall.response;
+                string? repeatedResponseErrorMessage = repeatedCall.responseErrorMessage;
+                if (repeatedResponseErrorMessage is string) {
+                    response = error(repeatedResponseErrorMessage);
+                } else if (repeatedResponse is handshake:RegisterResponse) {
+                    handshake:RegisterRequest repeatedRequest = repeatedCall.request;
+                    boolean isSameAst = repeatedRequest.astHash == request.astHash;
+                    string obsId = repeatedResponse.obsId;
+                    string obsVersion = isSameAst ? (repeatedResponse.'version) : generateId(request.projectSecret);
 
                     response = {
                         obsId: obsId,
@@ -97,11 +100,14 @@ service "Handshake" on periscopeEndpoint {
                             { key: "response-type", value: isSameAst ? "repeated-obs-id-only" : "repeated-obs-version" }
                         ]
                     };
+                } else {
+                    return error("Unexpected error as recorded response is invalid");
                 }
             }
             recordedRegisterCalls.push({
                 request: request,
-                response: response
+                response: response is handshake:RegisterResponse ? response : (),
+                responseErrorMessage: response is error ? response.toString() : ()
             });
             return response;
         }
@@ -118,7 +124,7 @@ service "Handshake" on periscopeEndpoint {
         }
         recordedPublishAstCalls.push({
             request: request,
-            response: response
+            responseErrorMessage: response is error ? response.toString() : response
         });
         return response;
     }
@@ -135,4 +141,26 @@ function generateId(string projectSecret) returns string {
 
 function generateObsUrl(string obsId, string obsVersion) returns string {
     return "http://choreo.dev/obs/" + obsId + "/" + obsVersion;
+}
+
+service "Handshake" on periscopeCallsEndpoint {
+    resource function get register/calls() returns RegisterCall[] {
+        return recordedRegisterCalls;
+    }
+
+    resource function post register/calls(@http:Payload RegisterCall[] newCalls) returns RegisterCall[] {
+        var previousCalls = recordedRegisterCalls;
+        recordedRegisterCalls = newCalls;
+        return previousCalls;
+    }
+
+    resource function get publishAst/calls() returns PublishAstCall[] {
+        return recordedPublishAstCalls;
+    }
+
+    resource function post publishAst/calls(@http:Payload PublishAstCall[] newCalls) returns PublishAstCall[] {
+        var previousCalls = recordedPublishAstCalls;
+        recordedPublishAstCalls = newCalls;
+        return previousCalls;
+    }
 }

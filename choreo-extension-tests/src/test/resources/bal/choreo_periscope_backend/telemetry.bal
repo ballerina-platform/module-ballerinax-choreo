@@ -15,18 +15,19 @@
 // under the License.
 
 import ballerina/grpc;
+import ballerina/http;
 import ballerina_test/choreo_periscope_backend.telemetry;
 
 type PublishMetricsCall record {|
     telemetry:MetricsPublishRequest request;
-    error? response;
+    string? responseErrorMessage;
 |};
 
 PublishMetricsCall[] recordedPublishMetricsCall = [];
 
 type PublishTracesCall record {|
     telemetry:TracesPublishRequest request;
-    error? response;
+    string? responseErrorMessage;
 |};
 
 PublishTracesCall[] recordedPublishTracesCall = [];
@@ -47,7 +48,7 @@ service "Telemetry" on periscopeEndpoint {
         }
         recordedPublishMetricsCall.push({
             request: request,
-            response: response
+            responseErrorMessage: response is error ? response.toString() : response
         });
         return response;
     }
@@ -63,8 +64,30 @@ service "Telemetry" on periscopeEndpoint {
         }
         recordedPublishTracesCall.push({
             request: request,
-            response: response
+            responseErrorMessage: response is error ? response.toString() : response
         });
         return response;
+    }
+}
+
+service "Telemetry" on periscopeCallsEndpoint {
+    resource function get publishMetrics/calls() returns PublishMetricsCall[] {
+        return recordedPublishMetricsCall;
+    }
+
+    resource function post publishMetrics/calls(@http:Payload PublishMetricsCall[] newCalls) returns PublishMetricsCall[] {
+        PublishMetricsCall[] previousCalls = recordedPublishMetricsCall;
+        recordedPublishMetricsCall = newCalls;
+        return previousCalls;
+    }
+
+    resource function get publishTraces/calls() returns PublishTracesCall[] {
+        return recordedPublishTracesCall;
+    }
+
+    resource function post publishTraces/calls(@http:Payload PublishTracesCall[] newCalls) returns PublishTracesCall[] {
+        PublishTracesCall[] previousCalls = recordedPublishTracesCall;
+        recordedPublishTracesCall = newCalls;
+        return previousCalls;
     }
 }

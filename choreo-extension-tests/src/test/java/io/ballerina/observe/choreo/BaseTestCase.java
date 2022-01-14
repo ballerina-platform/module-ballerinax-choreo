@@ -22,7 +22,11 @@ import org.ballerinalang.test.context.BServerInstance;
 import org.ballerinalang.test.context.BalServer;
 import org.ballerinalang.test.context.BallerinaTestException;
 import org.ballerinalang.test.context.Utils;
+import org.ballerinalang.test.util.HttpClientRequest;
+import org.ballerinalang.test.util.HttpResponse;
+import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 
 import java.io.File;
@@ -30,7 +34,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -51,7 +58,7 @@ public class BaseTestCase {
     private static final String NODE_ID_BACKUP_FILE = "nodeId.back";
 
     @BeforeSuite(alwaysRun = true)
-    public void initialize() throws BallerinaTestException, IOException {
+    public void initializeSuite() throws BallerinaTestException, IOException {
         balServer = new BalServer();
 
         tempFilesDir = Files.createTempDirectory("choreo-test-temp-files-");
@@ -78,7 +85,7 @@ public class BaseTestCase {
     }
 
     @AfterSuite(alwaysRun = true)
-    public void destroy() throws IOException, BallerinaTestException {
+    public void cleanupSuite() throws IOException, BallerinaTestException {
         periscopeBackendServerInstance.shutdownServer();
 
         if (isNodeIdBackupRequired) {
@@ -102,6 +109,17 @@ public class BaseTestCase {
             LOGGER.severe("=== Ballerina Internal Log End ===");
         }
         balServer.cleanup();
+    }
+
+    @BeforeMethod
+    public void initializeTest() throws IOException {
+        List<String> calls = Arrays.asList("Handshake/register", "Handshake/publishAst", "Telemetry/publishMetrics",
+                "Telemetry/publishTraces");
+        for (String call : calls) {
+            HttpResponse response = HttpClientRequest.doPost("http://localhost:10091/" + call + "/calls", "[]",
+                    Collections.singletonMap("Content-Type", "application/json"));
+            Assert.assertEquals(response.getResponseCode(), 200);
+        }
     }
 
     protected Path getNodeIdFilePath() {
