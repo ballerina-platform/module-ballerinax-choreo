@@ -17,6 +17,7 @@
  */
 package io.ballerina.observe.choreo;
 
+import io.ballerina.observe.choreo.model.RecordedCalls;
 import org.ballerinalang.test.context.BServerInstance;
 import org.ballerinalang.test.context.LogLeecher;
 import org.ballerinalang.test.context.Utils;
@@ -123,12 +124,19 @@ public class ChoreoTracesTestCase extends BaseTestCase {
         testExtension(Collections.emptyMap(), "periscope.choreo.dev:443", "Config.cloud.toml");
     }
 
-    public void testExtensionWithLocalPeriscope(Map<String, String> additionalEnvVars) throws Exception {
+    public RecordedCalls testExtensionWithLocalPeriscope(Map<String, String> additionalEnvVars) throws Exception {
         testExtension(additionalEnvVars, "localhost:10090", "Config.toml");
+
+        RecordedCalls recordedCalls = new RecordedCalls();
+        recordedCalls.setRegisterCalls(getRegisterCalls());
+        recordedCalls.setPublishAstCalls(getPublishAstCalls());
+        recordedCalls.setPublishMetricsCalls(getPublishMetricsCalls());
+        recordedCalls.setPublishTracesCalls(getPublishTracesCalls());
+        return recordedCalls;
     }
 
-    public void testExtension(Map<String, String> additionalEnvVars, String reporterHost, String configFileName)
-            throws Exception {
+    public void testExtension(Map<String, String> additionalEnvVars, String reporterHost,
+                                       String configFileName) throws Exception {
         LogLeecher choreoExtLogLeecher = new LogLeecher(CHOREO_EXTENSION_LOG_PREFIX + reporterHost);
         serverInstance.addLogLeecher(choreoExtLogLeecher);
         LogLeecher choreoObservabilityUrlLogLeecher = new LogLeecher(CHOREO_EXTENSION_URL_LOG_PREFIX);
