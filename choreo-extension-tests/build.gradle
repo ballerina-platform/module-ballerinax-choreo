@@ -18,6 +18,7 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
     id 'jacoco'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
 }
 
 description = 'Ballerina - Choreo Extension Tests'
@@ -33,6 +34,8 @@ configurations {
 
 dependencies {
     observabilityExtensions project(path: ':choreo-extension-ballerina', configuration: 'distribution')
+
+    implementation "org.javassist:javassist:${javassistVersion}"
 
     testImplementation project(":choreo-extension-native")
     testImplementation "org.ballerinalang:ballerina-runtime:${ballerinaLangVersion}"
@@ -60,6 +63,15 @@ clean {
 
 jar {
     enabled = false
+    manifest {
+        attributes(
+                'Premain-Class': 'io.ballerina.observe.choreo.test.DelayedShutdownAgent'
+        )
+    }
+}
+
+shadowJar {
+    configurations = [project.configurations.runtimeClasspath]
 }
 
 task unpackJballerinaTools(type: Copy, dependsOn: configurations.jbalTools) {
@@ -200,6 +212,7 @@ task commitTomlFiles {
 }
 
 test {
+    dependsOn shadowJar
     dependsOn createServerZip
     dependsOn generateChoreoGrpcTestBackend
 
@@ -220,6 +233,7 @@ test {
     systemProperty 'jballerina.server.zip', createServerZip.outputs.files.singleFile
     systemProperty 'java.util.logging.config.file', "${buildDir}/resources/test/logging.properties"
     systemProperty 'ballerina.agent.path', configurations.testUtils.asPath
+    systemProperty 'choreo.ext.test.agent', shadowJar.archiveFile.get().getAsFile().getPath()
     useTestNG() {
         suites 'src/test/resources/testng.xml'
     }

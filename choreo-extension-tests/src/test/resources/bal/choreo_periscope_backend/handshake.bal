@@ -16,10 +16,11 @@
 
 import ballerina/grpc;
 import ballerina/http;
+import ballerina/log;
 import ballerina_test/choreo_periscope_backend.handshake;
 
-const string REGISTER_ERROR_PROJECT_SECRET_PREFIX = "register-error-";
-const string PUBLISH_AST_ERROR_PROJECT_SECRET_PREFIX = "publish-ast-error-";
+const string REGISTER_ABORT_ERROR_PROJECT_SECRET = "xxxxxxxxxxxxxxx-abort-register-error";
+const string PUBLISH_AST_ERROR_PROJECT_SECRET_PREFIX = "xxxxxxxxxxxxxxxxxx-publish-ast-error-";
 
 type RegisterCall record {|
     handshake:RegisterRequest request;
@@ -46,9 +47,10 @@ service "Handshake" on periscopeEndpoint {
     # + request - gRPC register request
     # + return - error if register fails or register response
     remote function register(handshake:RegisterRequest request) returns handshake:RegisterResponse|error {
+        log:printInfo("Received Handshake/register call", projectSecret = request.projectSecret);
         handshake:RegisterResponse|error response;
-        if (request.projectSecret.startsWith(REGISTER_ERROR_PROJECT_SECRET_PREFIX)) {
-            response = error("test error for register using project secret " + request.projectSecret);
+        if (request.projectSecret == REGISTER_ABORT_ERROR_PROJECT_SECRET) {
+            response = error grpc:AbortedError("test error for register using project secret " + request.projectSecret);
         } else {
             VersionInfo versionInfo = getVersionInformation(request.projectSecret, request.astHash);
             response = {
@@ -75,9 +77,10 @@ service "Handshake" on periscopeEndpoint {
     # + request - gRPC publish AST request
     # + return - error if publishing the AST fails
     remote function publishAst(handshake:PublishAstRequest request) returns error? {
+        log:printInfo("Received Handshake/publishAst call", obsId = request.obsId);
         error? response = ();
         if (request.obsId.startsWith(PUBLISH_AST_ERROR_PROJECT_SECRET_PREFIX)) {
-            response = error("test error for publish ast using obs ID " + request.obsId);
+            response = error grpc:AbortedError("test error for publish ast using obs ID " + request.obsId);
         }
         recordedPublishAstCalls.push({
             request: request,
@@ -97,6 +100,8 @@ service "Handshake" on periscopeCallsEndpoint {
     }
 
     resource function post register/calls(@http:Payload RegisterCall[] newCalls) returns RegisterCall[] {
+        log:printInfo("Updated Handshake/register calls", newCallsCount = newCalls.length(),
+            previousCallsCount = recordedRegisterCalls.length());
         var previousCalls = recordedRegisterCalls;
         recordedRegisterCalls = newCalls;
         return previousCalls;
@@ -107,6 +112,8 @@ service "Handshake" on periscopeCallsEndpoint {
     }
 
     resource function post publishAst/calls(@http:Payload PublishAstCall[] newCalls) returns PublishAstCall[] {
+        log:printInfo("Updated Handshake/publishAst calls", newCallsCount = newCalls.length(),
+            previousCallsCount = recordedPublishAstCalls.length());
         var previousCalls = recordedPublishAstCalls;
         recordedPublishAstCalls = newCalls;
         return previousCalls;

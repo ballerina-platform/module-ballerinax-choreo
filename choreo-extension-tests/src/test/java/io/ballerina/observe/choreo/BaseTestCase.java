@@ -23,31 +23,38 @@ import io.ballerina.observe.choreo.client.internal.secret.AnonymousAppSecretHand
 import io.ballerina.observe.choreo.recording.PublishAstCall;
 import io.ballerina.observe.choreo.recording.PublishMetricsCall;
 import io.ballerina.observe.choreo.recording.PublishTracesCall;
+import io.ballerina.observe.choreo.recording.RecordedTest;
 import io.ballerina.observe.choreo.recording.RegisterCall;
 import io.ballerina.observe.choreo.recording.Tag;
 import org.ballerinalang.test.context.BServerInstance;
 import org.ballerinalang.test.context.BalServer;
 import org.ballerinalang.test.context.BallerinaTestException;
+import org.ballerinalang.test.context.LogLeecher;
 import org.ballerinalang.test.context.Utils;
 import org.ballerinalang.test.util.HttpClientRequest;
 import org.ballerinalang.test.util.HttpResponse;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -61,12 +68,21 @@ import java.util.stream.Collectors;
 public class BaseTestCase {
     private static final Logger LOGGER = Logger.getLogger(BaseTestCase.class.getName());
 
-    static final File RESOURCES_DIR = Paths.get("src", "test", "resources", "bal").toFile();
-    private static final String PERISCOPE_CALLS_SERVICE = "http://localhost:10091";
+    protected static final File RESOURCES_DIR = Paths.get("src", "test", "resources", "bal").toFile();
+    protected static final String PERISCOPE_CALLS_SERVICE = "http://localhost:10091";
+    protected static final String TEST_RESOURCE_URL = "http://localhost:9091/test/sum";
+
+    protected static final String CHOREO_EXTENSION_LOG_PREFIX =
+            "ballerina: initializing connection with observability backend ";
+    protected static final String CHOREO_EXTENSION_URL_LOG_PREFIX = "ballerina: visit ";
+    protected static final String CHOREO_EXTENSION_METRICS_ENABLED_LOG =
+            "ballerina: started publishing metrics to Choreo";
+    protected static final String CHOREO_EXTENSION_TRACES_ENABLED_LOG =
+            "ballerina: started publishing traces to Choreo";
 
     private BServerInstance periscopeBackendServerInstance;
     protected Path tempFilesDir;
-    private static BalServer balServer;
+    static BalServer balServer;
     protected BServerInstance serverInstance;
 
     private boolean isNodeIdBackupRequired = false;
@@ -128,7 +144,7 @@ public class BaseTestCase {
     }
 
     @BeforeMethod
-    public void initializeTest() throws IOException, BallerinaTestException {
+    public void initializeTestInBaseTestCase() throws IOException {
         List<String> calls = Arrays.asList("Handshake/register", "Handshake/publishAst", "Telemetry/publishMetrics",
                 "Telemetry/publishTraces");
         for (String call : calls) {
@@ -136,28 +152,18 @@ public class BaseTestCase {
                     Collections.singletonMap("Content-Type", "application/json"));
             Assert.assertEquals(response.getResponseCode(), 200);
         }
-        if (serverInstance != null) {
-            Path projectFile = Paths.get(serverInstance.getServerHome(), AnonymousAppSecretHandler.PROJECT_FILE_NAME);
-            Files.deleteIfExists(projectFile);
-        }
-        serverInstance = new BServerInstance(balServer);
-    }
-
-    @AfterMethod
-    public void cleanUpTest() throws Exception {
-        serverInstance.shutdownServer();
     }
 
     protected Path getNodeIdFilePath() {
         return ClientUtils.getGlobalChoreoConfigDir().resolve(NODE_ID_FILE_NAME);
     }
 
-    protected String getNodeId() throws IOException {
+    protected String getNodeIdFromFileSystem() throws IOException {
         return Files.readString(ClientUtils.getGlobalChoreoConfigDir().resolve(NODE_ID_FILE_NAME));
     }
 
-    protected String getProjectObsId(String cwd) throws IOException {
-        Path projectFile = Paths.get(cwd, AnonymousAppSecretHandler.PROJECT_FILE_NAME);
+    protected String getProjectObsIdFromFileSystem(String workingDir) throws IOException {
+        Path projectFile = Paths.get(workingDir, AnonymousAppSecretHandler.PROJECT_FILE_NAME);
         Properties projectProperties = new Properties();
         try (InputStream inputStream = new FileInputStream(projectFile.toFile())) {
             projectProperties.load(inputStream);
@@ -165,15 +171,121 @@ public class BaseTestCase {
         }
     }
 
-    protected String getProjectSecret(String obsId) throws IOException {
-        return Files.readString(ClientUtils.getGlobalChoreoConfigDir().resolve(obsId)
-                .resolve(AnonymousAppSecretHandler.PROJECT_SECRET_FILE_NAME)).trim();
+    protected String getProjectSecretFromFileSystem(String obsId) throws IOException {
+        Path projectSecretPath = ClientUtils.getGlobalChoreoConfigDir()
+                .resolve(obsId)
+                .resolve(AnonymousAppSecretHandler.PROJECT_SECRET_FILE_NAME);
+        return Files.readString(projectSecretPath).trim();
+    }
+
+    protected void setProjectObsIdIntoFileSystem(String workingDir, String obsId) throws IOException {
+        Path projectFile = Paths.get(workingDir, AnonymousAppSecretHandler.PROJECT_FILE_NAME);
+        Files.deleteIfExists(projectFile);
+        Properties projectProperties = new Properties();
+        projectProperties.setProperty(AnonymousAppSecretHandler.PROJECT_OBSERVABILITY_ID_CONFIG_KEY, obsId);
+        try (OutputStream outputStream = new FileOutputStream(projectFile.toFile())) {
+            projectProperties.store(outputStream, "Created for integration tests");
+        }
+    }
+
+    protected void setProjectSecretIntoFileSystem(String obsId, String projectSecret) throws IOException {
+        removeProjectDirFromUserHome(obsId);
+        Path projectSecretParentPath = ClientUtils.getGlobalChoreoConfigDir().resolve(obsId);
+        if (projectSecretParentPath.toFile().mkdirs()) {
+            LOGGER.info("Created project dir in home: " + projectSecretParentPath);
+        }
+        Path projectSecretPath = projectSecretParentPath.resolve(AnonymousAppSecretHandler.PROJECT_SECRET_FILE_NAME);
+        Files.createFile(projectSecretPath);
+        Files.writeString(projectSecretPath, projectSecret, StandardCharsets.UTF_8, StandardOpenOption.WRITE);
+    }
+
+    protected void removeProjectDirFromUserHome(String obsId) throws IOException {
+        Path projectSecretParentPath = ClientUtils.getGlobalChoreoConfigDir().resolve(obsId);
+        if (projectSecretParentPath.toFile().exists()) {
+            Files.walk(projectSecretParentPath)
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+            Files.deleteIfExists(projectSecretParentPath);
+        }
     }
 
     protected List<Tag> findTag(List<Tag> tagsList, Tag tag) {
         return tagsList.stream()
                 .filter(spanTag -> Objects.equals(spanTag, tag))
                 .collect(Collectors.toList());
+    }
+
+    protected RecordedTest testExtensionWithLocalPeriscope(Map<String, String> additionalEnvVars) throws Exception {
+        RecordedTest recordedTest = new RecordedTest();
+        recordedTest.recordStart();
+        testExtension(additionalEnvVars, "localhost:10090", "Config.toml");
+        recordedTest.recordEnd();
+        populateWithRecordedCalls(recordedTest);
+        return recordedTest;
+    }
+
+    protected void populateWithRecordedCalls(RecordedTest recordedTest) throws IOException {
+        recordedTest.setRegisterCalls(getRegisterCalls());
+        recordedTest.setPublishAstCalls(getPublishAstCalls());
+        recordedTest.setPublishMetricsCalls(getPublishMetricsCalls());
+        recordedTest.setPublishTracesCalls(getPublishTracesCalls());
+    }
+
+    protected void testExtension(Map<String, String> additionalEnvVars, String reporterHost,
+                               String configFileName) throws Exception {
+        LogLeecher choreoExtLogLeecher = new LogLeecher(CHOREO_EXTENSION_LOG_PREFIX + reporterHost);
+        serverInstance.addLogLeecher(choreoExtLogLeecher);
+        LogLeecher choreoObservabilityUrlLogLeecher = new LogLeecher(CHOREO_EXTENSION_URL_LOG_PREFIX);
+        serverInstance.addLogLeecher(choreoObservabilityUrlLogLeecher);
+        LogLeecher choreoExtMetricsEnabledLogLeecher = new LogLeecher(CHOREO_EXTENSION_METRICS_ENABLED_LOG);
+        serverInstance.addLogLeecher(choreoExtMetricsEnabledLogLeecher);
+        LogLeecher choreoExtTracesEnabledLogLeecher = new LogLeecher(CHOREO_EXTENSION_TRACES_ENABLED_LOG);
+        serverInstance.addLogLeecher(choreoExtTracesEnabledLogLeecher);
+        LogLeecher errorLogLeecher = new LogLeecher("error");
+        serverInstance.addErrorLogLeecher(errorLogLeecher);
+        LogLeecher exceptionLogLeecher = new LogLeecher("Exception");
+        serverInstance.addErrorLogLeecher(exceptionLogLeecher);
+
+        String configFile = Paths.get("src", "test", "resources", "bal", "choreo_ext_test", configFileName)
+                .toFile().getAbsolutePath();
+        Map<String, String> env = new HashMap<>(additionalEnvVars);
+        env.put("BAL_CONFIG_FILES", configFile);
+
+        startTestService(env, true);
+        choreoExtLogLeecher.waitForText(10000);
+        choreoObservabilityUrlLogLeecher.waitForText(10000);
+        choreoExtMetricsEnabledLogLeecher.waitForText(1000);
+
+        // Send requests to generate metrics & traces
+        String responseData = HttpClientRequest.doGet(TEST_RESOURCE_URL).getData();
+        Assert.assertEquals(responseData, "Sum: 53");
+        Thread.sleep(11000);    // Data is published every 10 seconds
+
+        // The tracing log is printed on first start of a span
+        choreoExtTracesEnabledLogLeecher.waitForText(1000);
+
+        Assert.assertFalse(errorLogLeecher.isTextFound(), "Unexpected error log found");
+        Assert.assertFalse(exceptionLogLeecher.isTextFound(), "Unexpected exception log found");
+
+        // Validating generated project files
+        Path projectFile = Paths.get(serverInstance.getServerHome(), AnonymousAppSecretHandler.PROJECT_FILE_NAME);
+        Assert.assertTrue(Files.exists(projectFile), "Choreo Project file not generated");
+    }
+
+    protected void startTestService(Map<String, String> env, boolean expectSuccessfulStart)
+            throws BallerinaTestException, IOException {
+        // Cleaning up Dependencies.toml to avoid dependency issues in dependency updates
+        final String projectDir = Paths.get(RESOURCES_DIR.getAbsolutePath(), "choreo_ext_test").toFile()
+                .getAbsolutePath();
+        Files.deleteIfExists(Paths.get(projectDir, "Dependencies.toml"));
+
+        int[] requiredPorts = expectSuccessfulStart ? new int[]{9091} : new int[0];
+        serverInstance.startServer(projectDir, "choreo_ext_test", new String[]{"--offline"}, null, env,
+                requiredPorts);
+        if (expectSuccessfulStart) {
+            Utils.waitForPortsToOpen(requiredPorts, 1000 * 60, false, "localhost");
+        }
     }
 
     protected List<RegisterCall> getRegisterCalls() throws IOException {

@@ -27,7 +27,8 @@
 
     <test name="ballerina-choreo-extension-tests" parallel="false">
         <classes>
-            <class name="io.ballerina.observe.choreo.ChoreoTracesTestCase"/>
+            <class name="io.ballerina.observe.choreo.GeneralExtensionTestCase"/>
+            <class name="io.ballerina.observe.choreo.InitializationErrorTestCase"/>
         </classes>
     </test>
 </suite>

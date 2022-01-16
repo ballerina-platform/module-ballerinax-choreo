@@ -1,4 +1,4 @@
-// Copyright (c) 2021 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+// Copyright (c) 2022 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
 //
 // WSO2 Inc. licenses this file to you under the Apache License,
 // Version 2.0 (the "License"); you may not use this file except
@@ -25,7 +25,38 @@ type ObservabilityVersion record {|
     string astHash;
 |};
 
-ObservabilityGroup[] obsGroups = [];
+ObservabilityGroup[] obsGroups = [
+    {
+        id: "publish-ast-error-1",
+        projectSecret: "publish-ast-error",
+        versions: [
+            {
+                id: "publish-ast-error-2",
+                astHash: "publish-ast-error-st-hash"
+            }
+        ]
+    },
+    {
+        id: "publish-metrics-error-3",
+        projectSecret: "publish-metrics-error",
+        versions: [
+            {
+                id: "publish-metrics-error-4",
+                astHash: "publish-metrics-error-st-hash"
+            }
+        ]
+    },
+    {
+        id: "publish-traces-error-5",
+        projectSecret: "publish-traces-error",
+        versions: [
+            {
+                id: "publish-traces-error-6",
+                astHash: "publish-traces-error-st-hash"
+            }
+        ]
+    }
+];
 
 type VersionInfo record {|
     string obsId;
@@ -77,7 +108,7 @@ function getVersionInformation(string projectSecret, string astHash) returns Ver
     };
 }
 
-int idCounter = 0;
+int idCounter = obsGroups.length();
 
 function generateId(string projectSecret) returns string {
     idCounter += 1;

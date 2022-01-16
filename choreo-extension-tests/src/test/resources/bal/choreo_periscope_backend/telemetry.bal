@@ -16,10 +16,11 @@
 
 import ballerina/grpc;
 import ballerina/http;
+import ballerina/log;
 import ballerina_test/choreo_periscope_backend.telemetry;
 
-const string PUBLISH_METRICS_ERROR_PROJECT_SECRET_PREFIX = "publish-metrics-error-";
-const string PUBLISH_TRACES_ERROR_PROJECT_SECRET_PREFIX = "publish-traces-error-";
+const string PUBLISH_METRICS_ERROR_PROJECT_SECRET_PREFIX = "xxxxxxxxxxxxxx-publish-metrics-error-";
+const string PUBLISH_TRACES_ERROR_PROJECT_SECRET_PREFIX = "xxxxxxxxxxxxxxx-publish-traces-error-";
 
 type PublishMetricsCall record {|
     telemetry:MetricsPublishRequest request;
@@ -45,9 +46,11 @@ service "Telemetry" on periscopeEndpoint {
     # + request - gRPC publish metrics request
     # + return - error if publishing the metrics fails
     remote function publishMetrics(telemetry:MetricsPublishRequest request) returns error? {
+        log:printInfo("Received Telemetry/publishMetrics call", obsId = request.observabilityId,
+            obsVersion = request.'version);
         error? response = ();
         if (request.observabilityId.startsWith(PUBLISH_METRICS_ERROR_PROJECT_SECRET_PREFIX)) {
-            response = error("test error for publish metrics using obs ID " + request.observabilityId);
+            response = error grpc:AbortedError("test error for publish metrics using obs ID " + request.observabilityId);
         }
         recordedPublishMetricsCall.push({
             request: request,
@@ -61,9 +64,11 @@ service "Telemetry" on periscopeEndpoint {
     # + request - gRPC publish traces request
     # + return - error if publishing the traces fails
     remote function publishTraces(telemetry:TracesPublishRequest request) returns error? {
+        log:printInfo("Received Telemetry/publishTraces call", obsId = request.observabilityId,
+            obsVersion = request.'version);
         error? response = ();
         if (request.observabilityId.startsWith(PUBLISH_TRACES_ERROR_PROJECT_SECRET_PREFIX)) {
-            response = error("test error for publish traces using obs ID " + request.observabilityId);
+            response = error grpc:AbortedError("test error for publish traces using obs ID " + request.observabilityId);
         }
         recordedPublishTracesCall.push({
             request: request,
@@ -79,6 +84,8 @@ service "Telemetry" on periscopeCallsEndpoint {
     }
 
     resource function post publishMetrics/calls(@http:Payload PublishMetricsCall[] newCalls) returns PublishMetricsCall[] {
+        log:printInfo("Updated Telemetry/publishMetrics calls", newCallsCount = newCalls.length(),
+            previousCallsCount = recordedPublishMetricsCall.length());
         PublishMetricsCall[] previousCalls = recordedPublishMetricsCall;
         recordedPublishMetricsCall = newCalls;
         return previousCalls;
@@ -89,6 +96,8 @@ service "Telemetry" on periscopeCallsEndpoint {
     }
 
     resource function post publishTraces/calls(@http:Payload PublishTracesCall[] newCalls) returns PublishTracesCall[] {
+        log:printInfo("Updated Telemetry/publishTraces calls", newCallsCount = newCalls.length(),
+            previousCallsCount = recordedPublishTracesCall.length());
         PublishTracesCall[] previousCalls = recordedPublishTracesCall;
         recordedPublishTracesCall = newCalls;
         return previousCalls;

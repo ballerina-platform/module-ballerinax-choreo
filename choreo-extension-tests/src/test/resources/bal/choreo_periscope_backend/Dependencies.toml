@@ -207,6 +207,9 @@ dependencies = [
 	{org = "ballerina", name = "lang.value"},
 	{org = "ballerina", name = "observe"}
 ]
+modules = [
+	{org = "ballerina", packageName = "log", moduleName = "log"}
+]
 
 [[package]]
 org = "ballerina"
@@ -304,6 +307,7 @@ version = "0.1.0"
 dependencies = [
 	{org = "ballerina", name = "grpc"},
 	{org = "ballerina", name = "http"},
+	{org = "ballerina", name = "log"},
 	{org = "ballerina", name = "protobuf"}
 ]
 modules = [
