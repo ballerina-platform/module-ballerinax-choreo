@@ -198,12 +198,40 @@ public class InitializationErrorTestCase extends BaseTestCase {
         Assert.assertEquals(recordedTest.getRegisterCalls().size(), 0);
     }
 
+    @Test
+    public void testExtensionWithoutObservabilityIncluded() throws BallerinaTestException, IOException {
+        LogLeecher clientNotInitializedErrorLogLeecher = new LogLeecher(
+                "error: Failed to initialize Choreo client. Please check Ballerina.toml");
+        serverInstance.addErrorLogLeecher(clientNotInitializedErrorLogLeecher);
+        LogLeecher sequenceDiagramDataNotFoundErrorLogLeecher = new LogLeecher(
+                "cause: Sequence diagram information cannot be found in the binary");
+        serverInstance.addErrorLogLeecher(sequenceDiagramDataNotFoundErrorLogLeecher);
+
+        RecordedTest recordedTest = new RecordedTest();
+        recordedTest.recordStart();
+
+        testExtension("Config.toml", new String[]{"--observability-included=false"});
+        clientNotInitializedErrorLogLeecher.waitForText(10000);
+        sequenceDiagramDataNotFoundErrorLogLeecher.waitForText(2000);
+        Utils.checkPortsAvailability(new int[]{9091});
+
+        recordedTest.recordEnd();
+        populateWithRecordedCalls(recordedTest);
+
+        Assert.assertEquals(recordedTest.getPublishAstCalls().size(), 0);
+        Assert.assertEquals(recordedTest.getPublishMetricsCalls().size(), 0);
+        Assert.assertEquals(recordedTest.getPublishTracesCalls().size(), 0);
+        Assert.assertEquals(recordedTest.getRegisterCalls().size(), 0);
+    }
+
     private void testExtension(String configFileName) throws IOException, BallerinaTestException {
-        String configFile = Paths.get("src", "test", "resources", "bal", "choreo_ext_test", configFileName)
-                .toFile().getAbsolutePath();
+        testExtension(configFileName, new String[0]);
+    }
+
+    private void testExtension(String configFileName, String[] additionalBuildArgs)
+            throws IOException, BallerinaTestException {
         Map<String, String> env = new HashMap<>();
-        env.put("BAL_CONFIG_FILES", configFile);
         env.put("JAVA_OPTS", "-javaagent:" + System.getProperty("choreo.ext.test.agent"));
-        startTestService(env, false);
+        startTestService(env, additionalBuildArgs, false, configFileName);
     }
 }

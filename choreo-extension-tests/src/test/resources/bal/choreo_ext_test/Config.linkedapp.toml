@@ -1,0 +1,9 @@
+[ballerina.observe]
+enabled=true
+provider="choreo"
+
+[ballerinax.choreo]
+reporterHostname="localhost"
+reporterPort=10090
+reporterUseSSL=false
+applicationSecret="xxxxxxxxxx-pre-linked-project-secret"

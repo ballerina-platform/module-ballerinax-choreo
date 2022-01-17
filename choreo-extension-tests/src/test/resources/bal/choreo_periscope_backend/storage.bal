@@ -27,6 +27,16 @@ type ObservabilityVersion record {|
 
 ObservabilityGroup[] obsGroups = [
     {
+        id: "xxxxxxxxxx-pre-linked-project-secret-01",
+        projectSecret: "xxxxxxxxxx-pre-linked-project-secret",
+        versions: [
+            {
+                id: "xxxxxxxxxx-pre-linked-project-secret-02",
+                astHash: "xxxxxxxxxx-pre-linked-project-secret-st-hash"
+            }
+        ]
+    },
+    {
         id: "xxxxxxxxxxxxxxxxxx-publish-ast-error-1",
         projectSecret: "xxxxxxxxxxxxxxxxxx-publish-ast-error",
         versions: [
@@ -63,6 +73,16 @@ ObservabilityGroup[] obsGroups = [
             {
                 id: "xxxxxxxxx-publish-traces-error-retry-8",
                 astHash: "xxxxxxxxx-publish-traces-error-retry-st-hash"
+            }
+        ]
+    },
+    {
+        id: "xx-publish-traces-error-buffer-clean-9",
+        projectSecret: "xx-publish-traces-error-buffer-clean",
+        versions: [
+            {
+                id: "xx-publish-traces-error-buffer-clean-8",
+                astHash: "xx-publish-traces-error-buffer-clean-st-hash"
             }
         ]
     }

@@ -34,12 +34,18 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * Parent test case for all tests which had started up successfully.
  */
 public class SuccessfulStartBaseTestCase extends BaseTestCase {
+    private static final List<String> EXPECTED_METRICS_NAMES = Arrays.asList("up", "requests_total",
+            "response_time_seconds", "response_time_seconds_mean", "response_time_seconds_max",
+            "response_time_seconds_min", "response_time_seconds_stdDev", "response_time_seconds_percentile",
+            "inprogress_requests", "response_time_nanoseconds_total");
+
     @BeforeMethod
     public void initializeTest() throws IOException, BallerinaTestException {
         if (serverInstance != null) {
@@ -56,12 +62,13 @@ public class SuccessfulStartBaseTestCase extends BaseTestCase {
 
     protected void validateRecordedTest(RecordedTest recordedTest) throws IOException {
         validateRecordedRegisterCall(recordedTest);
+        validateCreatedFiles(recordedTest);
         validateRecordedPublishAstCall(recordedTest);
         validateRecordedPublishTracesCall(recordedTest);
         validateRecordedPublishMetricsCall(recordedTest);
     }
 
-    protected void validateRecordedRegisterCall(RecordedTest recordedTest) throws IOException {
+    protected void validateRecordedRegisterCall(RecordedTest recordedTest) {
         // Validate recorded register call
         Assert.assertEquals(recordedTest.getRegisterCalls().size(), 1);
         RegisterCall registerCall = recordedTest.getRegisterCalls().get(0);
@@ -70,8 +77,13 @@ public class SuccessfulStartBaseTestCase extends BaseTestCase {
         Assert.assertEquals(registerCall.getResponse().getObsUrl(),
                 "http://choreo.dev/obs/" + obsId + "/" + obsVersion);
         Assert.assertNull(registerCall.getResponseErrorMessage());
+    }
 
-        // Validate saved files
+    protected void validateCreatedFiles(RecordedTest recordedTest) throws IOException {
+        RegisterCall registerCall = recordedTest.getRegisterCalls().get(0);
+        String obsId = registerCall.getResponse().getObsId();
+
+        // Validate created files
         Assert.assertEquals(getProjectObsIdFromFileSystem(serverInstance.getServerHome()), obsId);
         Assert.assertEquals(registerCall.getRequest().getProjectSecret(), getProjectSecretFromFileSystem(obsId));
     }
@@ -113,8 +125,7 @@ public class SuccessfulStartBaseTestCase extends BaseTestCase {
         // Validate recorded publish traces call span common information
         List<PublishTracesCall.Request.TraceSpan> traceSpans = publishTracesCall.getRequest().getSpans();
         Assert.assertEquals(traceSpans.size(), 2);
-        traceSpans.forEach(span -> periscopeTags.forEach(
-                tag -> Assert.assertEquals(findTag(span.getTags(), tag).size(), 1)));
+        traceSpans.forEach(span -> Assert.assertTrue(span.getTags().containsAll(periscopeTags)));
         traceSpans.forEach(span -> {
             Assert.assertTrue(span.getTimestamp() > recordedTest.getStartTimestamp());
             Assert.assertTrue(span.getTimestamp() < recordedTest.getEndTimestamp());
@@ -148,7 +159,7 @@ public class SuccessfulStartBaseTestCase extends BaseTestCase {
         // Validate published child span
         Assert.assertEquals(childSpan.getServiceName(), "/test");
         Assert.assertEquals(childSpan.getOperationName(), "ballerina_test/choreo_ext_test/ObservableAdder:getSum");
-        Assert.assertEquals(childSpan.getTags().size(), periscopeTags.size() + 9);
+        Assert.assertEquals(childSpan.getTags().size(), periscopeTags.size() + 10);
         Assert.assertEquals(childSpan.getCheckpoints().size(), 0);
     }
 
@@ -167,8 +178,8 @@ public class SuccessfulStartBaseTestCase extends BaseTestCase {
             Assert.assertEquals(publishMetricsCall.getRequest().getVersion(), obsVersion);
             Assert.assertEquals(publishMetricsCall.getRequest().getNodeId(), nodeId);
             Assert.assertEquals(publishMetricsCall.getRequest().getProjectSecret(), projectSecret);
-            publishMetricsCall.getRequest().getMetrics().forEach(metric -> periscopeTags.forEach(
-                    tag -> Assert.assertEquals(findTag(metric.getTags(), tag).size(), 1)));
+            publishMetricsCall.getRequest().getMetrics().forEach(metric ->
+                    Assert.assertTrue(metric.getTags().containsAll(periscopeTags)));
             Assert.assertNull(publishMetricsCall.getResponseErrorMessage());
 
             publishMetricsCall.getRequest().getMetrics().forEach(metric -> {
@@ -182,6 +193,18 @@ public class SuccessfulStartBaseTestCase extends BaseTestCase {
                 Assert.assertEquals(metric.getTags(), periscopeTags);
             } else {
                 Assert.assertEquals(publishMetricsCall.getRequest().getMetrics().size(), 75);
+                publishMetricsCall.getRequest().getMetrics().forEach(metric -> {
+                    Assert.assertTrue(metric.getTags().containsAll(periscopeTags));
+                    if ("up".equals(metric.getName())) {
+                        Assert.assertEquals(metric.getValue(), 1f);
+                        Assert.assertEquals(metric.getTags(), periscopeTags);
+                    } else {
+                        Assert.assertTrue(metric.getValue() >= 0f,
+                                "Metric " + metric.getName() + " has a negative value: " + metric.getValue());
+                    }
+                    Assert.assertTrue(EXPECTED_METRICS_NAMES.contains(metric.getName()),
+                            "Unknown metric: " + metric.getName());
+                });
             }
         });
     }

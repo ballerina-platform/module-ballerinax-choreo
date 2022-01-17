@@ -25,7 +25,7 @@ import io.ballerina.observe.choreo.recording.PublishMetricsCall;
 import io.ballerina.observe.choreo.recording.PublishTracesCall;
 import io.ballerina.observe.choreo.recording.RecordedTest;
 import io.ballerina.observe.choreo.recording.RegisterCall;
-import io.ballerina.observe.choreo.recording.Tag;
+import org.apache.commons.lang3.ArrayUtils;
 import org.ballerinalang.test.context.BServerInstance;
 import org.ballerinalang.test.context.BalServer;
 import org.ballerinalang.test.context.BallerinaTestException;
@@ -55,10 +55,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * Parent test class for all extension integration tests cases. This will provide basic
@@ -210,12 +208,6 @@ public class BaseTestCase {
         }
     }
 
-    protected List<Tag> findTag(List<Tag> tagsList, Tag tag) {
-        return tagsList.stream()
-                .filter(spanTag -> Objects.equals(spanTag, tag))
-                .collect(Collectors.toList());
-    }
-
     protected RecordedTest testExtensionWithLocalPeriscope(Map<String, String> additionalEnvVars) throws Exception {
         RecordedTest recordedTest = new RecordedTest();
         recordedTest.recordStart();
@@ -243,12 +235,7 @@ public class BaseTestCase {
         LogLeecher choreoExtTracesEnabledLogLeecher = new LogLeecher(CHOREO_EXTENSION_TRACES_ENABLED_LOG);
         serverInstance.addLogLeecher(choreoExtTracesEnabledLogLeecher);
 
-        String configFile = Paths.get("src", "test", "resources", "bal", "choreo_ext_test", configFileName)
-                .toFile().getAbsolutePath();
-        Map<String, String> env = new HashMap<>(additionalEnvVars);
-        env.put("BAL_CONFIG_FILES", configFile);
-
-        startTestService(env, true);
+        startTestService(additionalEnvVars, new String[0], true, configFileName);
         choreoExtLogLeecher.waitForText(10000);
         choreoObservabilityUrlLogLeecher.waitForText(10000);
         choreoExtMetricsEnabledLogLeecher.waitForText(1000);
@@ -266,15 +253,22 @@ public class BaseTestCase {
         Assert.assertTrue(Files.exists(projectFile), "Choreo Project file not generated");
     }
 
-    protected void startTestService(Map<String, String> env, boolean expectSuccessfulStart)
+    protected void startTestService(Map<String, String> additionalEnvVars, String[] additionalBuildArgs,
+                                    boolean expectSuccessfulStart, String configFileName)
             throws BallerinaTestException, IOException {
         // Cleaning up Dependencies.toml to avoid dependency issues in dependency updates
         final String projectDir = Paths.get(RESOURCES_DIR.getAbsolutePath(), "choreo_ext_test").toFile()
                 .getAbsolutePath();
         Files.deleteIfExists(Paths.get(projectDir, "Dependencies.toml"));
 
+        String configFile = Paths.get("src", "test", "resources", "bal", "choreo_ext_test", configFileName)
+                .toFile().getAbsolutePath();
+        Map<String, String> env = new HashMap<>(additionalEnvVars);
+        env.put("BAL_CONFIG_FILES", configFile);
+
+        String[] buildArgs = ArrayUtils.addAll(additionalBuildArgs, "--offline");
         int[] requiredPorts = expectSuccessfulStart ? new int[]{9091} : new int[0];
-        serverInstance.startServer(projectDir, "choreo_ext_test", new String[]{"--offline"}, null, env,
+        serverInstance.startServer(projectDir, "choreo_ext_test", buildArgs, null, env,
                 requiredPorts);
         if (expectSuccessfulStart) {
             Utils.waitForPortsToOpen(requiredPorts, 1000 * 60, false, "localhost");
