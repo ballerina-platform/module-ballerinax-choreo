@@ -15,7 +15,7 @@
 // under the License.
 
 import ballerina/http;
-import ballerina/observe; import ballerinax/choreo as _;   // TODO: Remove extension module imports
+import ballerina/observe;
 
 service /test on new http:Listener(9091) {
     resource function get sum() returns string {

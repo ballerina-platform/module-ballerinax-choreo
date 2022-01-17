@@ -21,6 +21,7 @@ import ballerina_test/choreo_periscope_backend.telemetry;
 
 const string PUBLISH_METRICS_ERROR_PROJECT_SECRET_PREFIX = "xxxxxxxxxxxxxx-publish-metrics-error-";
 const string PUBLISH_TRACES_ERROR_PROJECT_SECRET_PREFIX = "xxxxxxxxxxxxxxx-publish-traces-error-";
+const string PUBLISH_TRACES_ERROR_RETRY_PROJECT_SECRET_PREFIX = "xxxxxxxxx-publish-traces-error-retry-";
 
 type PublishMetricsCall record {|
     telemetry:MetricsPublishRequest request;
@@ -69,6 +70,17 @@ service "Telemetry" on periscopeEndpoint {
         error? response = ();
         if (request.observabilityId.startsWith(PUBLISH_TRACES_ERROR_PROJECT_SECRET_PREFIX)) {
             response = error grpc:AbortedError("test error for publish traces using obs ID " + request.observabilityId);
+        } else if (request.observabilityId.startsWith(PUBLISH_TRACES_ERROR_RETRY_PROJECT_SECRET_PREFIX)) {
+            boolean alreadyFailed = false;
+            foreach PublishTracesCall publishCall in recordedPublishTracesCall {
+                if (publishCall.request.observabilityId == request.observabilityId) {
+                    alreadyFailed = true;
+                }
+            }
+            if (!alreadyFailed) {
+                response = error grpc:AbortedError("test error for retry for publish traces using obs ID " +
+                    request.observabilityId);
+            }
         }
         recordedPublishTracesCall.push({
             request: request,

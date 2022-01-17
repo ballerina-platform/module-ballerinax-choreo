@@ -18,51 +18,24 @@
 package io.ballerina.observe.choreo;
 
 import io.ballerina.observe.choreo.client.internal.secret.AnonymousAppSecretHandler;
-import io.ballerina.observe.choreo.recording.PublishAstCall;
-import io.ballerina.observe.choreo.recording.PublishMetricsCall;
-import io.ballerina.observe.choreo.recording.PublishTracesCall;
-import io.ballerina.observe.choreo.recording.PublishTracesCall.Request.TraceSpan;
-import io.ballerina.observe.choreo.recording.PublishTracesCall.Request.TraceSpan.Reference.ReferenceType;
 import io.ballerina.observe.choreo.recording.RecordedTest;
-import io.ballerina.observe.choreo.recording.RegisterCall;
-import io.ballerina.observe.choreo.recording.Tag;
-import org.ballerinalang.test.context.BServerInstance;
-import org.ballerinalang.test.context.BallerinaTestException;
 import org.ballerinalang.test.context.LogLeecher;
 import org.ballerinalang.test.util.HttpClientRequest;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
  * Integration tests for Choreo extension.
  */
-public class GeneralExtensionTestCase extends BaseTestCase {
+public class GeneralExtensionTestCase extends SuccessfulStartBaseTestCase {
     private static final String RESTART_TEST_PROJECT_FILE = "restart_test_project_file";
-
-    @BeforeMethod
-    public void initializeTest() throws IOException, BallerinaTestException {
-        if (serverInstance != null) {
-            Path projectFile = Paths.get(serverInstance.getServerHome(), AnonymousAppSecretHandler.PROJECT_FILE_NAME);
-            Files.deleteIfExists(projectFile);
-        }
-        serverInstance = new BServerInstance(balServer);
-    }
-
-    @AfterMethod
-    public void cleanUpTest() throws Exception {
-        serverInstance.shutdownServer();
-    }
 
     @Test
     public void testPublishDataToChoreo() throws Exception {
@@ -71,7 +44,7 @@ public class GeneralExtensionTestCase extends BaseTestCase {
         Files.deleteIfExists(projectFile);  // To test fresh project
 
         RecordedTest recordedTest = testExtensionWithLocalPeriscope(Collections.emptyMap());
-        validateRecordedTest(recordedTest, true);
+        validateRecordedTest(recordedTest);
         Assert.assertEquals(recordedTest.getRegisterCalls().get(0).getRequest().getNodeId(), getNodeIdFromFileSystem());
 
         // Storing the choreo project file for dependent test testRestartBallerinaService
@@ -91,7 +64,10 @@ public class GeneralExtensionTestCase extends BaseTestCase {
         String previousNodeId = getNodeIdFromFileSystem();
 
         RecordedTest recordedTest = testExtensionWithLocalPeriscope(Collections.emptyMap());
-        validateRecordedTest(recordedTest, false);
+        validateRecordedRegisterCall(recordedTest);
+        Assert.assertEquals(recordedTest.getPublishAstCalls().size(), 0);
+        validateRecordedPublishTracesCall(recordedTest);
+        validateRecordedPublishMetricsCall(recordedTest);
         Assert.assertEquals(recordedTest.getRegisterCalls().get(0).getRequest().getNodeId(), getNodeIdFromFileSystem());
 
         // Validate final choreo project file with previous test choreo project file
@@ -107,7 +83,7 @@ public class GeneralExtensionTestCase extends BaseTestCase {
         envVars.put("CHOREO_EXT_LOG_LEVEL", "DEBUG");
 
         RecordedTest recordedTest = testExtensionWithLocalPeriscope(envVars);
-        validateRecordedTest(recordedTest, true);
+        validateRecordedTest(recordedTest);
         Assert.assertEquals(recordedTest.getRegisterCalls().get(0).getRequest().getNodeId(), getNodeIdFromFileSystem());
     }
 
@@ -118,7 +94,7 @@ public class GeneralExtensionTestCase extends BaseTestCase {
         Files.writeString(nodeIdFile, providedNodeId);
 
         RecordedTest recordedTest = testExtensionWithLocalPeriscope(Collections.emptyMap());
-        validateRecordedTest(recordedTest, true);
+        validateRecordedTest(recordedTest);
         Assert.assertEquals(recordedTest.getRegisterCalls().get(0).getRequest().getNodeId(), providedNodeId);
     }
 
@@ -129,7 +105,7 @@ public class GeneralExtensionTestCase extends BaseTestCase {
         envVars.put("CHOREO_EXT_NODE_ID", providedNodeId);
 
         RecordedTest recordedTest = testExtensionWithLocalPeriscope(envVars);
-        validateRecordedTest(recordedTest, true);
+        validateRecordedTest(recordedTest);
         Assert.assertEquals(recordedTest.getRegisterCalls().get(0).getRequest().getNodeId(), providedNodeId);
     }
 
@@ -139,8 +115,20 @@ public class GeneralExtensionTestCase extends BaseTestCase {
         Files.deleteIfExists(nodeIdFile);
 
         RecordedTest recordedTest = testExtensionWithLocalPeriscope(Collections.emptyMap());
-        validateRecordedTest(recordedTest, true);
+        validateRecordedTest(recordedTest);
         Assert.assertEquals(recordedTest.getRegisterCalls().get(0).getRequest().getNodeId(), getNodeIdFromFileSystem());
+    }
+
+    protected RecordedTest testExtensionWithLocalPeriscope(Map<String, String> envVars) throws Exception {
+        LogLeecher errorLogLeecher = new LogLeecher("error");
+        serverInstance.addErrorLogLeecher(errorLogLeecher);
+        LogLeecher exceptionLogLeecher = new LogLeecher("Exception");
+        serverInstance.addErrorLogLeecher(exceptionLogLeecher);
+
+        RecordedTest recordedTest = super.testExtensionWithLocalPeriscope(envVars);
+        Assert.assertFalse(errorLogLeecher.isTextFound(), "Unexpected error log found");
+        Assert.assertFalse(exceptionLogLeecher.isTextFound(), "Unexpected exception log found");
+        return recordedTest;
     }
 
     @Test(retryAnalyzer = RetryFailedTestRetryAnalyzer.class)
@@ -148,107 +136,6 @@ public class GeneralExtensionTestCase extends BaseTestCase {
         Path nodeIdFile = getNodeIdFilePath();
         Files.deleteIfExists(nodeIdFile);
         testExtension(Collections.emptyMap(), "periscope.choreo.dev:443", "Config.cloud.toml");
-    }
-
-    private void validateRecordedTest(RecordedTest recordedTest, boolean expectPublishAst) throws IOException {
-        // Validate recorded register call
-        Assert.assertEquals(recordedTest.getRegisterCalls().size(), 1);
-        RegisterCall registerCall = recordedTest.getRegisterCalls().get(0);
-        String nodeId = registerCall.getRequest().getNodeId();
-        String projectSecret = registerCall.getRequest().getProjectSecret();
-        String obsId = registerCall.getResponse().getObsId();
-        String obsVersion = registerCall.getResponse().getVersion();
-        List<Tag> periscopeTags = registerCall.getResponse().getTags();
-        Assert.assertEquals(registerCall.getResponse().getObsUrl(),
-                "http://choreo.dev/obs/" + obsId + "/" + obsVersion);
-        Assert.assertNull(registerCall.getResponseErrorMessage());
-
-        // Validate saved files
-        Assert.assertEquals(getProjectObsIdFromFileSystem(serverInstance.getServerHome()), obsId);
-        Assert.assertEquals(registerCall.getRequest().getProjectSecret(), getProjectSecretFromFileSystem(obsId));
-
-        // Validate recorded publish AST call
-        Assert.assertEquals(recordedTest.getPublishAstCalls().size(), expectPublishAst ? 1 : 0);
-        if (expectPublishAst) {
-            PublishAstCall publishAstCall = recordedTest.getPublishAstCalls().get(0);
-            Assert.assertEquals(publishAstCall.getRequest().getObsId(), obsId);
-            Assert.assertEquals(publishAstCall.getRequest().getProjectSecret(), projectSecret);
-            Assert.assertNull(publishAstCall.getResponseErrorMessage());
-        }
-
-        // Validate recorded publish traces call IDs
-        Assert.assertEquals(recordedTest.getPublishTracesCalls().size(), 1);
-        PublishTracesCall publishTracesCall = recordedTest.getPublishTracesCalls().get(0);
-        Assert.assertEquals(publishTracesCall.getRequest().getObservabilityId(), obsId);
-        Assert.assertEquals(publishTracesCall.getRequest().getVersion(), obsVersion);
-        Assert.assertEquals(publishTracesCall.getRequest().getNodeId(), nodeId);
-        Assert.assertEquals(publishTracesCall.getRequest().getProjectSecret(), projectSecret);
-        Assert.assertNull(publishTracesCall.getResponseErrorMessage());
-
-        // Validate recorded publish traces call span common information
-        List<TraceSpan> traceSpans = publishTracesCall.getRequest().getSpans();
-        Assert.assertEquals(traceSpans.size(), 2);
-        traceSpans.forEach(span -> periscopeTags.forEach(
-                tag -> Assert.assertEquals(findTag(span.getTags(), tag).size(), 1)));
-        traceSpans.forEach(span -> {
-            Assert.assertTrue(span.getTimestamp() > recordedTest.getStartTimestamp());
-            Assert.assertTrue(span.getTimestamp() < recordedTest.getEndTimestamp());
-            Assert.assertTrue(span.getDuration() > 0);
-            Assert.assertEquals(span.getReferences().size(), 1);
-            Assert.assertEquals(span.getReferences().get(0).getRefType(), ReferenceType.CHILD_OF);
-        });
-
-        // Validate published span linking
-        TraceSpan rootSpan;
-        TraceSpan childSpan;
-        if ("00000000000000000000000000000000".equals(traceSpans.get(0).getReferences().get(0).getTraceId())) {
-            rootSpan = traceSpans.get(0);
-            childSpan = traceSpans.get(1);
-        } else {
-            rootSpan = traceSpans.get(1);
-            childSpan = traceSpans.get(0);
-        }
-        Assert.assertEquals(rootSpan.getReferences().get(0).getSpanId(), "0000000000000000");
-        Assert.assertEquals(rootSpan.getTraceId(), childSpan.getTraceId());
-        Assert.assertEquals(rootSpan.getTraceId(), childSpan.getReferences().get(0).getTraceId());
-        Assert.assertEquals(rootSpan.getSpanId(), childSpan.getReferences().get(0).getSpanId());
-
-        // Validate published root span
-        Assert.assertEquals(rootSpan.getServiceName(), "/test");
-        Assert.assertEquals(rootSpan.getOperationName(), "get /sum");
-        Assert.assertEquals(rootSpan.getTags().size(), periscopeTags.size() + 16);
-        Assert.assertEquals(rootSpan.getCheckpoints().size(), 6);
-
-        // Validate published child span
-        Assert.assertEquals(childSpan.getServiceName(), "/test");
-        Assert.assertEquals(childSpan.getOperationName(), "ballerina_test/choreo_ext_test/ObservableAdder:getSum");
-        Assert.assertEquals(childSpan.getTags().size(), periscopeTags.size() + 9);
-        Assert.assertEquals(childSpan.getCheckpoints().size(), 0);
-
-        // Validate recorded publish metrics call
-        Assert.assertTrue(recordedTest.getPublishMetricsCalls().size() > 0);
-        recordedTest.getPublishMetricsCalls().forEach(publishMetricsCall -> {
-            Assert.assertEquals(publishMetricsCall.getRequest().getObservabilityId(), obsId);
-            Assert.assertEquals(publishMetricsCall.getRequest().getVersion(), obsVersion);
-            Assert.assertEquals(publishMetricsCall.getRequest().getNodeId(), nodeId);
-            Assert.assertEquals(publishMetricsCall.getRequest().getProjectSecret(), projectSecret);
-            publishMetricsCall.getRequest().getMetrics().forEach(metric -> periscopeTags.forEach(
-                    tag -> Assert.assertEquals(findTag(metric.getTags(), tag).size(), 1)));
-            Assert.assertNull(publishMetricsCall.getResponseErrorMessage());
-
-            publishMetricsCall.getRequest().getMetrics().forEach(metric -> {
-                Assert.assertTrue(metric.getTimestamp() > recordedTest.getStartTimestamp());
-                Assert.assertTrue(metric.getTimestamp() < recordedTest.getEndTimestamp());
-            });
-            if (publishMetricsCall.getRequest().getMetrics().size() == 1) {
-                PublishMetricsCall.Request.Metric metric = publishMetricsCall.getRequest().getMetrics().get(0);
-                Assert.assertEquals(metric.getName(), "up");
-                Assert.assertEquals(metric.getValue(), 1f);
-                Assert.assertEquals(metric.getTags(), periscopeTags);
-            } else {
-                Assert.assertEquals(publishMetricsCall.getRequest().getMetrics().size(), 75);
-            }
-        });
     }
 
     @Test

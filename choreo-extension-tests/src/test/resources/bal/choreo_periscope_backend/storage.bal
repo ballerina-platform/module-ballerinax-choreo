@@ -27,32 +27,42 @@ type ObservabilityVersion record {|
 
 ObservabilityGroup[] obsGroups = [
     {
-        id: "publish-ast-error-1",
-        projectSecret: "publish-ast-error",
+        id: "xxxxxxxxxxxxxxxxxx-publish-ast-error-1",
+        projectSecret: "xxxxxxxxxxxxxxxxxx-publish-ast-error",
         versions: [
             {
-                id: "publish-ast-error-2",
-                astHash: "publish-ast-error-st-hash"
+                id: "xxxxxxxxxxxxxxxxxx-publish-ast-error-2",
+                astHash: "xxxxxxxxxxxxxxxxxx-publish-ast-error-st-hash"
             }
         ]
     },
     {
-        id: "publish-metrics-error-3",
-        projectSecret: "publish-metrics-error",
+        id: "xxxxxxxxxxxxxx-publish-metrics-error-3",
+        projectSecret: "xxxxxxxxxxxxxx-publish-metrics-error",
         versions: [
             {
-                id: "publish-metrics-error-4",
-                astHash: "publish-metrics-error-st-hash"
+                id: "xxxxxxxxxxxxxx-publish-metrics-error-4",
+                astHash: "xxxxxxxxxxxxxx-publish-metrics-error-st-hash"
             }
         ]
     },
     {
-        id: "publish-traces-error-5",
-        projectSecret: "publish-traces-error",
+        id: "xxxxxxxxxxxxxxx-publish-traces-error-5",
+        projectSecret: "xxxxxxxxxxxxxxx-publish-traces-error",
         versions: [
             {
-                id: "publish-traces-error-6",
-                astHash: "publish-traces-error-st-hash"
+                id: "xxxxxxxxxxxxxxx-publish-traces-error-6",
+                astHash: "xxxxxxxxxxxxxxx-publish-traces-error-st-hash"
+            }
+        ]
+    },
+    {
+        id: "xxxxxxxxx-publish-traces-error-retry-7",
+        projectSecret: "xxxxxxxxx-publish-traces-error-retry",
+        versions: [
+            {
+                id: "xxxxxxxxx-publish-traces-error-retry-8",
+                astHash: "xxxxxxxxx-publish-traces-error-retry-st-hash"
             }
         ]
     }

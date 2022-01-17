@@ -29,6 +29,7 @@
         <classes>
             <class name="io.ballerina.observe.choreo.GeneralExtensionTestCase"/>
             <class name="io.ballerina.observe.choreo.InitializationErrorTestCase"/>
+            <class name="io.ballerina.observe.choreo.PeriscopeErrorTestCase"/>
         </classes>
     </test>
 </suite>

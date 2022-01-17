@@ -233,7 +233,7 @@ public class BaseTestCase {
     }
 
     protected void testExtension(Map<String, String> additionalEnvVars, String reporterHost,
-                               String configFileName) throws Exception {
+                                 String configFileName) throws Exception {
         LogLeecher choreoExtLogLeecher = new LogLeecher(CHOREO_EXTENSION_LOG_PREFIX + reporterHost);
         serverInstance.addLogLeecher(choreoExtLogLeecher);
         LogLeecher choreoObservabilityUrlLogLeecher = new LogLeecher(CHOREO_EXTENSION_URL_LOG_PREFIX);
@@ -242,10 +242,6 @@ public class BaseTestCase {
         serverInstance.addLogLeecher(choreoExtMetricsEnabledLogLeecher);
         LogLeecher choreoExtTracesEnabledLogLeecher = new LogLeecher(CHOREO_EXTENSION_TRACES_ENABLED_LOG);
         serverInstance.addLogLeecher(choreoExtTracesEnabledLogLeecher);
-        LogLeecher errorLogLeecher = new LogLeecher("error");
-        serverInstance.addErrorLogLeecher(errorLogLeecher);
-        LogLeecher exceptionLogLeecher = new LogLeecher("Exception");
-        serverInstance.addErrorLogLeecher(exceptionLogLeecher);
 
         String configFile = Paths.get("src", "test", "resources", "bal", "choreo_ext_test", configFileName)
                 .toFile().getAbsolutePath();
@@ -264,9 +260,6 @@ public class BaseTestCase {
 
         // The tracing log is printed on first start of a span
         choreoExtTracesEnabledLogLeecher.waitForText(1000);
-
-        Assert.assertFalse(errorLogLeecher.isTextFound(), "Unexpected error log found");
-        Assert.assertFalse(exceptionLogLeecher.isTextFound(), "Unexpected exception log found");
 
         // Validating generated project files
         Path projectFile = Paths.get(serverInstance.getServerHome(), AnonymousAppSecretHandler.PROJECT_FILE_NAME);
