@@ -236,5 +236,8 @@ test {
     systemProperty 'choreo.ext.test.agent', shadowJar.archiveFile.get().getAsFile().getPath()
     useTestNG() {
         suites 'src/test/resources/testng.xml'
+        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            excludeGroups "linux-only"
+        }
     }
 }
