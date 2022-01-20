@@ -171,19 +171,6 @@ task revertTomlFile {
     }
 }
 
-task commitTomlFiles {
-    doLast {
-        exec {
-            ignoreExitValue true
-            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                commandLine 'cmd', '/c', "git add Dependencies.toml && git commit -m '[Automated] Update the bal build ballerina package versions' Dependencies.toml"
-            } else {
-                commandLine 'sh', '-c', "git add Dependencies.toml && git commit -m '[Automated] Update the bal build ballerina package versions' Dependencies.toml"
-            }
-        }
-    }
-}
-
 task ballerinaBuild {
     dependsOn copyExternalJarsToLib
     dependsOn copyStdlibs
@@ -192,7 +179,7 @@ task ballerinaBuild {
     dependsOn configurations.externalJars
 
     finalizedBy revertTomlFile
-    finalizedBy commitTomlFiles
+    finalizedBy ":commitTomlFiles"
 
     inputs.dir file(project.projectDir)
     doLast {

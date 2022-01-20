@@ -153,7 +153,7 @@ task createServerZip(type: Zip) {
     from "${project.buildDir}/extracted-distributions/jballerina-tools-zip/"
 }
 
-def generateGrpcServer (protoFile, outputDir) {
+def generateGrpcServer(protoFile, outputDir) {
     def protoNameMatcher = protoFile =~ /.*\\/([^\/]+)\.proto/
     def protoName = protoNameMatcher[0][1]
     protoFile = new File(protoFile).getAbsolutePath()   // Resolve absolute path
@@ -176,6 +176,7 @@ def generateGrpcServer (protoFile, outputDir) {
 
 task generateChoreoGrpcTestBackend {
     dependsOn copyStdlibs
+    finalizedBy ":commitTomlFiles"
 
     def protoFilesDir = "${project.projectDir}/../choreo-extension-native/src/main/proto"
     def choreoBackendModulesDir = "${project.projectDir}/src/test/resources/bal/choreo_periscope_backend/modules"
@@ -184,30 +185,6 @@ task generateChoreoGrpcTestBackend {
 
         generateGrpcServer("${protoFilesDir}/handshake.proto", "${choreoBackendModulesDir}/handshake")
         generateGrpcServer("${protoFilesDir}/telemetry.proto", "${choreoBackendModulesDir}/telemetry")
-
-        exec {
-            ignoreExitValue true
-            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                commandLine 'cmd', '/c', "git add ${choreoBackendModulesDir} && git commit -m '[Automated] Update the Periscope gRPC backend' ${choreoBackendModulesDir}"
-            } else {
-                commandLine 'sh', '-c', "git add ${choreoBackendModulesDir} && git commit -m '[Automated] Update the Periscope gRPC backend' ${choreoBackendModulesDir}"
-            }
-        }
-    }
-}
-
-task commitTomlFiles {
-    doLast {
-        exec {
-            def dependenciesTomlFile = "src/test/resources/bal/**/Dependencies.toml"
-
-            ignoreExitValue true
-            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                commandLine 'cmd', '/c', "git add ${dependenciesTomlFile} && git commit -m '[Automated] Update the test ballerina package versions' ${dependenciesTomlFile}"
-            } else {
-                commandLine 'sh', '-c', "git add ${dependenciesTomlFile} && git commit -m '[Automated] Update the test ballerina package versions' ${dependenciesTomlFile}"
-            }
-        }
     }
 }
 
@@ -218,7 +195,7 @@ test {
 
     finalizedBy jacocoTestReport
     finalizedBy jacocoTestCoverageVerification
-    finalizedBy commitTomlFiles
+    finalizedBy ":commitTomlFiles"
 
     testLogging {
         showStackTraces true

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import org.apache.tools.ant.taskdefs.condition.Os
+
 plugins {
     id 'checkstyle'
     id "com.github.spotbugs" version "4.7.0"
@@ -178,5 +180,22 @@ task codeCoverageReport(type: JacocoReport) {
 
     onlyIf = {
         true
+    }
+}
+
+task commitTomlFiles {
+    doLast {
+        exec {
+            def testDependenciesTomlFile = "choreo-extension-tests/src/test/resources/bal/**/Dependencies.toml"
+            def balModuleDependenciesTomlFile = "choreo-extension-ballerina/Dependencies.toml"
+            def dependenciesTomlFile = "${testDependenciesTomlFile} ${balModuleDependenciesTomlFile}"
+
+            ignoreExitValue true
+            if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                commandLine 'cmd', '/c', "git add ${dependenciesTomlFile} && git commit -m '[Automated] Update ballerina package versions' ${dependenciesTomlFile}"
+            } else {
+                commandLine 'sh', '-c', "git add ${dependenciesTomlFile} && git commit -m '[Automated] Update ballerina package versions' ${dependenciesTomlFile}"
+            }
+        }
     }
 }

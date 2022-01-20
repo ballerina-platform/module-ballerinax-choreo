@@ -81,7 +81,7 @@ ObservabilityGroup[] obsGroups = [
         projectSecret: "xx-publish-traces-error-buffer-clean",
         versions: [
             {
-                id: "xx-publish-traces-error-buffer-clean-8",
+                id: "xx-publish-traces-error-buffer-clean-10",
                 astHash: "xx-publish-traces-error-buffer-clean-st-hash"
             }
         ]
@@ -115,9 +115,10 @@ function getVersionInformation(string projectSecret, string astHash) returns Ver
     }
 
     ObservabilityVersion? pickedVersion = ();
-    foreach ObservabilityVersion obsVersion in obsGroup.versions {
-        if (obsVersion.astHash == astHash) {
-            pickedVersion = obsVersion;
+    if (obsGroup.versions.length() > 0) {
+        ObservabilityVersion lastObsVersion = obsGroup.versions[obsGroup.versions.length() - 1];
+        if (lastObsVersion.astHash == astHash) {
+            pickedVersion = lastObsVersion;
         }
     }
     ObservabilityVersion obsVersion;

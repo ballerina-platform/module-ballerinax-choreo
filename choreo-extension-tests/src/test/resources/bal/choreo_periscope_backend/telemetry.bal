@@ -19,10 +19,10 @@ import ballerina/http;
 import ballerina/log;
 import ballerina_test/choreo_periscope_backend.telemetry;
 
-const string PUBLISH_METRICS_ERROR_PROJECT_SECRET_PREFIX = "xxxxxxxxxxxxxx-publish-metrics-error-";
-const string PUBLISH_TRACES_ERROR_PROJECT_SECRET_PREFIX = "xxxxxxxxxxxxxxx-publish-traces-error-";
-const string PUBLISH_TRACES_ERROR_RETRY_PROJECT_SECRET_PREFIX = "xxxxxxxxx-publish-traces-error-retry-";
-const string PUBLISH_TRACES_ERROR_BUFFER_CLEAN_PROJECT_SECRET_PREFIX = "xx-publish-traces-error-buffer-clean";
+const string PUBLISH_METRICS_ERROR_PROJECT_SECRET = "xxxxxxxxxxxxxx-publish-metrics-error";
+const string PUBLISH_TRACES_ERROR_PROJECT_SECRET = "xxxxxxxxxxxxxxx-publish-traces-error";
+const string PUBLISH_TRACES_ERROR_RETRY_PROJECT_SECRET = "xxxxxxxxx-publish-traces-error-retry";
+const string PUBLISH_TRACES_ERROR_BUFFER_CLEAN_PROJECT_SECRET = "xx-publish-traces-error-buffer-clean";
 
 type PublishMetricsCall record {|
     telemetry:MetricsPublishRequest request;
@@ -51,7 +51,7 @@ service "Telemetry" on periscopeEndpoint {
         log:printInfo("Received Telemetry/publishMetrics call", obsId = request.observabilityId,
             obsVersion = request.'version);
         error? response = ();
-        if (request.observabilityId.startsWith(PUBLISH_METRICS_ERROR_PROJECT_SECRET_PREFIX)) {
+        if (request.observabilityId.startsWith(PUBLISH_METRICS_ERROR_PROJECT_SECRET)) {
             response = error grpc:AbortedError("test error for publish metrics using obs ID " + request.observabilityId);
         }
         recordedPublishMetricsCall.push({
@@ -69,10 +69,10 @@ service "Telemetry" on periscopeEndpoint {
         log:printInfo("Received Telemetry/publishTraces call", obsId = request.observabilityId,
             obsVersion = request.'version);
         error? response = ();
-        if (request.observabilityId.startsWith(PUBLISH_TRACES_ERROR_PROJECT_SECRET_PREFIX)) {
+        if (request.observabilityId.startsWith(PUBLISH_TRACES_ERROR_PROJECT_SECRET)) {
             response = error grpc:AbortedError("test error for publish traces using obs ID " + request.observabilityId);
-        } else if (request.observabilityId.startsWith(PUBLISH_TRACES_ERROR_RETRY_PROJECT_SECRET_PREFIX)
-                || request.observabilityId.startsWith(PUBLISH_TRACES_ERROR_BUFFER_CLEAN_PROJECT_SECRET_PREFIX)) {
+        } else if (request.observabilityId.startsWith(PUBLISH_TRACES_ERROR_RETRY_PROJECT_SECRET)
+                || request.observabilityId.startsWith(PUBLISH_TRACES_ERROR_BUFFER_CLEAN_PROJECT_SECRET)) {
             int failedCallCount = 0;
             foreach PublishTracesCall publishCall in recordedPublishTracesCall {
                 if (publishCall.request.observabilityId == request.observabilityId) {

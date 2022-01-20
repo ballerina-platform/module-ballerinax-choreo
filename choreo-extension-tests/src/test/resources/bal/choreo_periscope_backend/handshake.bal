@@ -20,7 +20,7 @@ import ballerina/log;
 import ballerina_test/choreo_periscope_backend.handshake;
 
 const string REGISTER_ABORT_ERROR_PROJECT_SECRET = "xxxxxxxxxxxxxxx-abort-register-error";
-const string PUBLISH_AST_ERROR_PROJECT_SECRET_PREFIX = "xxxxxxxxxxxxxxxxxx-publish-ast-error-";
+const string PUBLISH_AST_ERROR_PROJECT_SECRET = "xxxxxxxxxxxxxxxxxx-publish-ast-error";
 
 type RegisterCall record {|
     handshake:RegisterRequest request;
@@ -79,7 +79,7 @@ service "Handshake" on periscopeEndpoint {
     remote function publishAst(handshake:PublishAstRequest request) returns error? {
         log:printInfo("Received Handshake/publishAst call", obsId = request.obsId);
         error? response = ();
-        if (request.obsId.startsWith(PUBLISH_AST_ERROR_PROJECT_SECRET_PREFIX)) {
+        if (request.obsId.startsWith(PUBLISH_AST_ERROR_PROJECT_SECRET)) {
             response = error grpc:AbortedError("test error for publish ast using obs ID " + request.obsId);
         }
         recordedPublishAstCalls.push({
