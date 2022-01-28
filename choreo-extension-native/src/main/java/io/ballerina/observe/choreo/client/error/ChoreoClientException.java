@@ -24,7 +24,6 @@ package io.ballerina.observe.choreo.client.error;
  * @since 2.0.0
  */
 public class ChoreoClientException extends Exception {
-    private final ChoreoError code;
 
     /**
      * Constructs the exception with both a status and trailers.
@@ -34,15 +33,5 @@ public class ChoreoClientException extends Exception {
      */
     public ChoreoClientException(ChoreoError error) {
         super(error.formatThrowableMessage(error), error.getCause());
-        this.code = error;
-    }
-
-    /**
-     * Returns the error code as a {@link ChoreoError} object.
-     *
-     * @return Error status
-     */
-    public final ChoreoError getCode() {
-        return code;
     }
 }

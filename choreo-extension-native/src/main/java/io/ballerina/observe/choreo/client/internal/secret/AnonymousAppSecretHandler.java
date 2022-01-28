@@ -46,6 +46,8 @@ public class AnonymousAppSecretHandler implements AppSecretHandler {
     private static final Logger LOGGER = LogFactory.getLogger();
 
     public static final String PROJECT_OBSERVABILITY_ID_CONFIG_KEY = "PROJECT_OBSERVABILITY_ID";
+    public static final String PROJECT_FILE_NAME = ".choreoproject";
+    public static final String PROJECT_SECRET_FILE_NAME = "projectsecret";
 
     private final String appSecret;
     private final Path propertiesFilePath;
@@ -58,7 +60,7 @@ public class AnonymousAppSecretHandler implements AppSecretHandler {
 
     private Path getPropertiesFilePath() {
         final String workingDir = System.getProperty("user.dir");
-        return Paths.get(workingDir + File.separator + ".choreoproject");
+        return Paths.get(workingDir + File.separator + PROJECT_FILE_NAME);
     }
 
     private String getAppSecretForProject(Path propertiesFilePath) throws IOException, ChoreoClientException {
@@ -154,6 +156,6 @@ public class AnonymousAppSecretHandler implements AppSecretHandler {
     private Path getProjectSecretPath(String obsId) {
         return ClientUtils.getGlobalChoreoConfigDir()
                                  .resolve(obsId)
-                                 .resolve("projectsecret");
+                                 .resolve(PROJECT_SECRET_FILE_NAME);
     }
 }

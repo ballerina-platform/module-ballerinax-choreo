@@ -15,5 +15,7 @@
 // under the License.
 
 import ballerina/grpc;
+import ballerina/http;
 
-listener grpc:Listener periscopeEndpoint = check new(10090);     // Common endpoint for all periscope services
+listener grpc:Listener periscopeEndpoint = check new(10090);      // Common endpoint for all periscope services
+listener http:Listener periscopeCallsEndpoint = check new(10091); // Common endpoint for getting calls received by periscope

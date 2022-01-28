@@ -15,18 +15,107 @@
 // under the License.
 
 import ballerina/grpc;
+import ballerina/http;
+import ballerina/log;
 import ballerina_test/choreo_periscope_backend.handshake;
+
+const string REGISTER_ABORT_ERROR_PROJECT_SECRET = "xxxxxxxxxxxxxxx-abort-register-error";
+const string PUBLISH_AST_ERROR_PROJECT_SECRET = "xxxxxxxxxxxxxxxxxx-publish-ast-error";
+
+type RegisterCall record {|
+    handshake:RegisterRequest request;
+    handshake:RegisterResponse? response;
+    string? responseErrorMessage;
+|};
+
+RegisterCall[] recordedRegisterCalls = [];
+
+type PublishAstCall record {|
+    handshake:PublishAstRequest request;
+    string? responseErrorMessage;
+|};
+
+PublishAstCall[] recordedPublishAstCalls = [];
 
 @grpc:ServiceDescriptor {
     descriptor: handshake:DESCRIPTOR,
     descMap: handshake:descriptorMap()
 }
 service "Handshake" on periscopeEndpoint {
-    remote function register(handshake:RegisterRequest value) returns handshake:RegisterResponse|error {
-        return error("Not Implemented");
+    # Mock register remote endpoint.
+    #
+    # + request - gRPC register request
+    # + return - error if register fails or register response
+    remote function register(handshake:RegisterRequest request) returns handshake:RegisterResponse|error {
+        log:printInfo("Received Handshake/register call", projectSecret = request.projectSecret);
+        handshake:RegisterResponse|error response;
+        if (request.projectSecret == REGISTER_ABORT_ERROR_PROJECT_SECRET) {
+            response = error grpc:AbortedError("test error for register using project secret " + request.projectSecret);
+        } else {
+            VersionInfo versionInfo = getVersionInformation(request.projectSecret, request.astHash);
+            response = {
+                obsId: versionInfo.obsId,
+                'version: versionInfo.obsVersion,
+                obsUrl: generateObsUrl(versionInfo.obsId, versionInfo.obsVersion),
+                sendAst: versionInfo.isNewSyntaxTree,
+                tags: [
+                    { key: "test-key", value: "test-value" },
+                    { key: "response-type", value: versionInfo.isNewSyntaxTree ? "new-obs-version" : "new-obs-group" }
+                ]
+            };
+        }
+        recordedRegisterCalls.push({
+            request: request,
+            response: response is handshake:RegisterResponse ? response : (),
+            responseErrorMessage: response is error ? response.toString() : ()
+        });
+        return response;
     }
 
-    remote function publishAst(handshake:PublishAstRequest value) returns error? {
-        return error("Not Implemented");
+    # Mock publish AST remote endpoint.
+    #
+    # + request - gRPC publish AST request
+    # + return - error if publishing the AST fails
+    remote function publishAst(handshake:PublishAstRequest request) returns error? {
+        log:printInfo("Received Handshake/publishAst call", obsId = request.obsId);
+        error? response = ();
+        if (request.obsId.startsWith(PUBLISH_AST_ERROR_PROJECT_SECRET)) {
+            response = error grpc:AbortedError("test error for publish ast using obs ID " + request.obsId);
+        }
+        recordedPublishAstCalls.push({
+            request: request,
+            responseErrorMessage: response is error ? response.toString() : ()
+        });
+        return response;
+    }
+}
+
+function generateObsUrl(string obsId, string obsVersion) returns string {
+    return "http://choreo.dev/obs/" + obsId + "/" + obsVersion;
+}
+
+service "Handshake" on periscopeCallsEndpoint {
+    resource function get register/calls() returns RegisterCall[] {
+        return recordedRegisterCalls;
+    }
+
+    resource function post register/calls(@http:Payload RegisterCall[] newCalls) returns RegisterCall[] {
+        log:printInfo("Updated Handshake/register calls", newCallsCount = newCalls.length(),
+            previousCallsCount = recordedRegisterCalls.length());
+        var previousCalls = recordedRegisterCalls;
+        recordedRegisterCalls = newCalls;
+        return previousCalls;
+    }
+
+    resource function get publishAst/calls() returns PublishAstCall[] {
+        return recordedPublishAstCalls;
+    }
+
+    resource function post publishAst/calls(@http:Payload PublishAstCall[] newCalls) returns PublishAstCall[] {
+        log:printInfo("Updated Handshake/publishAst calls", newCallsCount = newCalls.length(),
+            previousCallsCount = recordedPublishAstCalls.length());
+        var previousCalls = recordedPublishAstCalls;
+        recordedPublishAstCalls = newCalls;
+        return previousCalls;
     }
 }

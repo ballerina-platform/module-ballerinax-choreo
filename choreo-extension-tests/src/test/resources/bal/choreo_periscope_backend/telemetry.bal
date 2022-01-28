@@ -15,18 +15,105 @@
 // under the License.
 
 import ballerina/grpc;
+import ballerina/http;
+import ballerina/log;
 import ballerina_test/choreo_periscope_backend.telemetry;
+
+const string PUBLISH_METRICS_ERROR_PROJECT_SECRET = "xxxxxxxxxxxxxx-publish-metrics-error";
+const string PUBLISH_TRACES_ERROR_PROJECT_SECRET = "xxxxxxxxxxxxxxx-publish-traces-error";
+const string PUBLISH_TRACES_ERROR_RETRY_PROJECT_SECRET = "xxxxxxxxx-publish-traces-error-retry";
+const string PUBLISH_TRACES_ERROR_BUFFER_CLEAN_PROJECT_SECRET = "xx-publish-traces-error-buffer-clean";
+
+type PublishMetricsCall record {|
+    telemetry:MetricsPublishRequest request;
+    string? responseErrorMessage;
+|};
+
+PublishMetricsCall[] recordedPublishMetricsCall = [];
+
+type PublishTracesCall record {|
+    telemetry:TracesPublishRequest request;
+    string? responseErrorMessage;
+|};
+
+PublishTracesCall[] recordedPublishTracesCall = [];
 
 @grpc:ServiceDescriptor {
     descriptor: telemetry:DESCRIPTOR,
     descMap: telemetry:descriptorMap()
 }
 service "Telemetry" on periscopeEndpoint {
-    remote function publishMetrics(telemetry:MetricsPublishRequest value) returns error? {
-        return error("Not Implemented");
+    # Mock publish metrics remote endpoint.
+    #
+    # + request - gRPC publish metrics request
+    # + return - error if publishing the metrics fails
+    remote function publishMetrics(telemetry:MetricsPublishRequest request) returns error? {
+        log:printInfo("Received Telemetry/publishMetrics call", obsId = request.observabilityId,
+            obsVersion = request.'version);
+        error? response = ();
+        if (request.observabilityId.startsWith(PUBLISH_METRICS_ERROR_PROJECT_SECRET)) {
+            response = error grpc:AbortedError("test error for publish metrics using obs ID " + request.observabilityId);
+        }
+        recordedPublishMetricsCall.push({
+            request: request,
+            responseErrorMessage: response is error ? response.toString() : ()
+        });
+        return response;
     }
 
-    remote function publishTraces(telemetry:TracesPublishRequest value) returns error? {
-        return error("Not Implemented");
+    # Mock publish traces remote endpoint.
+    #
+    # + request - gRPC publish traces request
+    # + return - error if publishing the traces fails
+    remote function publishTraces(telemetry:TracesPublishRequest request) returns error? {
+        log:printInfo("Received Telemetry/publishTraces call", obsId = request.observabilityId,
+            obsVersion = request.'version);
+        error? response = ();
+        if (request.observabilityId.startsWith(PUBLISH_TRACES_ERROR_PROJECT_SECRET)) {
+            response = error grpc:AbortedError("test error for publish traces using obs ID " + request.observabilityId);
+        } else if (request.observabilityId.startsWith(PUBLISH_TRACES_ERROR_RETRY_PROJECT_SECRET)
+                || request.observabilityId.startsWith(PUBLISH_TRACES_ERROR_BUFFER_CLEAN_PROJECT_SECRET)) {
+            int failedCallCount = 0;
+            foreach PublishTracesCall publishCall in recordedPublishTracesCall {
+                if (publishCall.request.observabilityId == request.observabilityId) {
+                    failedCallCount += 1;
+                }
+            }
+            if (failedCallCount < 2) {
+                response = error grpc:AbortedError("test error for retry for publish traces using obs ID " +
+                    request.observabilityId);
+            }
+        }
+        recordedPublishTracesCall.push({
+            request: request,
+            responseErrorMessage: response is error ? response.toString() : ()
+        });
+        return response;
+    }
+}
+
+service "Telemetry" on periscopeCallsEndpoint {
+    resource function get publishMetrics/calls() returns PublishMetricsCall[] {
+        return recordedPublishMetricsCall;
+    }
+
+    resource function post publishMetrics/calls(@http:Payload PublishMetricsCall[] newCalls) returns PublishMetricsCall[] {
+        log:printInfo("Updated Telemetry/publishMetrics calls", newCallsCount = newCalls.length(),
+            previousCallsCount = recordedPublishMetricsCall.length());
+        PublishMetricsCall[] previousCalls = recordedPublishMetricsCall;
+        recordedPublishMetricsCall = newCalls;
+        return previousCalls;
+    }
+
+    resource function get publishTraces/calls() returns PublishTracesCall[] {
+        return recordedPublishTracesCall;
+    }
+
+    resource function post publishTraces/calls(@http:Payload PublishTracesCall[] newCalls) returns PublishTracesCall[] {
+        log:printInfo("Updated Telemetry/publishTraces calls", newCallsCount = newCalls.length(),
+            previousCallsCount = recordedPublishTracesCall.length());
+        PublishTracesCall[] previousCalls = recordedPublishTracesCall;
+        recordedPublishTracesCall = newCalls;
+        return previousCalls;
     }
 }

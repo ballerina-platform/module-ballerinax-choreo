@@ -15,16 +15,38 @@
 // under the License.
 
 import ballerina/http;
-import ballerina/observe; import ballerinax/choreo as _;   // TODO: Remove extension module imports
+import ballerina/observe;
 
 service /test on new http:Listener(9091) {
-    resource function get sum(http:Caller caller, http:Request req) {
+    resource function get sum() returns string {
         ObservableAdderClass adder = new ObservableAdder(20, 33);
         var sum = adder.getSum();
+        return "Sum: " + sum.toString();
+    }
 
-        http:Response resp = new;
-        resp.setTextPayload(<@untainted> "Sum: " + sum.toString());
-        checkpanic caller->respond(resp);
+    resource function get loopWithLargeTags() returns string {
+        int finalSum = 0;
+        int i = 0;
+        while i < 45 { // i added as a metric tag can be used to tune the number of metrics published
+            int j = 0;
+            while j < 25 { // i * j + 1 number of spans are generated in total
+                ObservableAdderClass adder = new ObservableAdder(i, j);
+                finalSum += adder.getSum();
+                j += 1;
+            }
+            i += 1;
+        }
+        return "Sum: " + finalSum.toString();
+    }
+
+    resource function get loopWithLargeSpanCount() returns string {
+        int finalSum = 0;
+        int i = 0;
+        while i < 2500 {
+            finalSum += sum(21, 33);
+            i += 1;
+        }
+        return "Sum: " + finalSum.toString();
     }
 }
 
@@ -43,6 +65,23 @@ class ObservableAdder {
     }
 
     function getSum() returns int {
+        error? err = observe:addTagToMetrics("choreo.ext.test.sum.first_number", self.firstNumber.toString());
+        if (err is error) {
+            panic err;
+        }
+        err = observe:addTagToMetrics("choreo.ext.test.sum.large_string", LARGE_STRING);
+        if (err is error) {
+            panic err;
+        }
+        err = observe:addTagToSpan("choreo.ext.test.sum.large_string", LARGE_STRING);
+        if (err is error) {
+            panic err;
+        }
         return self.firstNumber + self.secondNumber;
     }
+}
+
+@observe:Observable
+function sum(int a, int b) returns int {
+    return a + b;
 }

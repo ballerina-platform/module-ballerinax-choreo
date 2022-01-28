@@ -45,44 +45,29 @@ public class ChoreoError implements Serializable {
         /**
          * The caller does not have permission to execute the specified operation.
          */
-        PERMISSION_DENIED(1),
+        PERMISSION_DENIED,
 
         /**
          * Internal errors.
          */
-        INTERNAL(2),
+        INTERNAL,
 
         /**
          * The service is currently unavailable.
          */
-        UNAVAILABLE(3),
+        UNAVAILABLE,
 
         /**
          * User input or config input is not valid.
          */
-        VALIDATION_ERROR(4);
-
-        private final int value;
-
-        Code(int value) {
-            this.value = value;
-        }
-
-        /**
-         * The numerical value of the code.
-         *
-         * @return value
-         */
-        public int value() {
-            return value;
-        }
+        VALIDATION_ERROR
     }
 
     public String formatThrowableMessage(ChoreoError error) {
         if (error.description == null) {
-            return error.code.toString();
+            return error.getCode().toString();
         } else {
-            return error.code + ": " + error.description;
+            return error.getCode() + ": " + error.getDescription();
         }
     }
 

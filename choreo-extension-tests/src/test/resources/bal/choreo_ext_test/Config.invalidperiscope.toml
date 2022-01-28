@@ -4,5 +4,5 @@ provider="choreo"
 
 [ballerinax.choreo]
 reporterHostname="localhost"
-reporterPort=10090
+reporterPort=20090
 reporterUseSSL=false

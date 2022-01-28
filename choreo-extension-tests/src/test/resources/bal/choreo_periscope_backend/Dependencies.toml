@@ -52,6 +52,31 @@ dependencies = [
 
 [[package]]
 org = "ballerina"
+name = "grpc"
+version = "1.2.0"
+dependencies = [
+	{org = "ballerina", name = "auth"},
+	{org = "ballerina", name = "crypto"},
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerina", name = "jwt"},
+	{org = "ballerina", name = "lang.runtime"},
+	{org = "ballerina", name = "log"},
+	{org = "ballerina", name = "oauth2"},
+	{org = "ballerina", name = "protobuf"},
+	{org = "ballerina", name = "regex"},
+	{org = "ballerina", name = "time"}
+]
+modules = [
+	{org = "ballerina", packageName = "grpc", moduleName = "grpc"},
+	{org = "ballerina", packageName = "grpc", moduleName = "grpc.types.any"},
+	{org = "ballerina", packageName = "grpc", moduleName = "grpc.types.duration"},
+	{org = "ballerina", packageName = "grpc", moduleName = "grpc.types.struct"},
+	{org = "ballerina", packageName = "grpc", moduleName = "grpc.types.timestamp"},
+	{org = "ballerina", packageName = "grpc", moduleName = "grpc.types.wrappers"}
+]
+
+[[package]]
+org = "ballerina"
 name = "http"
 version = "2.2.0"
 dependencies = [
@@ -182,6 +207,9 @@ dependencies = [
 	{org = "ballerina", name = "lang.value"},
 	{org = "ballerina", name = "observe"}
 ]
+modules = [
+	{org = "ballerina", packageName = "log", moduleName = "log"}
+]
 
 [[package]]
 org = "ballerina"
@@ -212,10 +240,6 @@ version = "1.0.1"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"}
 ]
-modules = [
-	{org = "ballerina", packageName = "observe", moduleName = "observe"},
-	{org = "ballerina", packageName = "observe", moduleName = "observe.mockextension"}
-]
 
 [[package]]
 org = "ballerina"
@@ -223,6 +247,24 @@ name = "os"
 version = "1.2.0"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"}
+]
+
+[[package]]
+org = "ballerina"
+name = "protobuf"
+version = "1.2.0"
+dependencies = [
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerina", name = "time"}
+]
+modules = [
+	{org = "ballerina", packageName = "protobuf", moduleName = "protobuf"},
+	{org = "ballerina", packageName = "protobuf", moduleName = "protobuf.types.any"},
+	{org = "ballerina", packageName = "protobuf", moduleName = "protobuf.types.duration"},
+	{org = "ballerina", packageName = "protobuf", moduleName = "protobuf.types.empty"},
+	{org = "ballerina", packageName = "protobuf", moduleName = "protobuf.types.struct"},
+	{org = "ballerina", packageName = "protobuf", moduleName = "protobuf.types.timestamp"},
+	{org = "ballerina", packageName = "protobuf", moduleName = "protobuf.types.wrappers"}
 ]
 
 [[package]]
@@ -260,41 +302,18 @@ dependencies = [
 
 [[package]]
 org = "ballerina_test"
-name = "choreo_ext_test"
+name = "choreo_periscope_backend"
 version = "0.1.0"
 dependencies = [
+	{org = "ballerina", name = "grpc"},
 	{org = "ballerina", name = "http"},
-	{org = "ballerina", name = "observe"},
-	{org = "ballerinai", name = "observe"},
-	{org = "ballerinax", name = "choreo"}
+	{org = "ballerina", name = "log"},
+	{org = "ballerina", name = "protobuf"}
 ]
 modules = [
-	{org = "ballerina_test", packageName = "choreo_ext_test", moduleName = "choreo_ext_test"}
-]
-
-[[package]]
-org = "ballerinai"
-name = "observe"
-version = "0.0.0"
-dependencies = [
-	{org = "ballerina", name = "jballerina.java"},
-	{org = "ballerina", name = "observe"}
-]
-modules = [
-	{org = "ballerinai", packageName = "observe", moduleName = "observe"}
-]
-
-[[package]]
-org = "ballerinax"
-name = "choreo"
-version = "0.4.7"
-dependencies = [
-	{org = "ballerina", name = "io"},
-	{org = "ballerina", name = "jballerina.java"},
-	{org = "ballerina", name = "observe"}
-]
-modules = [
-	{org = "ballerinax", packageName = "choreo", moduleName = "choreo"}
+	{org = "ballerina_test", packageName = "choreo_periscope_backend", moduleName = "choreo_periscope_backend"},
+	{org = "ballerina_test", packageName = "choreo_periscope_backend", moduleName = "choreo_periscope_backend.handshake"},
+	{org = "ballerina_test", packageName = "choreo_periscope_backend", moduleName = "choreo_periscope_backend.telemetry"}
 ]
 
 

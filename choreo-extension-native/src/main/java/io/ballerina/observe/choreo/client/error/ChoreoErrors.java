@@ -24,6 +24,9 @@ package io.ballerina.observe.choreo.client.error;
  * @since 2.0.0
  */
 public class ChoreoErrors {
+    private ChoreoErrors() {    // Prevent initialization
+    }
+
     public static ChoreoClientException getUnavailableError(Throwable throwable) {
         return new ChoreoClientException(
                 new ChoreoError(ChoreoError.Code.UNAVAILABLE, "Choreo services are not accessible.", throwable)

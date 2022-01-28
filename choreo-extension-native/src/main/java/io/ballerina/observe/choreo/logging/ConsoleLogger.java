@@ -24,20 +24,20 @@ import java.io.PrintStream;
  * @since 2.0.0
  */
 public class ConsoleLogger implements Logger {
-    private static final PrintStream console = System.out;
-
     private static final String PREFIX = "ballerina: ";
     private static final String DEBUG_PREFIX = PREFIX + "debug: ";
     private static final String ERROR_PREFIX = "error: ";
     private static final String POSTFIX = "\n";
     private static final String DEBUG_LOG_LEVEL = "DEBUG";
 
+    private static final PrintStream infoLogPrinter = System.out;
+    private static final PrintStream errorLogPrinter = System.err;
     private final LogPrinter debugLogPrinter;
 
     public ConsoleLogger() {
         String logLevel = System.getenv("CHOREO_EXT_LOG_LEVEL");
         if (DEBUG_LOG_LEVEL.equalsIgnoreCase(logLevel)) {
-            debugLogPrinter = new PrintStreamPrinter(console);
+            debugLogPrinter = new PrintStreamPrinter(infoLogPrinter);
         } else {
             debugLogPrinter = new EmptyPrinter();
         }
@@ -50,12 +50,12 @@ public class ConsoleLogger implements Logger {
 
     @Override
     public void info(String format, Object... args) {
-        console.printf(PREFIX + format + POSTFIX, args);
+        infoLogPrinter.printf(PREFIX + format + POSTFIX, args);
     }
 
     @Override
     public void error(String format, Object... args) {
-        console.printf(ERROR_PREFIX + format + POSTFIX, args);
+        errorLogPrinter.printf(ERROR_PREFIX + format + POSTFIX, args);
     }
 
     private interface LogPrinter {

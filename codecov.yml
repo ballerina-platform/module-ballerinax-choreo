@@ -1,2 +1,4 @@
 fixes:
   - "ballerinax/choreo/*/::choreo-extension-ballerina/"
+ignore:
+  - "choreo-extension-tests/src/main/java/**"
