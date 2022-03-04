@@ -72,7 +72,6 @@ public class BaseTestCase {
 
     protected static final String CHOREO_EXTENSION_LOG_PREFIX =
             "ballerina: initializing connection with observability backend ";
-    protected static final String CHOREO_EXTENSION_URL_LOG_PREFIX = "ballerina: visit ";
     protected static final String CHOREO_EXTENSION_METRICS_ENABLED_LOG =
             "ballerina: started publishing metrics to Choreo";
     protected static final String CHOREO_EXTENSION_TRACES_ENABLED_LOG =
@@ -228,8 +227,6 @@ public class BaseTestCase {
                                  String configFileName) throws Exception {
         LogLeecher choreoExtLogLeecher = new LogLeecher(CHOREO_EXTENSION_LOG_PREFIX + reporterHost);
         serverInstance.addLogLeecher(choreoExtLogLeecher);
-        LogLeecher choreoObservabilityUrlLogLeecher = new LogLeecher(CHOREO_EXTENSION_URL_LOG_PREFIX);
-        serverInstance.addLogLeecher(choreoObservabilityUrlLogLeecher);
         LogLeecher choreoExtMetricsEnabledLogLeecher = new LogLeecher(CHOREO_EXTENSION_METRICS_ENABLED_LOG);
         serverInstance.addLogLeecher(choreoExtMetricsEnabledLogLeecher);
         LogLeecher choreoExtTracesEnabledLogLeecher = new LogLeecher(CHOREO_EXTENSION_TRACES_ENABLED_LOG);
@@ -237,7 +234,6 @@ public class BaseTestCase {
 
         startTestService(additionalEnvVars, new String[0], true, configFileName);
         choreoExtLogLeecher.waitForText(10000);
-        choreoObservabilityUrlLogLeecher.waitForText(10000);
         choreoExtMetricsEnabledLogLeecher.waitForText(1000);
 
         // Send requests to generate metrics & traces

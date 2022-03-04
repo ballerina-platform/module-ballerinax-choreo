@@ -152,6 +152,8 @@ public class ChoreoClient implements AutoCloseable {
         }
 
         this.nodeId = nodeId;
+        LOGGER.debug("connected to the observability backend with id " + registerResponse.getObsId() + " and version" +
+                registerResponse.getVersion());
         return new RegisterResponse(registerResponse.getObsUrl(), this.id);
     }
 
