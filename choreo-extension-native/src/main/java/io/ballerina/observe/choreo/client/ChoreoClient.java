@@ -66,7 +66,38 @@ public class ChoreoClient implements AutoCloseable {
     public ChoreoClient(String hostname, int port, boolean useSSL, String projectSecret) {
         LOGGER.info("initializing connection with observability backend " + hostname + ":" + port);
 
-        ManagedChannelBuilder<?> channelBuilder = ManagedChannelBuilder.forAddress(hostname, port);
+        Map<String, ?> periscopeServiceConfig = Map.of("methodConfig", List.of(
+                Map.of(
+                        "name", List.of(
+                                Map.of("service", "v0_1_2.Handshake", "method", "register"),
+                                Map.of("service", "v0_2_0.Telemetry", "method", "publishMetrics"),
+                                Map.of("service", "v0_2_0.Telemetry", "method", "publishTraces")
+                        ),
+                        "retryPolicy", Map.of(
+                                "maxAttempts", 5.0,
+                                "initialBackoff", "0.5s",
+                                "maxBackoff", "10s",
+                                "backoffMultiplier", 2.0,
+                                "retryableStatusCodes", List.of("UNAVAILABLE")
+                        )
+                ),
+                Map.of(
+                        "name", List.of(
+                                Map.of("service", "v0_1_2.Handshake", "method", "publishAst")
+                        ),
+                        "retryPolicy", Map.of(
+                                "maxAttempts", 5.0,
+                                "initialBackoff", "1s",
+                                "maxBackoff", "30s",
+                                "backoffMultiplier", 2.0,
+                                "retryableStatusCodes", List.of("UNAVAILABLE")
+                        )
+                )
+        ));
+
+        ManagedChannelBuilder<?> channelBuilder = ManagedChannelBuilder.forAddress(hostname, port)
+                .defaultServiceConfig(periscopeServiceConfig)
+                .enableRetry();
         if (!useSSL) {
             channelBuilder.usePlaintext();
         }
