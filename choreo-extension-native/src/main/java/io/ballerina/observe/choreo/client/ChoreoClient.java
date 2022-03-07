@@ -125,13 +125,7 @@ public class ChoreoClient implements AutoCloseable {
             LOGGER.debug("Registered with Periscope with observability ID: " + this.id + ", version: " + this.version
                     + " and node ID: " + nodeId);
         } catch (StatusRuntimeException e) {
-            switch (e.getStatus().getCode()) {
-                case UNAVAILABLE:
-                    throw ChoreoErrors.getUnavailableError(e);
-                case UNKNOWN:
-                    throw ChoreoErrors.getIncompatibleServiceError(e);
-            }
-            throw e;
+            throw ChoreoErrors.getChoreoClientError(e);
         }
 
         boolean sendProgramJson = registerResponse.getSendAst();
@@ -150,10 +144,13 @@ public class ChoreoClient implements AutoCloseable {
                     switch (e.getStatus().getCode()) {
                         case UNAVAILABLE:
                             LOGGER.error("failed to publish syntax tree as Choreo services are not accessible");
+                            break;
                         case UNKNOWN:
                             LOGGER.error("Choreo backend is not compatible");
+                            break;
+                        default:
+                            LOGGER.error("failed to publish syntax tree to Choreo due to " + e.getMessage());
                     }
-                    LOGGER.error("failed to publish syntax tree to Choreo due to " + e.getMessage());
                 }
             }, "AST Uploading Thread");
             LOGGER.debug("Starting AST upload with AST hash " + metadataReader.getAstHash());
@@ -224,13 +221,7 @@ public class ChoreoClient implements AutoCloseable {
                         .setProjectSecret(projectSecret)
                         .build());
             } catch (StatusRuntimeException e) {
-                switch (e.getStatus().getCode()) {
-                    case UNAVAILABLE:
-                        throw ChoreoErrors.getUnavailableError(e);
-                    case UNKNOWN:
-                        throw ChoreoErrors.getIncompatibleServiceError(e);
-                }
-                throw e;
+                throw ChoreoErrors.getChoreoClientError(e);
             }
         }
         LOGGER.debug("Successfully published " + metrics.length + " metrics to Choreo");
@@ -293,13 +284,7 @@ public class ChoreoClient implements AutoCloseable {
                         .setProjectSecret(projectSecret)
                         .build());
             } catch (StatusRuntimeException e) {
-                switch (e.getStatus().getCode()) {
-                    case UNAVAILABLE:
-                        throw ChoreoErrors.getUnavailableError(e);
-                    case UNKNOWN:
-                        throw ChoreoErrors.getIncompatibleServiceError(e);
-                }
-                throw e;
+                throw ChoreoErrors.getChoreoClientError(e);
             }
         }
         LOGGER.debug("Successfully published " + traceSpans.size() + " traces to Choreo");
