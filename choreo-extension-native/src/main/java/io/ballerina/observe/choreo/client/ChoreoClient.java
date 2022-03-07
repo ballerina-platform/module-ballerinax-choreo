@@ -131,21 +131,30 @@ public class ChoreoClient implements AutoCloseable {
                 case UNKNOWN:
                     throw ChoreoErrors.getIncompatibleServiceError(e);
             }
-
             throw e;
         }
 
         boolean sendProgramJson = registerResponse.getSendAst();
         if (sendProgramJson) {
             uploadingThread = new Thread(() -> {
-                PublishAstRequest programRequest = PublishAstRequest.newBuilder()
-                        .setAst(metadataReader.getAstData())
-                        .setObsId(id)
-                        .setProjectSecret(projectSecret)
-                        .build();
-                registrationClient.withCompression("gzip").publishAst(programRequest);
-                uploadingThread = null;
-                LOGGER.debug("Uploading AST completed");
+                try {
+                    PublishAstRequest programRequest = PublishAstRequest.newBuilder()
+                            .setAst(metadataReader.getAstData())
+                            .setObsId(id)
+                            .setProjectSecret(projectSecret)
+                            .build();
+                    registrationClient.withCompression("gzip").publishAst(programRequest);
+                    uploadingThread = null;
+                    LOGGER.debug("Uploading AST completed");
+                } catch (StatusRuntimeException e) {
+                    switch (e.getStatus().getCode()) {
+                        case UNAVAILABLE:
+                            LOGGER.error("failed to publish syntax tree as Choreo services are not accessible");
+                        case UNKNOWN:
+                            LOGGER.error("Choreo backend is not compatible");
+                    }
+                    LOGGER.error("failed to publish syntax tree to Choreo due to " + e.getMessage());
+                }
             }, "AST Uploading Thread");
             LOGGER.debug("Starting AST upload with AST hash " + metadataReader.getAstHash());
             uploadingThread.start();
@@ -178,7 +187,7 @@ public class ChoreoClient implements AutoCloseable {
         }
     }
 
-    public void publishMetrics(ChoreoMetric[] metrics) {
+    public void publishMetrics(ChoreoMetric[] metrics) throws ChoreoClientException {
         int i = 0;
         while (i < metrics.length) {
             TelemetryOuterClass.MetricsPublishRequest.Builder requestBuilder =
@@ -208,16 +217,26 @@ public class ChoreoClient implements AutoCloseable {
                     i++;
                 }
             }
-            telemetryClient.withCompression("gzip").publishMetrics(requestBuilder.setObservabilityId(id)
-                    .setNodeId(nodeId)
-                    .setVersion(version)
-                    .setProjectSecret(projectSecret)
-                    .build());
+            try {
+                telemetryClient.withCompression("gzip").publishMetrics(requestBuilder.setObservabilityId(id)
+                        .setNodeId(nodeId)
+                        .setVersion(version)
+                        .setProjectSecret(projectSecret)
+                        .build());
+            } catch (StatusRuntimeException e) {
+                switch (e.getStatus().getCode()) {
+                    case UNAVAILABLE:
+                        throw ChoreoErrors.getUnavailableError(e);
+                    case UNKNOWN:
+                        throw ChoreoErrors.getIncompatibleServiceError(e);
+                }
+                throw e;
+            }
         }
         LOGGER.debug("Successfully published " + metrics.length + " metrics to Choreo");
     }
 
-    public void publishTraceSpans(List<ChoreoTraceSpan> traceSpans) {
+    public void publishTraceSpans(List<ChoreoTraceSpan> traceSpans) throws ChoreoClientException {
         int i = 0;
         while (i < traceSpans.size()) {
             TelemetryOuterClass.TracesPublishRequest.Builder requestBuilder =
@@ -267,11 +286,21 @@ public class ChoreoClient implements AutoCloseable {
                     i++;
                 }
             }
-            telemetryClient.withCompression("gzip").publishTraces(requestBuilder.setObservabilityId(id)
-                    .setNodeId(nodeId)
-                    .setVersion(version)
-                    .setProjectSecret(projectSecret)
-                    .build());
+            try {
+                telemetryClient.withCompression("gzip").publishTraces(requestBuilder.setObservabilityId(id)
+                        .setNodeId(nodeId)
+                        .setVersion(version)
+                        .setProjectSecret(projectSecret)
+                        .build());
+            } catch (StatusRuntimeException e) {
+                switch (e.getStatus().getCode()) {
+                    case UNAVAILABLE:
+                        throw ChoreoErrors.getUnavailableError(e);
+                    case UNKNOWN:
+                        throw ChoreoErrors.getIncompatibleServiceError(e);
+                }
+                throw e;
+            }
         }
         LOGGER.debug("Successfully published " + traceSpans.size() + " traces to Choreo");
     }
