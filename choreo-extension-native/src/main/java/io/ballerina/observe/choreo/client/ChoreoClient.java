@@ -33,6 +33,7 @@ import io.ballerina.observe.choreo.logging.LogFactory;
 import io.ballerina.observe.choreo.logging.Logger;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
 import java.util.Collections;
@@ -40,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * Manages the communication with Choreo cloud.
@@ -51,6 +53,7 @@ public class ChoreoClient implements AutoCloseable {
 
     private static final int MESSAGE_SIZE_BUFFER_BYTES = 200 * 1024; // Buffer for the rest of the content
     private static final int SERVER_MAX_FRAME_SIZE_BYTES = 4 * 1024 * 1024 - MESSAGE_SIZE_BUFFER_BYTES;
+    private static final int MAX_RETRY_COUNT = 4;
 
     private String id;      // ID received from the handshake
     private String nodeId;
@@ -137,7 +140,8 @@ public class ChoreoClient implements AutoCloseable {
                             .setObsId(id)
                             .setProjectSecret(projectSecret)
                             .build();
-                    registrationClient.withCompression("gzip").publishAst(programRequest);
+                    callWithRetry((req) -> registrationClient.withCompression("gzip").publishAst(req), programRequest,
+                            2000);
                     uploadingThread = null;
                     LOGGER.debug("Uploading AST completed");
                 } catch (StatusRuntimeException e) {
@@ -215,11 +219,12 @@ public class ChoreoClient implements AutoCloseable {
                 }
             }
             try {
-                telemetryClient.withCompression("gzip").publishMetrics(requestBuilder.setObservabilityId(id)
+                TelemetryOuterClass.MetricsPublishRequest publishRequest = requestBuilder.setObservabilityId(id)
                         .setNodeId(nodeId)
                         .setVersion(version)
                         .setProjectSecret(projectSecret)
-                        .build());
+                        .build();
+                telemetryClient.withCompression("gzip").publishMetrics(publishRequest);
             } catch (StatusRuntimeException e) {
                 throw ChoreoErrors.getChoreoClientError(e);
             }
@@ -278,16 +283,40 @@ public class ChoreoClient implements AutoCloseable {
                 }
             }
             try {
-                telemetryClient.withCompression("gzip").publishTraces(requestBuilder.setObservabilityId(id)
+                TelemetryOuterClass.TracesPublishRequest publishRequest = requestBuilder.setObservabilityId(id)
                         .setNodeId(nodeId)
                         .setVersion(version)
                         .setProjectSecret(projectSecret)
-                        .build());
+                        .build();
+                telemetryClient.withCompression("gzip").publishTraces(publishRequest);
             } catch (StatusRuntimeException e) {
                 throw ChoreoErrors.getChoreoClientError(e);
             }
         }
         LOGGER.debug("Successfully published " + traceSpans.size() + " traces to Choreo");
+    }
+
+    private <T, R> R callWithRetry(Function<T, R> function, T request, int initialBackoffMillis) {
+        R response;
+        int currentBackoff = initialBackoffMillis;
+        for (int i = 0; true; i++) {
+            try {
+                response = function.apply(request);
+                break;
+            } catch (StatusRuntimeException e) {
+                if (i == MAX_RETRY_COUNT - 1 || e.getStatus() != Status.UNAVAILABLE) {
+                    throw e;
+                }
+            }
+
+            try {
+                Thread.sleep(currentBackoff);
+            } catch (InterruptedException e) {
+                LOGGER.debug("retry backoff interrupted due to " + e.getMessage());
+            }
+            currentBackoff = currentBackoff * 2;
+        }
+        return response;
     }
 
     @Override
