@@ -174,6 +174,8 @@ public class GeneralExtensionTestCase extends SuccessfulStartBaseTestCase {
     public void testExtensionDataPublishBatching() throws BallerinaTestException, IOException, InterruptedException {
         LogLeecher choreoExtLogLeecher = new LogLeecher(CHOREO_EXTENSION_LOG_PREFIX + "localhost:10090");
         serverInstance.addLogLeecher(choreoExtLogLeecher);
+        LogLeecher choreoExtensionConnectedLogLeecher = new LogLeecher(CHOREO_EXTENSION_CONNECTED_LOG_PREFIX);
+        serverInstance.addLogLeecher(choreoExtensionConnectedLogLeecher);
         LogLeecher choreoExtMetricsEnabledLogLeecher = new LogLeecher(CHOREO_EXTENSION_METRICS_ENABLED_LOG);
         serverInstance.addLogLeecher(choreoExtMetricsEnabledLogLeecher);
         LogLeecher choreoExtTracesEnabledLogLeecher = new LogLeecher(CHOREO_EXTENSION_TRACES_ENABLED_LOG);
@@ -188,6 +190,7 @@ public class GeneralExtensionTestCase extends SuccessfulStartBaseTestCase {
 
         startTestService(Collections.emptyMap(), new String[0], true, "Config.toml");
         choreoExtLogLeecher.waitForText(10000);
+        choreoExtensionConnectedLogLeecher.waitForText(10000);
         choreoExtMetricsEnabledLogLeecher.waitForText(1000);
 
         // Send requests to generate metrics & traces

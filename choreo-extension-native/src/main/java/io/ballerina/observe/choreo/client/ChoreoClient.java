@@ -74,8 +74,8 @@ public class ChoreoClient implements AutoCloseable {
                                 Map.of("service", "v0_2_0.Telemetry", "method", "publishTraces")
                         ),
                         "retryPolicy", Map.of(
-                                "maxAttempts", 5.0,
-                                "initialBackoff", "0.5s",
+                                "maxAttempts", 3.0,
+                                "initialBackoff", "0.25s",
                                 "maxBackoff", "10s",
                                 "backoffMultiplier", 2.0,
                                 "retryableStatusCodes", List.of("UNAVAILABLE")
@@ -86,8 +86,8 @@ public class ChoreoClient implements AutoCloseable {
                                 Map.of("service", "v0_1_2.Handshake", "method", "publishAst")
                         ),
                         "retryPolicy", Map.of(
-                                "maxAttempts", 5.0,
-                                "initialBackoff", "1s",
+                                "maxAttempts", 3.0,
+                                "initialBackoff", "0.5s",
                                 "maxBackoff", "30s",
                                 "backoffMultiplier", 2.0,
                                 "retryableStatusCodes", List.of("UNAVAILABLE")
@@ -152,7 +152,7 @@ public class ChoreoClient implements AutoCloseable {
         }
 
         this.nodeId = nodeId;
-        LOGGER.debug("connected to the observability backend with id " + registerResponse.getObsId() + " and version" +
+        LOGGER.info("connected to the observability backend with id " + registerResponse.getObsId() + " and version " +
                 registerResponse.getVersion());
         return new RegisterResponse(registerResponse.getObsUrl(), this.id);
     }
