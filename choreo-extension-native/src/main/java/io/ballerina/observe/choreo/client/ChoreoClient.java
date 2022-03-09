@@ -33,6 +33,7 @@ import io.ballerina.observe.choreo.logging.LogFactory;
 import io.ballerina.observe.choreo.logging.Logger;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 
 import java.util.Collections;
@@ -40,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * Manages the communication with Choreo cloud.
@@ -51,6 +53,7 @@ public class ChoreoClient implements AutoCloseable {
 
     private static final int MESSAGE_SIZE_BUFFER_BYTES = 200 * 1024; // Buffer for the rest of the content
     private static final int SERVER_MAX_FRAME_SIZE_BYTES = 4 * 1024 * 1024 - MESSAGE_SIZE_BUFFER_BYTES;
+    private static final int MAX_RETRY_COUNT = 4;
 
     private String id;      // ID received from the handshake
     private String nodeId;
@@ -66,7 +69,38 @@ public class ChoreoClient implements AutoCloseable {
     public ChoreoClient(String hostname, int port, boolean useSSL, String projectSecret) {
         LOGGER.info("initializing connection with observability backend " + hostname + ":" + port);
 
-        ManagedChannelBuilder<?> channelBuilder = ManagedChannelBuilder.forAddress(hostname, port);
+        Map<String, ?> periscopeServiceConfig = Map.of("methodConfig", List.of(
+                Map.of(
+                        "name", List.of(
+                                Map.of("service", "v0_1_2.Handshake", "method", "register"),
+                                Map.of("service", "v0_2_0.Telemetry", "method", "publishMetrics"),
+                                Map.of("service", "v0_2_0.Telemetry", "method", "publishTraces")
+                        ),
+                        "retryPolicy", Map.of(
+                                "maxAttempts", 3.0,
+                                "initialBackoff", "0.25s",
+                                "maxBackoff", "10s",
+                                "backoffMultiplier", 2.0,
+                                "retryableStatusCodes", List.of("UNAVAILABLE")
+                        )
+                ),
+                Map.of(
+                        "name", List.of(
+                                Map.of("service", "v0_1_2.Handshake", "method", "publishAst")
+                        ),
+                        "retryPolicy", Map.of(
+                                "maxAttempts", 3.0,
+                                "initialBackoff", "0.5s",
+                                "maxBackoff", "30s",
+                                "backoffMultiplier", 2.0,
+                                "retryableStatusCodes", List.of("UNAVAILABLE")
+                        )
+                )
+        ));
+
+        ManagedChannelBuilder<?> channelBuilder = ManagedChannelBuilder.forAddress(hostname, port)
+                .defaultServiceConfig(periscopeServiceConfig)
+                .enableRetry();
         if (!useSSL) {
             channelBuilder.usePlaintext();
         }
@@ -94,33 +128,42 @@ public class ChoreoClient implements AutoCloseable {
             LOGGER.debug("Registered with Periscope with observability ID: " + this.id + ", version: " + this.version
                     + " and node ID: " + nodeId);
         } catch (StatusRuntimeException e) {
-            switch (e.getStatus().getCode()) {
-                case UNAVAILABLE:
-                    throw ChoreoErrors.getUnavailableError(e);
-                case UNKNOWN:
-                    throw ChoreoErrors.getIncompatibleServiceError(e);
-            }
-
-            throw e;
+            throw ChoreoErrors.getChoreoClientError(e);
         }
 
         boolean sendProgramJson = registerResponse.getSendAst();
         if (sendProgramJson) {
             uploadingThread = new Thread(() -> {
-                PublishAstRequest programRequest = PublishAstRequest.newBuilder()
-                        .setAst(metadataReader.getAstData())
-                        .setObsId(id)
-                        .setProjectSecret(projectSecret)
-                        .build();
-                registrationClient.withCompression("gzip").publishAst(programRequest);
-                uploadingThread = null;
-                LOGGER.debug("Uploading AST completed");
+                try {
+                    PublishAstRequest programRequest = PublishAstRequest.newBuilder()
+                            .setAst(metadataReader.getAstData())
+                            .setObsId(id)
+                            .setProjectSecret(projectSecret)
+                            .build();
+                    callWithRetry((req) -> registrationClient.withCompression("gzip").publishAst(req), programRequest,
+                            2000);
+                    uploadingThread = null;
+                    LOGGER.debug("Uploading AST completed");
+                } catch (StatusRuntimeException e) {
+                    switch (e.getStatus().getCode()) {
+                        case UNAVAILABLE:
+                            LOGGER.error("failed to publish syntax tree as Choreo services are not accessible");
+                            break;
+                        case UNKNOWN:
+                            LOGGER.error("Choreo backend is not compatible");
+                            break;
+                        default:
+                            LOGGER.error("failed to publish syntax tree to Choreo due to " + e.getMessage());
+                    }
+                }
             }, "AST Uploading Thread");
             LOGGER.debug("Starting AST upload with AST hash " + metadataReader.getAstHash());
             uploadingThread.start();
         }
 
         this.nodeId = nodeId;
+        LOGGER.info("connected to the observability backend with id " + registerResponse.getObsId() + " and version " +
+                registerResponse.getVersion());
         return new RegisterResponse(registerResponse.getObsUrl(), this.id);
     }
 
@@ -145,7 +188,7 @@ public class ChoreoClient implements AutoCloseable {
         }
     }
 
-    public void publishMetrics(ChoreoMetric[] metrics) {
+    public void publishMetrics(ChoreoMetric[] metrics) throws ChoreoClientException {
         int i = 0;
         while (i < metrics.length) {
             TelemetryOuterClass.MetricsPublishRequest.Builder requestBuilder =
@@ -175,16 +218,21 @@ public class ChoreoClient implements AutoCloseable {
                     i++;
                 }
             }
-            telemetryClient.withCompression("gzip").publishMetrics(requestBuilder.setObservabilityId(id)
-                    .setNodeId(nodeId)
-                    .setVersion(version)
-                    .setProjectSecret(projectSecret)
-                    .build());
+            try {
+                TelemetryOuterClass.MetricsPublishRequest publishRequest = requestBuilder.setObservabilityId(id)
+                        .setNodeId(nodeId)
+                        .setVersion(version)
+                        .setProjectSecret(projectSecret)
+                        .build();
+                telemetryClient.withCompression("gzip").publishMetrics(publishRequest);
+            } catch (StatusRuntimeException e) {
+                throw ChoreoErrors.getChoreoClientError(e);
+            }
         }
         LOGGER.debug("Successfully published " + metrics.length + " metrics to Choreo");
     }
 
-    public void publishTraceSpans(List<ChoreoTraceSpan> traceSpans) {
+    public void publishTraceSpans(List<ChoreoTraceSpan> traceSpans) throws ChoreoClientException {
         int i = 0;
         while (i < traceSpans.size()) {
             TelemetryOuterClass.TracesPublishRequest.Builder requestBuilder =
@@ -234,13 +282,41 @@ public class ChoreoClient implements AutoCloseable {
                     i++;
                 }
             }
-            telemetryClient.withCompression("gzip").publishTraces(requestBuilder.setObservabilityId(id)
-                    .setNodeId(nodeId)
-                    .setVersion(version)
-                    .setProjectSecret(projectSecret)
-                    .build());
+            try {
+                TelemetryOuterClass.TracesPublishRequest publishRequest = requestBuilder.setObservabilityId(id)
+                        .setNodeId(nodeId)
+                        .setVersion(version)
+                        .setProjectSecret(projectSecret)
+                        .build();
+                telemetryClient.withCompression("gzip").publishTraces(publishRequest);
+            } catch (StatusRuntimeException e) {
+                throw ChoreoErrors.getChoreoClientError(e);
+            }
         }
         LOGGER.debug("Successfully published " + traceSpans.size() + " traces to Choreo");
+    }
+
+    private <T, R> R callWithRetry(Function<T, R> function, T request, int initialBackoffMillis) {
+        R response;
+        int currentBackoff = initialBackoffMillis;
+        for (int i = 0; true; i++) {
+            try {
+                response = function.apply(request);
+                break;
+            } catch (StatusRuntimeException e) {
+                if (i == MAX_RETRY_COUNT - 1 || e.getStatus() != Status.UNAVAILABLE) {
+                    throw e;
+                }
+            }
+
+            try {
+                Thread.sleep(currentBackoff);
+            } catch (InterruptedException e) {
+                LOGGER.debug("retry backoff interrupted due to " + e.getMessage());
+            }
+            currentBackoff = currentBackoff * 2;
+        }
+        return response;
     }
 
     @Override

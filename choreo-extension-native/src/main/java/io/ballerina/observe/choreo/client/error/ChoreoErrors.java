@@ -18,6 +18,8 @@
 
 package io.ballerina.observe.choreo.client.error;
 
+import io.grpc.StatusRuntimeException;
+
 /**
  * Collection of helper methods to create Choreo specific exceptions.
  *
@@ -25,6 +27,17 @@ package io.ballerina.observe.choreo.client.error;
  */
 public class ChoreoErrors {
     private ChoreoErrors() {    // Prevent initialization
+    }
+
+    public static ChoreoClientException getChoreoClientError(StatusRuntimeException e) {
+        switch (e.getStatus().getCode()) {
+            case UNAVAILABLE:
+                return ChoreoErrors.getUnavailableError(e);
+            case UNKNOWN:
+                return ChoreoErrors.getIncompatibleServiceError(e);
+            default:
+                return new ChoreoClientException(new ChoreoError(ChoreoError.Code.INTERNAL, e.getMessage(), e));
+        }
     }
 
     public static ChoreoClientException getUnavailableError(Throwable throwable) {

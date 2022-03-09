@@ -82,8 +82,6 @@ public class ChoreoClientHolder {
                 LOGGER.error("Error occurred while associating observability ID with secret. " + e.getMessage());
                 return null;
             }
-            LOGGER.info("visit " + registerResponse.getObsUrl().replaceAll("%", "%%")
-                    + " to access observability data");
 
             createShutdownHook();
             choreoClient = newChoreoClient;
