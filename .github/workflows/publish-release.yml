@@ -34,6 +34,16 @@ jobs:
           git commit -m "Move dependencies to stable version" || echo "No changes to commit"
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+      - name: Generating Artifacts for Scanning
+        run: ./gradlew build -x check -x test
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '/github/workspace/choreo-extension-ballerina/lib'
+          format: 'table'
+          timeout: '6m0s'
+          exit-code: '1'
       - name: Publish artifact
         env:
           GITHUB_TOKEN: ${{ secrets.BALLERINA_BOT_TOKEN }}
