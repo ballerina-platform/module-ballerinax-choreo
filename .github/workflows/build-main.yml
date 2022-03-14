@@ -20,6 +20,16 @@ jobs:
           java-version: 11
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+      - name: Generating Artifacts for Scanning
+        run: ./gradlew build -x check -x test
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '/github/workspace/choreo-extension-ballerina/lib'
+          format: 'table'
+          timeout: '6m0s'
+          exit-code: '1'
       - name: Build with Gradle
         env:
           packageUser: ${{ secrets.BALLERINA_BOT_USERNAME }}
