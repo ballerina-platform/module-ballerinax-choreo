@@ -1,6 +1,6 @@
 # Ballerina Choreo Observability Extension
 
-[![Build](https://github.com/ballerina-platform/module-ballerinax-choreo/workflows/Daily%20Build/badge.svg)](https://github.com/ballerina-platform/module-ballerinax-choreo/actions?query=workflow%3A"Daily+Build")
+[!  [Build](https://github.com/ballerina-platform/module-ballerinax-choreo/workflows/Daily%20Build/badge.svg)](https://github.com/ballerina-platform/module-ballerinax-choreo/actions?query=workflow%3A"Daily+Build")
 [![GitHub Last Commit](https://img.shields.io/github/last-commit/ballerina-platform/module-ballerinax-choreo.svg)](https://github.com/ballerina-platform/module-ballerinax-choreo/commits/main)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![codecov](https://codecov.io/gh/ballerina-platform/module-ballerinax-choreo/branch/main/graph/badge.svg?token=YFBSFSOND4)](https://codecov.io/gh/ballerina-platform/module-ballerinax-choreo)
