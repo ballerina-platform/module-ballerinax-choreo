@@ -17,112 +17,112 @@
 [package]
 org = "ballerinax"
 name = "choreo"
-version = "@toml.version@"
+version = "0.4.10"
 
 [[platform.java11.dependency]]
-path = "../choreo-extension-native/build/libs/choreo-extension-native-@project.version@.jar"
+path = "../choreo-extension-native/build/libs/choreo-extension-native-0.4.10-SNAPSHOT.jar"
 groupId = "ballerina"
 artifactId = "choreo-extension-native"
-version = "@project.version@"
+version = "0.4.10-SNAPSHOT"
 
 [[platform.java11.dependency]]
-path = "./lib/jaeger-core-@jaeger.version@.jar"
+path = "./lib/jaeger-core-1.5.0.jar"
 groupId = "io.jaegertracing"
 artifactId = "jaeger-core"
-version = "@jaeger.version@"
+version = "1.5.0"
 
 [[platform.java11.dependency]]
-path = "./lib/opentelemetry-sdk-trace-@opentelemetry.version@.jar"
+path = "./lib/opentelemetry-sdk-trace-1.0.0.jar"
 groupId = "io.opentelemetry"
 artifactId = "opentelemetry-sdk-trace"
-version = "@opentelemetry.version@"
+version = "1.0.0"
 
 [[platform.java11.dependency]]
-path = "./lib/opentelemetry-sdk-common-@opentelemetry.version@.jar"
+path = "./lib/opentelemetry-sdk-common-1.0.0.jar"
 groupId = "io.opentelemetry"
 artifactId = "opentelemetry-sdk-common"
-version = "@opentelemetry.version@"
+version = "1.0.0"
 
 [[platform.java11.dependency]]
-path = "./lib/opentelemetry-semconv-@openTelemetryAlpha.version@.jar"
+path = "./lib/opentelemetry-semconv-1.0.0-alpha.jar"
 groupId = "io.opentelemetry"
 artifactId = "opentelemetry-semconv"
-version = "@openTelemetryAlpha.version@"
+version = "1.0.0-alpha"
 
 [[platform.java11.dependency]]
-path = "./lib/opentelemetry-api-metrics-@openTelemetryAlpha.version@.jar"
+path = "./lib/opentelemetry-api-metrics-1.0.0-alpha.jar"
 groupId = "io.opentelemetry"
 artifactId = "opentelemetry-api-metrics"
-version = "@openTelemetryAlpha.version@"
+version = "1.0.0-alpha"
 
 [[platform.java11.dependency]]
-path = "./lib/opentelemetry-extension-trace-propagators-@opentelemetry.version@.jar"
+path = "./lib/opentelemetry-extension-trace-propagators-1.0.0.jar"
 groupId = "io.opentelemetry"
 artifactId = "opentelemetry-extension-trace-propagators"
-version = "@opentelemetry.version@"
+version = "1.0.0"
 
 [[platform.java11.dependency]]
-path = "./lib/grpc-protobuf-@grpc.version@.jar"
+path = "./lib/grpc-protobuf-1.35.0.jar"
 groupId = "io.grpc"
 artifactId = "grpc-protobuf"
-version = "@grpc.version@"
+version = "1.35.0"
 
 [[platform.java11.dependency]]
-path = "./lib/grpc-stub-@grpc.version@.jar"
+path = "./lib/grpc-stub-1.35.0.jar"
 groupId = "io.grpc"
 artifactId = "grpc-stub"
-version = "@grpc.version@"
+version = "1.35.0"
 
 [[platform.java11.dependency]]
-path = "./lib/grpc-netty-shaded-@grpc.version@.jar"
+path = "./lib/grpc-netty-shaded-1.35.0.jar"
 groupId = "io.grpc"
 artifactId = "grpc-netty-shaded"
-version = "@grpc.version@"
+version = "1.35.0"
 
 [[platform.java11.dependency]]
-path = "./lib/grpc-api-@grpc.version@.jar"
+path = "./lib/grpc-api-1.35.0.jar"
 groupId = "io.grpc"
 artifactId = "grpc-api"
-version = "@grpc.version@"
+version = "1.35.0"
 
 [[platform.java11.dependency]]
-path = "./lib/grpc-core-@grpc.version@.jar"
+path = "./lib/grpc-core-1.35.0.jar"
 groupId = "io.grpc"
 artifactId = "grpc-core"
-version = "@grpc.version@"
+version = "1.35.0"
 
 [[platform.java11.dependency]]
-path = "./lib/grpc-protobuf-lite-@grpc.version@.jar"
+path = "./lib/grpc-protobuf-lite-1.35.0.jar"
 groupId = "io.grpc"
 artifactId = "grpc-protobuf-lite"
-version = "@grpc.version@"
+version = "1.35.0"
 
 [[platform.java11.dependency]]
-path = "./lib/grpc-context-@grpc.version@.jar"
+path = "./lib/grpc-context-1.35.0.jar"
 groupId = "io.grpc"
 artifactId = "grpc-context"
-version = "@grpc.version@"
+version = "1.35.0"
 
 [[platform.java11.dependency]]
-path = "./lib/guava-@guava.version@.jar"
+path = "./lib/guava-30.1-jre.jar"
 groupId = "com.google.guava"
 artifactId = "guava"
-version = "@guava.version@"
+version = "30.1-jre"
 
 [[platform.java11.dependency]]
-path = "./lib/failureaccess-@failureAccess.version@.jar"
+path = "./lib/failureaccess-1.0.1.jar"
 groupId = "com.google.guava"
 artifactId = "failureaccess"
-version = "@failureAccess.version@"
+version = "1.0.1"
 
 [[platform.java11.dependency]]
-path = "./lib/protobuf-java-@protobuf.version@.jar"
+path = "./lib/protobuf-java-3.14.0.jar"
 groupId = "com.google.protobuf"
 artifactId = "protobuf-java"
-version = "@protobuf.version@"
+version = "3.14.0"
 
 [[platform.java11.dependency]]
-path = "./lib/perfmark-api-@perfmark.version@.jar"
+path = "./lib/perfmark-api-0.23.0.jar"
 groupId = "io.perfmark"
 artifactId = "perfmark-api"
-version = "@perfmark.version@"
+version = "0.23.0"
