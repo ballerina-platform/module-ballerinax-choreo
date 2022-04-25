@@ -72,7 +72,7 @@ public class StepcountObserver implements BallerinaObserver {
             Long startTime = (Long) observerContext.getProperty(PROPERTY_START_TIME);
             long duration = System.nanoTime() - startTime;
             long steps= Math.round(Math.ceil((double)(duration-500)/500));
-            System.out.println(steps);
+            //System.out.println(steps);
             metricRegistry.counter(new MetricId("steps_total",
                     "Total no of steps", tags)).increment(steps);
         } catch (RuntimeException e) {
