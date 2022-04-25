@@ -28,13 +28,8 @@ import io.ballerina.runtime.api.values.BString;
 import io.ballerina.runtime.observability.ObserveUtils;
 import io.ballerina.runtime.observability.BallerinaObserver;
 
-
 import java.io.IOException;
 import java.util.Objects;
-
-
-
-
 
 /**
  * Native functions used by the Choreo extension objects.
@@ -115,8 +110,3 @@ public class InitUtils {
         return !Objects.isNull(ChoreoClientHolder.getChoreoClient());
     }
 }
-
-
-
-
-
