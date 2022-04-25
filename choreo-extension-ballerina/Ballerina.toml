@@ -17,7 +17,7 @@
 [package]
 org = "ballerinax"
 name = "choreo"
-version = "0.4.10"
+version = "@toml.version@"
 
 [[platform.java11.dependency]]
 path = "../choreo-extension-native/build/libs/choreo-extension-native-0.4.10-SNAPSHOT.jar"

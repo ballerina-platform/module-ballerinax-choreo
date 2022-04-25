@@ -25,16 +25,11 @@ import io.ballerina.observe.choreo.logging.Logger;
 import io.ballerina.runtime.api.creators.ErrorCreator;
 import io.ballerina.runtime.api.utils.StringUtils;
 import io.ballerina.runtime.api.values.BString;
-import io.ballerina.runtime.observability.ObserveUtils;
 import io.ballerina.runtime.observability.BallerinaObserver;
-
+import io.ballerina.runtime.observability.ObserveUtils;
 
 import java.io.IOException;
 import java.util.Objects;
-
-
-
-
 
 /**
  * Native functions used by the Choreo extension objects.
@@ -47,7 +42,8 @@ public class InitUtils {
     private static final String REPORTER_HOSTNAME_ENV_VAR = "CHOREO_EXT_REPORTER_HOSTNAME";
 
     private static final Logger LOGGER = LogFactory.getLogger();
-    private static final BallerinaObserver observer = new StepcountObserver();
+
+    private static final BallerinaObserver observer = new StepCountObserver();
     /**
      * Initialize the Choreo extension.
      *
@@ -115,8 +111,3 @@ public class InitUtils {
         return !Objects.isNull(ChoreoClientHolder.getChoreoClient());
     }
 }
-
-
-
-
-
