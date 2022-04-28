@@ -30,13 +30,20 @@ import java.util.Set;
 /**
  * Observe the runtime and collect measurements.
  */
-
 public class StepCountObserver implements BallerinaObserver {
     private static final String PROPERTY_START_TIME = "_choreo_observation_start_time_";
 
-    private static final String PROPERTY_STEP_TIME = System.getenv("choreo_per_step_time");
-         
     private static final Logger LOGGER = LogFactory.getLogger();
+
+    private static long stepTime;
+
+    static {
+    String propertysteptime = System.getenv("CHOREO_PER_STEP_TIME");
+    if (propertysteptime == null) { 
+                propertysteptime = "500";
+            }
+    stepTime = Long.parseLong(propertysteptime);
+    }
 
     @Override
     public void startServerObservation(ObserverContext observerContext) {
@@ -71,13 +78,12 @@ public class StepCountObserver implements BallerinaObserver {
         Set<Tag> tags = observerContext.getAllTags();
         try {
             Long startTime = (Long) observerContext.getProperty(PROPERTY_START_TIME);
-            long stepTime = Long.parseLong(PROPERTY_STEP_TIME);
             long duration = System.currentTimeMillis() - startTime;
             long steps = Math.round(Math.ceil((double) (duration - stepTime) / stepTime));
             final MetricRegistry metricRegistry = DefaultMetricRegistry.getInstance();
             metricRegistry.counter(new MetricId("choreo_steps_total", "Total no of steps", tags)).increment(steps);
         } catch (RuntimeException e) {
-            LOGGER.error("error: error collecting metrics for multiple metrics with tags " 
+            LOGGER.error("error collecting metrics for multiple metrics with tags " 
             + tags + ": " + e.getMessage());
         }
     }
