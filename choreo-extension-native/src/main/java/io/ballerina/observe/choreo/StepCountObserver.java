@@ -35,7 +35,9 @@ public class StepCountObserver implements BallerinaObserver {
 
     private static final Logger LOGGER = LogFactory.getLogger();
 
-    private static long stepTime;
+    private static final long stepTime;
+
+    private static long steps = 0;
 
     static {
     String propertysteptime = System.getenv("CHOREO_PER_STEP_TIME");
@@ -49,10 +51,12 @@ public class StepCountObserver implements BallerinaObserver {
     public void startServerObservation(ObserverContext observerContext) {
         startObservation(observerContext);
     }
+
     @Override
     public void startClientObservation(ObserverContext observerContext) {
         startObservation(observerContext);
     }
+
     @Override
     public void stopServerObservation(ObserverContext observerContext) {
         if (!observerContext.isStarted()) {
@@ -60,7 +64,9 @@ public class StepCountObserver implements BallerinaObserver {
             return;
         }
         stopObservation(observerContext);
+    
     }
+
     @Override
     public void stopClientObservation(ObserverContext observerContext) {
         if (!observerContext.isStarted()) {
@@ -79,12 +85,14 @@ public class StepCountObserver implements BallerinaObserver {
         try {
             Long startTime = (Long) observerContext.getProperty(PROPERTY_START_TIME);
             long duration = System.currentTimeMillis() - startTime;
-            long steps = Math.round(Math.ceil((double) (duration - stepTime) / stepTime));
+            if (duration > stepTime) {
+                steps = Math.round(Math.ceil((double) (duration - stepTime) / stepTime));
+            }
             final MetricRegistry metricRegistry = DefaultMetricRegistry.getInstance();
             metricRegistry.counter(new MetricId("choreo_steps_total", "Total no of steps", tags)).increment(steps);
         } catch (RuntimeException e) {
-            LOGGER.error("error collecting metrics for multiple metrics with tags " 
-            + tags + ": " + e.getMessage());
+            LOGGER.error("error collecting metrics for choreo_steps_total metric with tags " 
+             + tags + ": " + e.getMessage());
         }
     }
 }
