@@ -44,7 +44,7 @@ public class SuccessfulStartBaseTestCase extends BaseTestCase {
     private static final List<String> EXPECTED_METRICS_NAMES = Arrays.asList("up", "requests_total",
             "response_time_seconds", "response_time_seconds_mean", "response_time_seconds_max",
             "response_time_seconds_min", "response_time_seconds_stdDev", "response_time_seconds_percentile",
-            "inprogress_requests", "response_time_nanoseconds_total");
+            "inprogress_requests", "response_time_nanoseconds_total", "choreo_steps_total");
 
     @BeforeMethod
     public void initializeTest() throws IOException, BallerinaTestException {
@@ -192,7 +192,7 @@ public class SuccessfulStartBaseTestCase extends BaseTestCase {
                 Assert.assertEquals(metric.getValue(), 1f);
                 Assert.assertEquals(metric.getTags(), periscopeTags);
             } else {
-                Assert.assertEquals(publishMetricsCall.getRequest().getMetrics().size(), 75);
+                Assert.assertEquals(publishMetricsCall.getRequest().getMetrics().size(), 76);
                 publishMetricsCall.getRequest().getMetrics().forEach(metric -> {
                     Assert.assertTrue(metric.getTags().containsAll(periscopeTags));
                     if ("up".equals(metric.getName())) {

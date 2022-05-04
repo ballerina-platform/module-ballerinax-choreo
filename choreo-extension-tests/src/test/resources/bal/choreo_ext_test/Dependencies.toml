@@ -156,6 +156,9 @@ version = "0.0.0"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"}
 ]
+modules = [
+	{org = "ballerina", packageName = "lang.runtime", moduleName = "lang.runtime"}
+]
 
 [[package]]
 org = "ballerina"
@@ -265,6 +268,7 @@ name = "choreo_ext_test"
 version = "0.1.0"
 dependencies = [
 	{org = "ballerina", name = "http"},
+	{org = "ballerina", name = "lang.runtime"},
 	{org = "ballerina", name = "observe"},
 	{org = "ballerinai", name = "observe"},
 	{org = "ballerinax", name = "choreo"}

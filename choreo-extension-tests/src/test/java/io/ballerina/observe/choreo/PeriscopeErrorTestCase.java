@@ -229,7 +229,7 @@ public class PeriscopeErrorTestCase extends SuccessfulStartBaseTestCase {
         validateRecordedPublishMetricsCall(recordedTest);
 
         // Validating first call failure
-        Assert.assertEquals(recordedTest.getPublishTracesCalls().size(), 8);
+        Assert.assertEquals(recordedTest.getPublishTracesCalls().size(), 6);
         int totalPublishedSpans = 0;
         Map<String, List<PublishTracesCall.Request.TraceSpan>> traceIdToSpansMap = new HashMap<>();
         for (int i = 0; i < recordedTest.getPublishTracesCalls().size(); i++) {
