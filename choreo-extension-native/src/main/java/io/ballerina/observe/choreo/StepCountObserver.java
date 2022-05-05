@@ -38,11 +38,11 @@ public class StepCountObserver implements BallerinaObserver {
     private static final long stepTime;
 
     static {
-    String propertysteptime = System.getenv("CHOREO_PER_STEP_TIME");
-    if (propertysteptime == null) { 
-                propertysteptime = "500";
-            }
-    stepTime = Long.parseLong(propertysteptime);
+        String propertysteptime = System.getenv("CHOREO_PER_STEP_TIME");
+        if (propertysteptime == null) { 
+            propertysteptime = "500";
+        }
+        stepTime = Long.parseLong(propertysteptime);
     }
 
     @Override
@@ -84,10 +84,11 @@ public class StepCountObserver implements BallerinaObserver {
             Long startTime = (Long) observerContext.getProperty(PROPERTY_START_TIME);
             long duration = System.currentTimeMillis() - startTime;
             if (duration > stepTime) {
-               long steps = Math.round(Math.ceil((double) (duration - stepTime) / stepTime));
-               final MetricRegistry metricRegistry = DefaultMetricRegistry.getInstance();
-               metricRegistry.counter(new MetricId("choreo_steps_total", "Total no of steps", tags)).increment(steps);
+                long steps = Math.round(Math.ceil((double) (duration - stepTime) / stepTime));
+                final MetricRegistry metricRegistry = DefaultMetricRegistry.getInstance();
+                metricRegistry.counter(new MetricId("choreo_steps_total", "Total no of steps", tags)).increment(steps);
             }
+
         } catch (RuntimeException e) {
             LOGGER.error("error collecting metrics for choreo_steps_total metric with tags " 
              + tags + ": " + e.getMessage());
