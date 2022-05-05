@@ -16,15 +16,18 @@
 
 import ballerina/http;
 import ballerina/observe;
+import ballerina/lang.runtime;
 
 service /test on new http:Listener(9091) {
     resource function get sum() returns string {
+        runtime:sleep(1);
         ObservableAdderClass adder = new ObservableAdder(20, 33);
         var sum = adder.getSum();
         return "Sum: " + sum.toString();
     }
 
     resource function get loopWithLargeTags() returns string {
+        runtime:sleep(1);
         int finalSum = 0;
         int i = 0;
         while i < 45 { // i added as a metric tag can be used to tune the number of metrics published

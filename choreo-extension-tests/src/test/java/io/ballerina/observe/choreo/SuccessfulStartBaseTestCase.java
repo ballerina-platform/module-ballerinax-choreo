@@ -154,7 +154,7 @@ public class SuccessfulStartBaseTestCase extends BaseTestCase {
         Assert.assertEquals(rootSpan.getServiceName(), "/test");
         Assert.assertEquals(rootSpan.getOperationName(), "get /sum");
         Assert.assertEquals(rootSpan.getTags().size(), periscopeTags.size() + 16);
-        Assert.assertEquals(rootSpan.getCheckpoints().size(), 6);
+        Assert.assertEquals(rootSpan.getCheckpoints().size(), 7);
 
         // Validate published child span
         Assert.assertEquals(childSpan.getServiceName(), "/test");
