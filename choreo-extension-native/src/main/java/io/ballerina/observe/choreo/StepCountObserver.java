@@ -90,8 +90,8 @@ public class StepCountObserver implements BallerinaObserver {
             }
 
         } catch (RuntimeException e) {
-            LOGGER.error("error collecting metrics for choreo_steps_total metric with tags " 
-             + tags + ": " + e.getMessage());
+            LOGGER.error("Error collecting metrics for choreo_steps_total metric with tags " 
+             + tags, e);
         }
     }
 }
