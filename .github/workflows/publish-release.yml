@@ -35,6 +35,9 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Generating Artifacts for Scanning
+        env:
+          packageUser: ${{ secrets.BALLERINA_BOT_USERNAME }}
+          packagePAT: ${{ secrets.BALLERINA_BOT_TOKEN }}
         run: ./gradlew build -x check -x test
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
