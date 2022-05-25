@@ -34,11 +34,14 @@ import io.ballerina.runtime.observability.metrics.Snapshot;
 import io.ballerina.runtime.observability.metrics.Tag;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -61,6 +64,9 @@ public class MetricsReporter implements AutoCloseable {
     private static final String METRIC_MIN_POSTFIX = "_min";
     private static final String METRIC_STD_DEV_POSTFIX = "_stdDev";
     private static final String METRIC_PERCENTILE_POSTFIX = "_percentile";
+
+    private static final Set<String> IGNORED_GAUGE_VALUE_METRICS = new HashSet<>(Arrays.asList(
+        "response_time_seconds"));
 
     private ScheduledExecutorService executorService;
     private Task task;
@@ -122,9 +128,13 @@ public class MetricsReporter implements AutoCloseable {
                     } else if (metric instanceof Gauge) {
                         Gauge gauge = (Gauge) metric;
                         Map<String, String> tags = generateTagsMap(metric, 0);
-                        ChoreoMetric gaugeMetric = new ChoreoMetric(currentTimestamp, metricName, gauge.getValue(),
-                                tags);
-                        choreoMetrics.add(gaugeMetric);
+
+                        if (!IGNORED_GAUGE_VALUE_METRICS.contains(metricName)) {
+                            ChoreoMetric gaugeMetric = new ChoreoMetric(currentTimestamp, metricName, gauge.getValue(),
+                                    tags);
+                            choreoMetrics.add(gaugeMetric);
+                        }
+
                         for (Snapshot snapshot : gauge.getSnapshots()) {
                             Map<String, String> snapshotTags = new HashMap<>(tags.size() + 1);
                             snapshotTags.putAll(tags);
