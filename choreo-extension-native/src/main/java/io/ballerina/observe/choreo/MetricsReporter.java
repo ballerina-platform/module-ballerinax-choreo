@@ -120,15 +120,23 @@ public class MetricsReporter implements AutoCloseable {
                 for (Metric metric : metrics) {
                     String metricName = metric.getId().getName();
                     if (metric instanceof Counter) {
+                        Counter counter = (Counter) metric;
+                        if (counter.getValue() == 0) {
+                            continue;
+                        }
+
                         Map<String, String> tags = generateTagsMap(metric, 1);
                         tags.put(TIME_WINDOW_TAG_KEY, String.valueOf(currentTimestamp - lastCounterResetTimestamp));
                         ChoreoMetric counterMetric = new ChoreoMetric(currentTimestamp, metricName,
-                                ((Counter) metric).getValueThenReset(), tags);
+                            counter.getValueThenReset(), tags);
                         choreoMetrics.add(counterMetric);
                     } else if (metric instanceof Gauge) {
                         Gauge gauge = (Gauge) metric;
-                        Map<String, String> tags = generateTagsMap(metric, 0);
+                        if (gauge.getValue() == 0) {
+                            continue;
+                        }
 
+                        Map<String, String> tags = generateTagsMap(metric, 0);
                         if (!IGNORED_GAUGE_VALUE_METRICS.contains(metricName)) {
                             ChoreoMetric gaugeMetric = new ChoreoMetric(currentTimestamp, metricName, gauge.getValue(),
                                     tags);
@@ -167,9 +175,14 @@ public class MetricsReporter implements AutoCloseable {
                             }
                         }
                     } else if (metric instanceof PolledGauge) {
+                        PolledGauge polledGauge = (PolledGauge) metric;
+                        if (polledGauge.getValue() == 0) {
+                            continue;
+                        }
+
                         Map<String, String> tags = generateTagsMap(metric, 0);
                         ChoreoMetric polledGaugeMetric = new ChoreoMetric(currentTimestamp, metricName,
-                                ((PolledGauge) metric).getValue(), tags);
+                            polledGauge.getValue(), tags);
                         choreoMetrics.add(polledGaugeMetric);
                     }
                 }

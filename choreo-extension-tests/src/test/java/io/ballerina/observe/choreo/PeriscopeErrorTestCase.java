@@ -155,7 +155,7 @@ public class PeriscopeErrorTestCase extends SuccessfulStartBaseTestCase {
 
         validateRecordedRegisterCall(recordedTest);
         validateRecordedPublishAstCall(recordedTest);
-        validateRecordedPublishMetricsCall(recordedTest);
+        validateRecordedPublishMetricsCall(recordedTest, 203);
 
         // Validating first call failure
         Assert.assertEquals(recordedTest.getPublishTracesCalls().size(), 3);
@@ -226,7 +226,7 @@ public class PeriscopeErrorTestCase extends SuccessfulStartBaseTestCase {
 
         validateRecordedRegisterCall(recordedTest);
         validateRecordedPublishAstCall(recordedTest);
-        validateRecordedPublishMetricsCall(recordedTest);
+        validateRecordedPublishMetricsCall(recordedTest, 207);
 
         // Validating first call failure
         Assert.assertEquals(recordedTest.getPublishTracesCalls().size(), 8);

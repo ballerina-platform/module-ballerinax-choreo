@@ -20,6 +20,7 @@ package io.ballerina.observe.choreo;
 import io.ballerina.observe.choreo.client.internal.secret.AnonymousAppSecretHandler;
 import io.ballerina.observe.choreo.recording.PublishAstCall;
 import io.ballerina.observe.choreo.recording.PublishMetricsCall;
+import io.ballerina.observe.choreo.recording.PublishMetricsCall.Request.Metric;
 import io.ballerina.observe.choreo.recording.PublishTracesCall;
 import io.ballerina.observe.choreo.recording.RecordedTest;
 import io.ballerina.observe.choreo.recording.RegisterCall;
@@ -34,8 +35,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Parent test case for all tests which had started up successfully.
@@ -45,6 +48,7 @@ public class SuccessfulStartBaseTestCase extends BaseTestCase {
             "response_time_seconds_mean", "response_time_seconds_max", "response_time_seconds_min",
             "response_time_seconds_stdDev", "response_time_seconds_percentile", "inprogress_requests",
             "response_time_nanoseconds_total", "choreo_steps_total");
+    private static final int DEFAULT_EXPECTED_TOTAL_METRICS_COUNT = 71;
 
     @BeforeMethod
     public void initializeTest() throws IOException, BallerinaTestException {
@@ -164,6 +168,10 @@ public class SuccessfulStartBaseTestCase extends BaseTestCase {
     }
 
     protected void validateRecordedPublishMetricsCall(RecordedTest recordedTest) {
+        validateRecordedPublishMetricsCall(recordedTest, DEFAULT_EXPECTED_TOTAL_METRICS_COUNT);
+    }
+
+    protected void validateRecordedPublishMetricsCall(RecordedTest recordedTest, int expectedTotalMetrics) {
         RegisterCall registerCall = recordedTest.getRegisterCalls().get(0);
         String nodeId = registerCall.getRequest().getNodeId();
         String projectSecret = registerCall.getRequest().getProjectSecret();
@@ -173,6 +181,7 @@ public class SuccessfulStartBaseTestCase extends BaseTestCase {
 
         // Validate recorded publish metrics call
         Assert.assertTrue(recordedTest.getPublishMetricsCalls().size() > 0);
+        List<Metric> allPublishedMetrics = new ArrayList<>();
         recordedTest.getPublishMetricsCalls().forEach(publishMetricsCall -> {
             Assert.assertEquals(publishMetricsCall.getRequest().getObservabilityId(), obsId);
             Assert.assertEquals(publishMetricsCall.getRequest().getVersion(), obsVersion);
@@ -189,23 +198,31 @@ public class SuccessfulStartBaseTestCase extends BaseTestCase {
             if (publishMetricsCall.getRequest().getMetrics().size() == 1) {
                 PublishMetricsCall.Request.Metric metric = publishMetricsCall.getRequest().getMetrics().get(0);
                 Assert.assertEquals(metric.getName(), "up");
-                Assert.assertEquals(metric.getValue(), 1f);
-                Assert.assertEquals(metric.getTags(), periscopeTags);
             } else {
-                Assert.assertEquals(publishMetricsCall.getRequest().getMetrics().size(), 74);
-                publishMetricsCall.getRequest().getMetrics().forEach(metric -> {
-                    Assert.assertTrue(metric.getTags().containsAll(periscopeTags));
-                    if ("up".equals(metric.getName())) {
-                        Assert.assertEquals(metric.getValue(), 1f);
-                        Assert.assertEquals(metric.getTags(), periscopeTags);
-                    } else {
-                        Assert.assertTrue(metric.getValue() >= 0f,
-                                "Metric " + metric.getName() + " has a negative value: " + metric.getValue());
-                    }
-                    Assert.assertTrue(EXPECTED_METRICS_NAMES.contains(metric.getName()),
-                            "Unknown metric: " + metric.getName());
-                });
+                Assert.assertTrue(publishMetricsCall.getRequest().getMetrics().size() <= 72);
             }
+            allPublishedMetrics.addAll(publishMetricsCall.getRequest().getMetrics());
+        });
+
+        List<Metric> upMetrics = allPublishedMetrics.stream()
+            .filter(m -> "up".equals(m.getName()))
+            .collect(Collectors.toList());
+        Assert.assertEquals(upMetrics.size(), recordedTest.getPublishMetricsCalls().size());
+        upMetrics.forEach(metric -> {
+            Assert.assertEquals(metric.getValue(), 1f);
+            Assert.assertEquals(metric.getTags(), periscopeTags);
+        });
+
+        List<Metric> recordedMetrics = allPublishedMetrics.stream()
+            .filter(m -> !"up".equals(m.getName()))
+            .collect(Collectors.toList());
+        Assert.assertEquals(recordedMetrics.size(), expectedTotalMetrics);
+        recordedMetrics.forEach(metric -> {
+            Assert.assertTrue(metric.getTags().containsAll(periscopeTags));
+            Assert.assertTrue(metric.getValue() >= 0f,
+                "Metric " + metric.getName() + " has a negative value: " + metric.getValue());
+            Assert.assertTrue(EXPECTED_METRICS_NAMES.contains(metric.getName()),
+                "Unknown metric: " + metric.getName());
         });
     }
 }
