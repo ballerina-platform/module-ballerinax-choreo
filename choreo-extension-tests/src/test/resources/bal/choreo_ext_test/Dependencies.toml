@@ -41,9 +41,8 @@ dependencies = [
 [[package]]
 org = "ballerina"
 name = "file"
-version = "1.2.2"
+version = "1.2.1"
 dependencies = [
-	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "log"},
 	{org = "ballerina", name = "os"},
@@ -190,7 +189,7 @@ dependencies = [
 [[package]]
 org = "ballerina"
 name = "mime"
-version = "2.2.1"
+version = "2.2.2"
 dependencies = [
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jballerina.java"},
@@ -212,7 +211,7 @@ dependencies = [
 [[package]]
 org = "ballerina"
 name = "observe"
-version = "1.0.3"
+version = "1.0.4"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"}
 ]
@@ -292,7 +291,7 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "choreo"
-version = "0.4.10"
+version = "0.4.11"
 dependencies = [
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jballerina.java"},

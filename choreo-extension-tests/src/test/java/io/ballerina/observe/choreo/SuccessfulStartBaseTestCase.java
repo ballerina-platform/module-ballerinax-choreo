@@ -20,6 +20,7 @@ package io.ballerina.observe.choreo;
 import io.ballerina.observe.choreo.client.internal.secret.AnonymousAppSecretHandler;
 import io.ballerina.observe.choreo.recording.PublishAstCall;
 import io.ballerina.observe.choreo.recording.PublishMetricsCall;
+import io.ballerina.observe.choreo.recording.PublishMetricsCall.Request.Metric;
 import io.ballerina.observe.choreo.recording.PublishTracesCall;
 import io.ballerina.observe.choreo.recording.RecordedTest;
 import io.ballerina.observe.choreo.recording.RegisterCall;
@@ -34,17 +35,59 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Parent test case for all tests which had started up successfully.
  */
 public class SuccessfulStartBaseTestCase extends BaseTestCase {
-    private static final List<String> EXPECTED_METRICS_NAMES = Arrays.asList("up", "requests_total",
-            "response_time_seconds", "response_time_seconds_mean", "response_time_seconds_max",
-            "response_time_seconds_min", "response_time_seconds_stdDev", "response_time_seconds_percentile",
-            "inprogress_requests", "response_time_nanoseconds_total", "choreo_steps_total");
+    private static final String UP_METRIC = "up";
+
+    private static final String INPROGRESS_REQUESTS_METRIC = "inprogress_requests";
+    private static final String CHOREO_STEPS_TOTAL_METRIC = "choreo_steps_total";
+    private static final Map<String, Long> EXPECTED_METRICS_COUNTS = new HashMap<>();
+
+    private static final String REQUESTS_TOTAL_METRIC = "requests_total";
+    private static final String RESPONSE_TIME_NANOSECONDS_TOTAL_METRIC = "response_time_nanoseconds_total";
+    private static final Map<String, Long> EXPECTED_PER_ACTIVE_PUBLISH_CALL_METRICS_COUNTS = new HashMap<>();
+
+    private static final String RESPONSE_TIME_SECONDS_MEAN_METRIC = "response_time_seconds_mean";
+    private static final String RESPONSE_TIME_SECONDS_MAX_METRIC = "response_time_seconds_max";
+    private static final String RESPONSE_TIME_SECONDS_MIN_METRIC = "response_time_seconds_min";
+    private static final String RESPONSE_TIME_SECONDS_STDDEV_METRIC = "response_time_seconds_stdDev";
+    private static final String RESPONSE_TIME_SECONDS_PERCENTILE_METRIC = "response_time_seconds_percentile";
+    private static final Map<String, Long> EXPECTED_PER_PUBLISH_CALL_METRICS_COUNTS = new HashMap<>();
+
+    private static final Set<String> ALL_EXPECTED_METRIC_NAMES = new HashSet<>(Arrays.asList(UP_METRIC,
+        INPROGRESS_REQUESTS_METRIC, CHOREO_STEPS_TOTAL_METRIC, REQUESTS_TOTAL_METRIC,
+        RESPONSE_TIME_NANOSECONDS_TOTAL_METRIC, RESPONSE_TIME_SECONDS_MEAN_METRIC,
+        RESPONSE_TIME_SECONDS_MAX_METRIC, RESPONSE_TIME_SECONDS_MIN_METRIC,
+        RESPONSE_TIME_SECONDS_STDDEV_METRIC, RESPONSE_TIME_SECONDS_PERCENTILE_METRIC));
+
+    static {
+        // Counts of metrics which are static for the test
+        EXPECTED_METRICS_COUNTS.put(CHOREO_STEPS_TOTAL_METRIC, 1L);
+
+        // Counts of metrics which are based on the publish calls which had observations being recorded
+        EXPECTED_PER_ACTIVE_PUBLISH_CALL_METRICS_COUNTS.put(REQUESTS_TOTAL_METRIC, 2L);
+        EXPECTED_PER_ACTIVE_PUBLISH_CALL_METRICS_COUNTS.put(RESPONSE_TIME_NANOSECONDS_TOTAL_METRIC, 2L);
+
+        // Counts of metrics which are based on the number of publish calls
+        EXPECTED_PER_PUBLISH_CALL_METRICS_COUNTS.put(RESPONSE_TIME_SECONDS_MEAN_METRIC, 6L);
+        EXPECTED_PER_PUBLISH_CALL_METRICS_COUNTS.put(RESPONSE_TIME_SECONDS_MAX_METRIC, 6L);
+        EXPECTED_PER_PUBLISH_CALL_METRICS_COUNTS.put(RESPONSE_TIME_SECONDS_MIN_METRIC, 6L);
+        EXPECTED_PER_PUBLISH_CALL_METRICS_COUNTS.put(RESPONSE_TIME_SECONDS_STDDEV_METRIC, 6L);
+        EXPECTED_PER_PUBLISH_CALL_METRICS_COUNTS.put(RESPONSE_TIME_SECONDS_PERCENTILE_METRIC, 42L);
+    }
 
     @BeforeMethod
     public void initializeTest() throws IOException, BallerinaTestException {
@@ -173,6 +216,7 @@ public class SuccessfulStartBaseTestCase extends BaseTestCase {
 
         // Validate recorded publish metrics call
         Assert.assertTrue(recordedTest.getPublishMetricsCalls().size() > 0);
+        List<Metric> allPublishedMetrics = new ArrayList<>();
         recordedTest.getPublishMetricsCalls().forEach(publishMetricsCall -> {
             Assert.assertEquals(publishMetricsCall.getRequest().getObservabilityId(), obsId);
             Assert.assertEquals(publishMetricsCall.getRequest().getVersion(), obsVersion);
@@ -183,29 +227,82 @@ public class SuccessfulStartBaseTestCase extends BaseTestCase {
             Assert.assertNull(publishMetricsCall.getResponseErrorMessage());
 
             publishMetricsCall.getRequest().getMetrics().forEach(metric -> {
+                Assert.assertTrue(ALL_EXPECTED_METRIC_NAMES.contains(metric.getName()),
+                    "Metric " + metric.getName() + " is not one of the expected set of metrics");
                 Assert.assertTrue(metric.getTimestamp() > recordedTest.getStartTimestamp());
                 Assert.assertTrue(metric.getTimestamp() < recordedTest.getEndTimestamp());
             });
             if (publishMetricsCall.getRequest().getMetrics().size() == 1) {
                 PublishMetricsCall.Request.Metric metric = publishMetricsCall.getRequest().getMetrics().get(0);
-                Assert.assertEquals(metric.getName(), "up");
-                Assert.assertEquals(metric.getValue(), 1f);
-                Assert.assertEquals(metric.getTags(), periscopeTags);
-            } else {
-                Assert.assertEquals(publishMetricsCall.getRequest().getMetrics().size(), 76);
-                publishMetricsCall.getRequest().getMetrics().forEach(metric -> {
-                    Assert.assertTrue(metric.getTags().containsAll(periscopeTags));
-                    if ("up".equals(metric.getName())) {
-                        Assert.assertEquals(metric.getValue(), 1f);
-                        Assert.assertEquals(metric.getTags(), periscopeTags);
-                    } else {
-                        Assert.assertTrue(metric.getValue() >= 0f,
-                                "Metric " + metric.getName() + " has a negative value: " + metric.getValue());
-                    }
-                    Assert.assertTrue(EXPECTED_METRICS_NAMES.contains(metric.getName()),
-                            "Unknown metric: " + metric.getName());
-                });
+                Assert.assertEquals(metric.getName(), UP_METRIC);
             }
+            allPublishedMetrics.addAll(publishMetricsCall.getRequest().getMetrics());
         });
+        long nonEmptyPublishCalls = recordedTest.getPublishMetricsCalls().stream()
+            .filter(call -> call.getRequest().getMetrics().size() != 1)
+            .count();
+
+        // Validate up metrics published
+        List<Metric> upMetrics = allPublishedMetrics.stream()
+            .filter(m -> UP_METRIC.equals(m.getName()))
+            .collect(Collectors.toList());
+        Assert.assertEquals(upMetrics.size(), recordedTest.getPublishMetricsCalls().size());
+        upMetrics.forEach(metric -> {
+            Assert.assertEquals(metric.getValue(), 1f);
+            Assert.assertEquals(metric.getTags(), periscopeTags);
+        });
+
+        // Define a common consumer which tests the recorded test based on the metrics counts
+        Consumer<Map.Entry<String, Long>> forEachTestConsumer = (Map.Entry<String, Long> entry) -> {
+            String metricName = entry.getKey();
+            long count = entry.getValue();
+
+            List<Metric> recordedMetrics = allPublishedMetrics.stream()
+                .filter(m -> metricName.equals(m.getName()))
+                .collect(Collectors.toList());
+            Assert.assertEquals(recordedMetrics.size(), count,
+                "Unexpected number of metric " + metricName + " published");
+            recordedMetrics.forEach(metric -> {
+                Assert.assertTrue(metric.getTags().containsAll(periscopeTags),
+                    "Metric " + metricName + " does not contain all the expected tags");
+                Assert.assertTrue(metric.getValue() >= 0f,
+                    "Metric " + metric.getName() + " has a negative value: " + metric.getValue());
+            });
+        };
+
+        // Validate metrics which are expected to be static for the test
+        EXPECTED_METRICS_COUNTS.entrySet().forEach(forEachTestConsumer);
+
+        // Validate metrics which changes based on the number of publish calls which had ballerina observations
+        {
+            long requestsTotalMetricsCount = allPublishedMetrics.stream()
+                .filter(m -> REQUESTS_TOTAL_METRIC.equals(m.getName()))
+                .count();
+            long countMultiplier = requestsTotalMetricsCount /
+                EXPECTED_PER_ACTIVE_PUBLISH_CALL_METRICS_COUNTS.get(REQUESTS_TOTAL_METRIC);
+            Map<String, Long> expectedCounts = EXPECTED_PER_ACTIVE_PUBLISH_CALL_METRICS_COUNTS.entrySet().stream()
+                .map((Map.Entry<String, Long> e) ->
+                    new AbstractMap.SimpleEntry<String, Long>(e.getKey(), e.getValue() * countMultiplier))
+                .collect(Collectors.toMap((Map.Entry<String, Long> e) -> e.getKey(), e -> e.getValue()));
+            expectedCounts.entrySet().forEach(forEachTestConsumer);
+        }
+
+        // Validate metrics which changes based on the number of publish calls
+        {
+            Map<String, Long> expectedCounts = EXPECTED_PER_PUBLISH_CALL_METRICS_COUNTS.entrySet()
+                .stream()
+                .map((Map.Entry<String, Long> e) ->
+                    new AbstractMap.SimpleEntry<String, Long>(e.getKey(), e.getValue() * nonEmptyPublishCalls))
+                .collect(Collectors.toMap((Map.Entry<String, Long> e) -> e.getKey(), e -> e.getValue()));
+            expectedCounts.entrySet().forEach(forEachTestConsumer);
+        }
+
+        // Validate inprogress metrics which can be zero or one based on when the metrics are published
+        long inprogressMetricsCount = allPublishedMetrics.stream()
+            .filter(m -> INPROGRESS_REQUESTS_METRIC.equals(m.getName()))
+            .count();
+        Assert.assertTrue(inprogressMetricsCount == 0 || inprogressMetricsCount == 1,
+            "Metric " + INPROGRESS_REQUESTS_METRIC + " expected to be zero or one (actual - "
+                + inprogressMetricsCount + ")");
     }
 }
