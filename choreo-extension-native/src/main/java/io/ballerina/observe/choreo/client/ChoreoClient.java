@@ -154,17 +154,20 @@ public class ChoreoClient implements AutoCloseable {
                 } catch (StatusRuntimeException e) {
                     switch (e.getStatus().getCode()) {
                         case UNAVAILABLE:
-                            LOGGER.error("failed to publish syntax tree as Choreo services are not accessible");
+                            LOGGER.error("failed to publish syntax tree as Choreo services are not accessible, " +
+                                    "requestId = " + requestId);
                             break;
                         case UNKNOWN:
-                            LOGGER.error("Choreo backend is not compatible");
+                            LOGGER.error("Choreo backend is not compatible, requestId = " + requestId);
                             break;
                         default:
-                            LOGGER.error("failed to publish syntax tree to Choreo due to " + e.getMessage());
+                            LOGGER.error("failed to publish syntax tree to Choreo due to " + e.getMessage() +
+                                    " , requestId = " + requestId);
                     }
                 }
             }, "AST Uploading Thread");
-            LOGGER.debug("Starting AST upload with AST hash " + metadataReader.getAstHash());
+            LOGGER.debug("Starting AST upload with AST hash " + metadataReader.getAstHash() +
+                    " ,requestId " + requestId);
             uploadingThread.start();
         }
 
@@ -200,6 +203,8 @@ public class ChoreoClient implements AutoCloseable {
         while (i < metrics.length) {
             TelemetryOuterClass.MetricsPublishRequest.Builder requestBuilder =
                     TelemetryOuterClass.MetricsPublishRequest.newBuilder();
+            String requestId = UUID.randomUUID().toString();
+            CallOptions.Key<String> requestIdHeader = CallOptions.Key.create(REQUEST_ID_HEADER);
             int messageSize = 0;
             while (i < metrics.length && messageSize < SERVER_MAX_FRAME_SIZE_BYTES) {
                 ChoreoMetric metric = metrics[i];
@@ -215,7 +220,7 @@ public class ChoreoClient implements AutoCloseable {
                 int currentMessageSize = metricMessage.getSerializedSize();
                 if (currentMessageSize >= SERVER_MAX_FRAME_SIZE_BYTES) {
                     LOGGER.error("Dropping metric with size %d larger than gRPC frame limit %d",
-                            currentMessageSize, SERVER_MAX_FRAME_SIZE_BYTES);
+                            currentMessageSize, SERVER_MAX_FRAME_SIZE_BYTES, "requestId : " + requestId);
                     i++;
                     continue;
                 }
@@ -225,10 +230,6 @@ public class ChoreoClient implements AutoCloseable {
                     i++;
                 }
             }
-
-            String requestId = UUID.randomUUID().toString();
-            CallOptions.Key<String> requestIdHeader = CallOptions.Key.create(REQUEST_ID_HEADER);
-
             try {
                 TelemetryOuterClass.MetricsPublishRequest publishRequest = requestBuilder.setObservabilityId(id)
                         .setNodeId(nodeId)
