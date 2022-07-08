@@ -31,6 +31,7 @@ import io.ballerina.observe.choreo.gen.TelemetryGrpc;
 import io.ballerina.observe.choreo.gen.TelemetryOuterClass;
 import io.ballerina.observe.choreo.logging.LogFactory;
 import io.ballerina.observe.choreo.logging.Logger;
+import io.grpc.CallOptions;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
@@ -40,6 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -65,6 +67,7 @@ public class ChoreoClient implements AutoCloseable {
     private final HandshakeGrpc.HandshakeBlockingStub registrationClient;
     private final TelemetryGrpc.TelemetryBlockingStub telemetryClient;
     private Thread uploadingThread;
+    private static final String REQUEST_ID_HEADER = "X-Request-Id";
 
     public ChoreoClient(String hostname, int port, boolean useSSL, String projectSecret) {
         LOGGER.info("initializing connection with observability backend " + hostname + ":" + port);
@@ -119,6 +122,9 @@ public class ChoreoClient implements AutoCloseable {
                 .setNodeId(nodeId)
                 .build();
 
+        String requestId = UUID.randomUUID().toString();
+        CallOptions.Key<String> requestIdHeader = CallOptions.Key.create(REQUEST_ID_HEADER);
+
         HandshakeOuterClass.RegisterResponse registerResponse;
         try {
             registerResponse = registrationClient.withCompression("gzip").register(handshakeRequest);
@@ -140,8 +146,9 @@ public class ChoreoClient implements AutoCloseable {
                             .setObsId(id)
                             .setProjectSecret(projectSecret)
                             .build();
-                    callWithRetry((req) -> registrationClient.withCompression("gzip").publishAst(req), programRequest,
-                            2000);
+                    callWithRetry((req) -> registrationClient.withCompression("gzip")
+                            .withOption(requestIdHeader, requestId)
+                            .publishAst(req), programRequest, 2000);
                     uploadingThread = null;
                     LOGGER.debug("Uploading AST completed");
                 } catch (StatusRuntimeException e) {
@@ -218,13 +225,20 @@ public class ChoreoClient implements AutoCloseable {
                     i++;
                 }
             }
+
+            String requestId = UUID.randomUUID().toString();
+            CallOptions.Key<String> requestIdHeader = CallOptions.Key.create(REQUEST_ID_HEADER);
+
             try {
                 TelemetryOuterClass.MetricsPublishRequest publishRequest = requestBuilder.setObservabilityId(id)
                         .setNodeId(nodeId)
                         .setVersion(version)
                         .setProjectSecret(projectSecret)
                         .build();
-                telemetryClient.withCompression("gzip").publishMetrics(publishRequest);
+                telemetryClient.withCompression("gzip")
+                        .withOption(requestIdHeader, requestId)
+                        .publishMetrics(publishRequest);
+
             } catch (StatusRuntimeException e) {
                 throw ChoreoErrors.getChoreoClientError(e);
             }
@@ -282,13 +296,19 @@ public class ChoreoClient implements AutoCloseable {
                     i++;
                 }
             }
+
+            String requestId = UUID.randomUUID().toString();
+            CallOptions.Key<String> requestIdHeader = CallOptions.Key.create(REQUEST_ID_HEADER);
+
             try {
                 TelemetryOuterClass.TracesPublishRequest publishRequest = requestBuilder.setObservabilityId(id)
                         .setNodeId(nodeId)
                         .setVersion(version)
                         .setProjectSecret(projectSecret)
                         .build();
-                telemetryClient.withCompression("gzip").publishTraces(publishRequest);
+                telemetryClient.withCompression("gzip")
+                        .withOption(requestIdHeader, requestId)
+                        .publishTraces(publishRequest);
             } catch (StatusRuntimeException e) {
                 throw ChoreoErrors.getChoreoClientError(e);
             }
