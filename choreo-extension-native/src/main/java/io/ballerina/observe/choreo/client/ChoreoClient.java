@@ -33,13 +33,16 @@ import io.ballerina.observe.choreo.logging.LogFactory;
 import io.ballerina.observe.choreo.logging.Logger;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import io.grpc.stub.MetadataUtils;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -65,6 +68,7 @@ public class ChoreoClient implements AutoCloseable {
     private final HandshakeGrpc.HandshakeBlockingStub registrationClient;
     private final TelemetryGrpc.TelemetryBlockingStub telemetryClient;
     private Thread uploadingThread;
+    private static final String REQUEST_ID_HEADER = "X-Request-Id";
 
     public ChoreoClient(String hostname, int port, boolean useSSL, String projectSecret) {
         LOGGER.info("initializing connection with observability backend " + hostname + ":" + port);
@@ -119,17 +123,28 @@ public class ChoreoClient implements AutoCloseable {
                 .setNodeId(nodeId)
                 .build();
 
+        String registerRequestId = UUID.randomUUID().toString();
+        Metadata requestIdHeader = new Metadata();
+        Metadata.Key<String> key = Metadata.Key.of(REQUEST_ID_HEADER, Metadata.ASCII_STRING_MARSHALLER);
+        requestIdHeader.put(key, registerRequestId);
+
         HandshakeOuterClass.RegisterResponse registerResponse;
         try {
-            registerResponse = registrationClient.withCompression("gzip").register(handshakeRequest);
+            registerResponse = registrationClient
+                    .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(requestIdHeader))
+                    .withCompression("gzip")
+                    .register(handshakeRequest);
             this.id = registerResponse.getObsId();
             this.version = registerResponse.getVersion();
             this.additionalTags = registerResponse.getTagsMap();
             LOGGER.debug("Registered with Periscope with observability ID: " + this.id + ", version: " + this.version
-                    + " and node ID: " + nodeId);
+                    + " and node ID: " + nodeId + " requestId = " + registerRequestId);
         } catch (StatusRuntimeException e) {
             throw ChoreoErrors.getChoreoClientError(e);
         }
+
+        String programJsonRequestId = UUID.randomUUID().toString();
+        requestIdHeader.put(key, programJsonRequestId);
 
         boolean sendProgramJson = registerResponse.getSendAst();
         if (sendProgramJson) {
@@ -140,24 +155,29 @@ public class ChoreoClient implements AutoCloseable {
                             .setObsId(id)
                             .setProjectSecret(projectSecret)
                             .build();
-                    callWithRetry((req) -> registrationClient.withCompression("gzip").publishAst(req), programRequest,
-                            2000);
+                    callWithRetry((req) -> registrationClient
+                            .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(requestIdHeader))
+                            .withCompression("gzip")
+                            .publishAst(req), programRequest, 2000);
                     uploadingThread = null;
                     LOGGER.debug("Uploading AST completed");
                 } catch (StatusRuntimeException e) {
                     switch (e.getStatus().getCode()) {
                         case UNAVAILABLE:
-                            LOGGER.error("failed to publish syntax tree as Choreo services are not accessible");
+                            LOGGER.error("failed to publish syntax tree as Choreo services are not accessible" +
+                                    " requestId = " + programJsonRequestId);
                             break;
                         case UNKNOWN:
-                            LOGGER.error("Choreo backend is not compatible");
+                            LOGGER.error("Choreo backend is not compatible requestId = " + programJsonRequestId);
                             break;
                         default:
-                            LOGGER.error("failed to publish syntax tree to Choreo due to " + e.getMessage());
+                            LOGGER.error("failed to publish syntax tree to Choreo due to " + e.getMessage() +
+                                    ", requestId = " + programJsonRequestId);
                     }
                 }
             }, "AST Uploading Thread");
-            LOGGER.debug("Starting AST upload with AST hash " + metadataReader.getAstHash());
+            LOGGER.debug("Starting AST upload with AST hash " + metadataReader.getAstHash() +
+                    " requestId = " + programJsonRequestId);
             uploadingThread.start();
         }
 
@@ -193,6 +213,10 @@ public class ChoreoClient implements AutoCloseable {
         while (i < metrics.length) {
             TelemetryOuterClass.MetricsPublishRequest.Builder requestBuilder =
                     TelemetryOuterClass.MetricsPublishRequest.newBuilder();
+            String requestId = UUID.randomUUID().toString();
+            Metadata requestIdHeader = new Metadata();
+            Metadata.Key<String> key = Metadata.Key.of(REQUEST_ID_HEADER, Metadata.ASCII_STRING_MARSHALLER);
+            requestIdHeader.put(key, requestId);
             int messageSize = 0;
             while (i < metrics.length && messageSize < SERVER_MAX_FRAME_SIZE_BYTES) {
                 ChoreoMetric metric = metrics[i];
@@ -208,7 +232,7 @@ public class ChoreoClient implements AutoCloseable {
                 int currentMessageSize = metricMessage.getSerializedSize();
                 if (currentMessageSize >= SERVER_MAX_FRAME_SIZE_BYTES) {
                     LOGGER.error("Dropping metric with size %d larger than gRPC frame limit %d",
-                            currentMessageSize, SERVER_MAX_FRAME_SIZE_BYTES);
+                            currentMessageSize, SERVER_MAX_FRAME_SIZE_BYTES, "requestId = " + requestId);
                     i++;
                     continue;
                 }
@@ -224,7 +248,11 @@ public class ChoreoClient implements AutoCloseable {
                         .setVersion(version)
                         .setProjectSecret(projectSecret)
                         .build();
-                telemetryClient.withCompression("gzip").publishMetrics(publishRequest);
+                telemetryClient
+                        .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(requestIdHeader))
+                        .withCompression("gzip")
+                        .publishMetrics(publishRequest);
+
             } catch (StatusRuntimeException e) {
                 throw ChoreoErrors.getChoreoClientError(e);
             }
@@ -282,13 +310,21 @@ public class ChoreoClient implements AutoCloseable {
                     i++;
                 }
             }
+
+            String requestId = UUID.randomUUID().toString();
+            Metadata requestIdHeader = new Metadata();
+            Metadata.Key<String> key = Metadata.Key.of(REQUEST_ID_HEADER, Metadata.ASCII_STRING_MARSHALLER);
+            requestIdHeader.put(key, requestId);
+
             try {
                 TelemetryOuterClass.TracesPublishRequest publishRequest = requestBuilder.setObservabilityId(id)
                         .setNodeId(nodeId)
                         .setVersion(version)
                         .setProjectSecret(projectSecret)
                         .build();
-                telemetryClient.withCompression("gzip").publishTraces(publishRequest);
+                telemetryClient.withCompression("gzip")
+                        .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(requestIdHeader))
+                        .publishTraces(publishRequest);
             } catch (StatusRuntimeException e) {
                 throw ChoreoErrors.getChoreoClientError(e);
             }
