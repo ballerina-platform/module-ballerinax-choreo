@@ -172,7 +172,7 @@ public class ChoreoClient implements AutoCloseable {
                             break;
                         default:
                             LOGGER.error("failed to publish syntax tree to Choreo due to " + e.getMessage() +
-                                    " , requestId = " + programJsonRequestId);
+                                    ", requestId = " + programJsonRequestId);
                     }
                 }
             }, "AST Uploading Thread");
