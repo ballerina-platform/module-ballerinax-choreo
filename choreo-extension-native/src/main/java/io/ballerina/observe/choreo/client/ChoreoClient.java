@@ -130,10 +130,10 @@ public class ChoreoClient implements AutoCloseable {
 
         HandshakeOuterClass.RegisterResponse registerResponse;
         try {
-            registerResponse = registrationClient
+            registerResponse = callWithRetry((req) -> registrationClient
                     .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(requestIdHeader))
                     .withCompression("gzip")
-                    .register(handshakeRequest);
+                    .register(req), handshakeRequest, 2000);
             this.id = registerResponse.getObsId();
             this.version = registerResponse.getVersion();
             this.additionalTags = registerResponse.getTagsMap();
