@@ -15,8 +15,8 @@
  */
 
 plugins {
-    id 'java'
-    id "com.google.protobuf" version "0.8.14"
+    id 'java-library'
+    id "com.google.protobuf" version "0.9.3"
 }
 
 description = 'Ballerina - Choreo Extension - Native Module'
