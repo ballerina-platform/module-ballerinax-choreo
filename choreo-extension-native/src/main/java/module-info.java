@@ -11,6 +11,7 @@ module io.ballerina.observe.trace.extension.choreo {
     requires grpc.stub;
     requires grpc.protobuf;
     requires io.opentelemetry.semconv;
+    requires protobuf.java;
 
     provides io.ballerina.runtime.observability.tracer.spi.TracerProvider
             with io.ballerina.observe.choreo.ChoreoTracerProvider;
