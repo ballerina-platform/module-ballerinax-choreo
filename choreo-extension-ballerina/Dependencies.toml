@@ -5,11 +5,12 @@
 
 [ballerina]
 dependencies-toml-version = "2"
+distribution-version = "2201.8.0-20230726-145300-b2bdf796"
 
 [[package]]
 org = "ballerina"
 name = "io"
-version = "1.2.1"
+version = "1.5.0"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"},
 	{org = "ballerina", name = "lang.value"}
@@ -37,7 +38,7 @@ dependencies = [
 [[package]]
 org = "ballerina"
 name = "observe"
-version = "1.0.2"
+version = "1.1.0"
 dependencies = [
 	{org = "ballerina", name = "jballerina.java"}
 ]
@@ -49,7 +50,7 @@ modules = [
 [[package]]
 org = "ballerinax"
 name = "choreo"
-version = "0.4.12"
+version = "0.4.13"
 dependencies = [
 	{org = "ballerina", name = "io"},
 	{org = "ballerina", name = "jballerina.java"},
@@ -58,5 +59,4 @@ dependencies = [
 modules = [
 	{org = "ballerinax", packageName = "choreo", moduleName = "choreo"}
 ]
-
 
