@@ -177,6 +177,7 @@ task ballerinaBuild {
     dependsOn updateTomlVerions
     dependsOn configurations.nativeJar
     dependsOn configurations.externalJars
+    dependsOn(jar)
 
     finalizedBy revertTomlFile
     finalizedBy ":commitTomlFiles"
