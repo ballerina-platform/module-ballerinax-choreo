@@ -114,4 +114,5 @@ task copyJavaClassFiles(type: Copy) {
         include '**/*.class'
     }
     into "${project.rootDir.absolutePath}/build/classes"
+    dependsOn(compileJava)
 }
