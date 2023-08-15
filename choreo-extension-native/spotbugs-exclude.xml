@@ -31,4 +31,31 @@
         </Or>
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
     </Match>
+    <Match>
+        <Class name="io.ballerina.observe.choreo.client.ChoreoSpanExporter$Task"/>
+        <Method name="run"/>
+        <Bug pattern="DMI_RANDOM_USED_ONLY_ONCE"/>
+    </Match>
+    <Match>
+        <Class name="io.ballerina.observe.choreo.client.error.ChoreoError"/>
+        <Method name="getCause"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="io.ballerina.observe.choreo.client.error.ChoreoError"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="io.ballerina.observe.choreo.client.model.ChoreoMetric"/>
+        <Method name="getTags"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="io.ballerina.observe.choreo.client.model.ChoreoMetric"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="io.ballerina.observe.choreo.client.model.ChoreoTraceSpan"/>
+        <Bug pattern="EI_EXPOSE_REP, EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>

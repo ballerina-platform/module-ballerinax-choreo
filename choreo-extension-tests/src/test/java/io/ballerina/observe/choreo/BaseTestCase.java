@@ -44,6 +44,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -112,7 +113,7 @@ public class BaseTestCase {
         int[] requiredPorts = {10090};
         periscopeBackendServerInstance.startServer(projectDir, "choreo_periscope_backend", new String[]{"--offline"},
                 null, requiredPorts);
-        Utils.waitForPortsToOpen(requiredPorts, 1000 * 60, false, "localhost");
+        Utils.waitForPortsToOpen(requiredPorts, 1000 * 60, false, InetAddress.getByName("localhost"));
     }
 
     @AfterSuite(alwaysRun = true)
@@ -272,7 +273,7 @@ public class BaseTestCase {
         serverInstance.startServer(projectDir, "choreo_ext_test", buildArgs, null, env,
                 requiredPorts);
         if (expectSuccessfulStart) {
-            Utils.waitForPortsToOpen(requiredPorts, 1000 * 60, false, "localhost");
+            Utils.waitForPortsToOpen(requiredPorts, 1000 * 60, false, InetAddress.getByName("localhost"));
         }
     }
 

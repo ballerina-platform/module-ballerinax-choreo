@@ -28,6 +28,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -67,7 +68,7 @@ public class InitializationErrorTestCase extends BaseTestCase {
         choreoExtLogLeecher.waitForText(10000);
         clientNotInitializedErrorLogLeecher.waitForText(5000);
         servicesUnavailableErrorLogLeecher.waitForText(2000);
-        Utils.checkPortsAvailability(new int[]{9091});
+        Utils.checkPortsAvailability(new int[]{9091}, InetAddress.getByName("localhost"));
 
         recordedTest.recordEnd();
         populateWithRecordedCalls(recordedTest);
@@ -96,7 +97,7 @@ public class InitializationErrorTestCase extends BaseTestCase {
         testExtension("Config.toml");
         choreoExtLogLeecher.waitForText(10000);
         periscopeErrorLogLeecher.waitForText(5000);
-        Utils.checkPortsAvailability(new int[]{9091});
+        Utils.checkPortsAvailability(new int[]{9091}, InetAddress.getByName("localhost"));
 
         recordedTest.recordEnd();
         populateWithRecordedCalls(recordedTest);
@@ -131,7 +132,7 @@ public class InitializationErrorTestCase extends BaseTestCase {
         clientNotInitializedErrorLogLeecher.waitForText(10000);
         validationErrorLogLeecher.waitForText(2000);
         fileMissingErrorLogLeecher.waitForText(2000);
-        Utils.checkPortsAvailability(new int[]{9091});
+        Utils.checkPortsAvailability(new int[]{9091}, InetAddress.getByName("localhost"));
 
         recordedTest.recordEnd();
         populateWithRecordedCalls(recordedTest);
@@ -158,7 +159,7 @@ public class InitializationErrorTestCase extends BaseTestCase {
         testExtension("Config.toml");
         clientNotInitializedErrorLogLeecher.waitForText(10000);
         validationErrorLogLeecher.waitForText(2000);
-        Utils.checkPortsAvailability(new int[]{9091});
+        Utils.checkPortsAvailability(new int[]{9091}, InetAddress.getByName("localhost"));
 
         recordedTest.recordEnd();
         populateWithRecordedCalls(recordedTest);
@@ -187,7 +188,7 @@ public class InitializationErrorTestCase extends BaseTestCase {
         testExtension("Config.toml");
         clientNotInitializedErrorLogLeecher.waitForText(10000);
         validationErrorLogLeecher.waitForText(2000);
-        Utils.checkPortsAvailability(new int[]{9091});
+        Utils.checkPortsAvailability(new int[]{9091}, InetAddress.getByName("localhost"));
 
         recordedTest.recordEnd();
         populateWithRecordedCalls(recordedTest);
@@ -213,7 +214,7 @@ public class InitializationErrorTestCase extends BaseTestCase {
         testExtension("Config.toml", new String[]{"--observability-included=false"});
         clientNotInitializedErrorLogLeecher.waitForText(10000);
         sequenceDiagramDataNotFoundErrorLogLeecher.waitForText(2000);
-        Utils.checkPortsAvailability(new int[]{9091});
+        Utils.checkPortsAvailability(new int[]{9091}, InetAddress.getByName("localhost"));
 
         recordedTest.recordEnd();
         populateWithRecordedCalls(recordedTest);
