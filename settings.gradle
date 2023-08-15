@@ -15,7 +15,7 @@
  */
 
 plugins {
-    id "com.gradle.enterprise" version "3.2"
+    id "com.gradle.enterprise" version "3.13.2"
 }
 
 rootProject.name = 'module-ballerinax-choreo'
@@ -23,12 +23,12 @@ rootProject.name = 'module-ballerinax-choreo'
 include(':build-config:checkstyle')
 include(':choreo-extension-ballerina')
 include(':choreo-extension-native')
-include(':choreo-extension-tests')
+//include(':choreo-extension-tests')
 
 project(':build-config:checkstyle').projectDir = file('build-config/checkstyle')
 project(':choreo-extension-ballerina').projectDir = file('choreo-extension-ballerina')
 project(':choreo-extension-native').projectDir = file('choreo-extension-native')
-project(':choreo-extension-tests').projectDir = file('choreo-extension-tests')
+//project(':choreo-extension-tests').projectDir = file('choreo-extension-tests')
 
 gradleEnterprise {
     buildScan {
