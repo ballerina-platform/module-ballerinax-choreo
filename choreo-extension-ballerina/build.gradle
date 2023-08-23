@@ -180,6 +180,11 @@ task ballerinaBuild {
     dependsOn(":choreo-extension-ballerina:compileJava")
     dependsOn(":choreo-extension-ballerina:jar")
     dependsOn(":choreo-extension-ballerina:processResources")
+    dependsOn(":choreo-extension-ballerina:compileTestJava")
+    dependsOn(":choreo-extension-ballerina:checkstyleMain")
+    dependsOn(":choreo-extension-ballerina:checkstyleTest")
+    dependsOn(":choreo-extension-ballerina:spotbugsMain")
+    dependsOn(":choreo-extension-ballerina:spotbugsTest")
 
     finalizedBy revertTomlFile
     finalizedBy ":commitTomlFiles"
