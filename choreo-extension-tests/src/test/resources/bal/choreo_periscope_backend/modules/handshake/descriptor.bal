@@ -14,8 +14,4 @@
 // specific language governing permissions and limitations
 // under the License.
 
-public const string DESCRIPTOR = ROOT_DESCRIPTOR_HANDSHAKE;
-
-public isolated function descriptorMap() returns map<string> {
-    return getDescriptorMapHandshake();
-}
+public const string DESCRIPTOR = HANDSHAKE_DESC;

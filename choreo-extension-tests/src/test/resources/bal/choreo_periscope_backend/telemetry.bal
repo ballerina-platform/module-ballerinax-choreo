@@ -38,9 +38,8 @@ type PublishTracesCall record {|
 
 PublishTracesCall[] recordedPublishTracesCall = [];
 
-@grpc:ServiceDescriptor {
-    descriptor: telemetry:DESCRIPTOR,
-    descMap: telemetry:descriptorMap()
+@grpc:Descriptor {
+    value: telemetry:DESCRIPTOR
 }
 service "Telemetry" on periscopeEndpoint {
     # Mock publish metrics remote endpoint.

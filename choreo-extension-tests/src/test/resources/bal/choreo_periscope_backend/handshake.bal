@@ -37,9 +37,8 @@ type PublishAstCall record {|
 
 PublishAstCall[] recordedPublishAstCalls = [];
 
-@grpc:ServiceDescriptor {
-    descriptor: handshake:DESCRIPTOR,
-    descMap: handshake:descriptorMap()
+@grpc:Descriptor {
+    value: handshake:DESCRIPTOR
 }
 service "Handshake" on periscopeEndpoint {
     # Mock register remote endpoint.
