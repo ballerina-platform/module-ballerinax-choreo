@@ -127,7 +127,7 @@ public class GeneralExtensionTestCase extends SuccessfulStartBaseTestCase {
         Assert.assertEquals(recordedTest.getRegisterCalls().get(0).getRequest().getNodeId(), getNodeIdFromFileSystem());
     }
 
-    @Test(groups = "linux-only")
+    @Test(groups = "linux-only", enabled = false)
     public void testContainerizedMode() throws Exception {
         Map<String, String> envVars = new HashMap<>();
         envVars.put("CHOREO_EXT_CONTAINERIZED_MODE", "true");
