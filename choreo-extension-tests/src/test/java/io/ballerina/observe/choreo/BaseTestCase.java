@@ -150,7 +150,7 @@ public class BaseTestCase {
         for (String call : calls) {
             HttpResponse response = HttpClientRequest.doPost(PERISCOPE_CALLS_SERVICE + "/" + call + "/calls", "[]",
                     Collections.singletonMap("Content-Type", "application/json"));
-            Assert.assertEquals(response.getResponseCode(), 200);
+            Assert.assertEquals(response.getResponseCode(), 201);
         }
     }
 

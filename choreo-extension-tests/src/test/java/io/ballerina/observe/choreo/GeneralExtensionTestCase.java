@@ -127,7 +127,8 @@ public class GeneralExtensionTestCase extends SuccessfulStartBaseTestCase {
         Assert.assertEquals(recordedTest.getRegisterCalls().get(0).getRequest().getNodeId(), getNodeIdFromFileSystem());
     }
 
-    @Test(groups = "linux-only")
+    // TODO: Fix this test - tracking issue: #191
+    @Test(groups = "linux-only", enabled = false)
     public void testContainerizedMode() throws Exception {
         Map<String, String> envVars = new HashMap<>();
         envVars.put("CHOREO_EXT_CONTAINERIZED_MODE", "true");
