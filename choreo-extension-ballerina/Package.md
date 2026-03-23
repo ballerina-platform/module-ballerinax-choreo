@@ -1,8 +1,13 @@
-## Package Overview
+## Overview
 
-The Choreo Observability Extension is one of the observability extensions of the [Ballerina](https://ballerina.io/) language.
+The Choreo Observability Extension provides an implementation for publishing traces and metrics to [Choreo](https://wso2.com/choreo/).
 
-It provides an implementation for publishing traces & metrics to Choreo.
+### Key Features
+
+- Publish traces and metrics to the Choreo observability platform
+- Simple configuration via import and Config.toml
+- Seamless integration with Choreo's monitoring and analytics
+- Support for OpenTelemetry-based tracing
 
 ## Enabling Choreo Extension
 
