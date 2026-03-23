@@ -18,6 +18,7 @@
 org = "ballerinax"
 name = "choreo"
 version = "@toml.version@"
+keywords = ["Type/Other", "Vendor/WSO2", "Area/Developer Tools", "Observability"]
 
 [[platform.java17.dependency]]
 path = "../choreo-extension-native/build/libs/choreo-extension-native-@project.version@.jar"
