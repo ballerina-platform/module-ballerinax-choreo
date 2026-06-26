@@ -109,7 +109,7 @@ publishing {
 }
 
 task copyJavaClassFiles(type: Copy) {
-    from("${project.buildDir}/classes") {
+    from(layout.buildDirectory.dir("classes").get().asFile) {
         exclude '**/module-info.class'
         include '**/*.class'
     }
