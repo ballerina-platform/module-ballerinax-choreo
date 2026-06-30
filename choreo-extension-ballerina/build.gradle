@@ -38,7 +38,6 @@ dependencies {
     externalJars "io.opentelemetry:opentelemetry-sdk-common:${openTelemetryVersion}"
     externalJars "io.opentelemetry:opentelemetry-sdk-trace:${openTelemetryVersion}"
     externalJars "io.opentelemetry:opentelemetry-semconv:${openTelemetryAlphaVersion}"
-    externalJars "io.opentelemetry:opentelemetry-api-metrics:${openTelemetryAlphaVersion}"
     externalJars "io.opentelemetry:opentelemetry-extension-trace-propagators:${openTelemetryVersion}"
     externalJars "io.grpc:grpc-protobuf:${grpcVersion}"
     externalJars "io.grpc:grpc-stub:${grpcVersion}"

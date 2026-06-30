@@ -28,7 +28,7 @@ dependencies {
     implementation "io.opentelemetry:opentelemetry-sdk-common:${openTelemetryVersion}"
     implementation "io.opentelemetry:opentelemetry-sdk-trace:${openTelemetryVersion}"
     implementation "io.opentelemetry:opentelemetry-semconv:${openTelemetryAlphaVersion}"
-    implementation "io.opentelemetry:opentelemetry-api-metrics:${openTelemetryAlphaVersion}"
+
     implementation "io.opentelemetry:opentelemetry-extension-trace-propagators:${openTelemetryVersion}"
     implementation "io.jaegertracing:jaeger-core:${jaegerVersion}"
     implementation("com.google.guava:guava:${guavaVersion}") {
