@@ -51,12 +51,6 @@ artifactId = "opentelemetry-semconv"
 version = "@openTelemetryAlpha.version@"
 
 [[platform.java17.dependency]]
-path = "./lib/opentelemetry-api-metrics-@openTelemetryAlpha.version@.jar"
-groupId = "io.opentelemetry"
-artifactId = "opentelemetry-api-metrics"
-version = "@openTelemetryAlpha.version@"
-
-[[platform.java17.dependency]]
 path = "./lib/opentelemetry-extension-trace-propagators-@opentelemetry.version@.jar"
 groupId = "io.opentelemetry"
 artifactId = "opentelemetry-extension-trace-propagators"
