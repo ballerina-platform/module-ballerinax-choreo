@@ -1,12 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+  ~ Copyright (c) 2026, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
   ~
   ~ WSO2 Inc. licenses this file to you under the Apache License,
   ~ Version 2.0 (the "License"); you may not use this file except
   ~ in compliance with the License.
   ~ You may obtain a copy of the License at
   ~
-  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~ http://www.apache.org/licenses/LICENSE-2.0
   ~
   ~ Unless required by applicable law or agreed to in writing,
   ~ software distributed under the License is distributed on an
@@ -14,24 +15,30 @@
   ~ KIND, either express or implied. See the License for the
   ~ specific language governing permissions and limitations
   ~ under the License.
-  ~
   -->
 <FindBugsFilter>
-    <!-- "balServer" field is kept static so that it will be available across Test Cases -->
+    <!-- SpotBugs 6.5.1 (bumped from 5.0.14 as part of the Gradle 9.5.1 migration) newly flags these
+         test-support methods for declaring `throws Exception` instead of a narrower checked exception.
+         Pre-existing test helper style, not a behavioral issue; narrowing it would require touching
+         call sites across the whole test suite, out of scope for this migration. -->
     <Match>
-        <Field name="balServer"/>
-        <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"/>
+        <Class name="~.*\.(BaseTestCase|GeneralExtensionTestCase|InitializationErrorTestCase|PeriscopeErrorTestCase|SuccessfulStartBaseTestCase)"/>
+        <Bug pattern="THROWS_METHOD_THROWS_CLAUSE_BASIC_EXCEPTION"/>
     </Match>
 
-    <!-- "serverInstance", "projectFilesDir" instances are initialized by setup methods called by TestNG -->
+    <!-- Same EI_EXPOSE_REP/REP2 category already suppressed for production code in
+         choreo-extension-native/spotbugs-exclude.xml. These are plain JSON (de)serialization
+         POJOs in the test-recording harness (request/response wire models) — returning/storing
+         the backing list directly is the intended behavior, not a real encapsulation bug. -->
     <Match>
-        <Or>
-            <Field name="serverInstance"/>
-            <Field name="projectFilesDir"/>
-        </Or>
-        <Bug pattern="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR"/>
-    </Match>
-    <Match>
+        <Package name="io.ballerina.observe.choreo.recording"/>
         <Bug pattern="EI_EXPOSE_REP, EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- BaseTestCase.initializeSuite() is a TestNG @BeforeSuite hook that legitimately
+         initializes the shared static test-server handle once per suite run. -->
+    <Match>
+        <Class name="~.*\.BaseTestCase"/>
+        <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"/>
     </Match>
 </FindBugsFilter>

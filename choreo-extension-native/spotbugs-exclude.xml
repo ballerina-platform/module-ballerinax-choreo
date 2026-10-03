@@ -58,4 +58,20 @@
         <Class name="io.ballerina.observe.choreo.client.model.ChoreoTraceSpan"/>
         <Bug pattern="EI_EXPOSE_REP, EI_EXPOSE_REP2"/>
     </Match>
+
+    <!-- SpotBugs 6.5.1 newly flags these constructors as vulnerable to finalizer attacks (CT_CONSTRUCTOR_THROW).
+         None have finalizers or are designed for subclassing; each throws to legitimately fail-fast on a real
+         initialization error (a required resource/client not being available), not a framework requirement. -->
+    <Match>
+        <Class name="io.ballerina.observe.choreo.BallerinaMetadataReader"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+    <Match>
+        <Class name="io.ballerina.observe.choreo.client.ChoreoSpanExporter"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+    <Match>
+        <Class name="io.ballerina.observe.choreo.client.internal.secret.AnonymousAppSecretHandler"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
 </FindBugsFilter>
