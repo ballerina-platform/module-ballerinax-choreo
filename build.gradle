@@ -15,11 +15,18 @@
  */
 
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.process.ExecOperations
+
+import javax.inject.Inject
+
+abstract class BallerinaExecHelper {
+    @Inject abstract ExecOperations getExecOperations()
+}
 
 plugins {
     id 'checkstyle'
-    id "com.github.spotbugs" version "5.0.14"
-    id "net.researchgate.release" version "2.8.1"
+    id "com.github.spotbugs" version "6.5.1"
+    id "net.researchgate.release" version "3.1.0"
     id "de.undercouch.download" version "5.4.0"
     id "jacoco"
 }
@@ -109,12 +116,12 @@ subprojects {
     }
 
     spotbugsMain {
-        it.effort "max"
-        it.reportLevel "low"
+        it.effort = 'max'
+        it.reportLevel = 'low'
         it.reports {
-            xml.enabled false
-            html.enabled true
-            text.enabled true
+            xml.required = false
+            html.required = true
+            text.required = true
         }
         def excludeFile = file('spotbugs-exclude.xml')
         if (excludeFile.exists()) {
@@ -123,12 +130,12 @@ subprojects {
     }
 
     spotbugsTest {
-        it.effort "max"
-        it.reportLevel "low"
+        it.effort = 'max'
+        it.reportLevel = 'low'
         it.reports {
-            xml.enabled false
-            html.enabled true
-            text.enabled true
+            xml.required = false
+            html.required = true
+            text.required = true
         }
         def excludeFile = file('spotbugs-test-exclude.xml')
         if (excludeFile.exists()) {
@@ -160,8 +167,14 @@ release {
     }
 }
 
-task build {
-    dependsOn('choreo-extension-ballerina:build')
+if (tasks.names.contains('build')) {
+    tasks.named('build') {
+        dependsOn('choreo-extension-ballerina:build')
+    }
+} else {
+    tasks.register('build') {
+        dependsOn('choreo-extension-ballerina:build')
+    }
 }
 
 task codeCoverageReport(type: JacocoReport) {
@@ -178,8 +191,8 @@ task codeCoverageReport(type: JacocoReport) {
     reports {
         xml.required = true
         html.required = true
-        xml.destination = new File("${buildDir}/reports/jacoco/report.xml")
-        html.destination = new File("${buildDir}/reports/jacoco/report.html")
+        xml.outputLocation = layout.buildDirectory.file("reports/jacoco/report.xml")
+        html.outputLocation = layout.buildDirectory.dir("reports/jacoco/report-html")
     }
 
     onlyIf = {
@@ -188,12 +201,13 @@ task codeCoverageReport(type: JacocoReport) {
 }
 
 task commitTomlFiles {
+    def execHelper = project.objects.newInstance(BallerinaExecHelper)
     doLast {
-        exec {
-            def testDependenciesTomlFile = "choreo-extension-tests/src/test/resources/bal/**/Dependencies.toml"
-            def balModuleDependenciesTomlFile = "choreo-extension-ballerina/Dependencies.toml"
-            def dependenciesTomlFile = "${testDependenciesTomlFile} ${balModuleDependenciesTomlFile}"
+        def testDependenciesTomlFile = "choreo-extension-tests/src/test/resources/bal/**/Dependencies.toml"
+        def balModuleDependenciesTomlFile = "choreo-extension-ballerina/Dependencies.toml"
+        def dependenciesTomlFile = "${testDependenciesTomlFile} ${balModuleDependenciesTomlFile}"
 
+        execHelper.execOperations.exec {
             ignoreExitValue true
             if (Os.isFamily(Os.FAMILY_WINDOWS)) {
                 commandLine 'cmd', '/c', "git add ${dependenciesTomlFile} && git commit -m '[Automated] Update ballerina package versions' ${dependenciesTomlFile}"

@@ -1,4 +1,11 @@
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.process.ExecOperations
+
+import javax.inject.Inject
+
+abstract class BallerinaExecHelper {
+    @Inject abstract ExecOperations getExecOperations()
+}
 
 /*
  * Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
@@ -18,7 +25,7 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
     id 'jacoco'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'com.gradleup.shadow' version '9.6.1'
 }
 
 description = 'Ballerina - Choreo Extension Tests'
@@ -154,13 +161,14 @@ task createServerZip(type: Zip) {
 }
 
 def generateGrpcServer(protoFile, outputDir) {
+    def execHelper = project.objects.newInstance(BallerinaExecHelper)
     def protoNameMatcher = protoFile =~ /.*\\/([^\/]+)\.proto/
     def protoName = protoNameMatcher[0][1]
     protoFile = new File(protoFile).getAbsolutePath()   // Resolve absolute path
 
     def generatedSourcesDir = "${project.buildDir}/tmp/generated/sources/${protoName}"
     def distributionBinPath = "${project.buildDir.absolutePath}/extracted-distributions/jballerina-tools-zip/jballerina-tools-${ballerinaLangVersion}/bin"
-    exec {
+    execHelper.execOperations.exec {
         workingDir project.projectDir
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
             commandLine 'cmd', '/c', "${distributionBinPath}/bal.bat grpc --input ${protoFile} --output ${generatedSourcesDir} --mode service && exit %%ERRORLEVEL%%"

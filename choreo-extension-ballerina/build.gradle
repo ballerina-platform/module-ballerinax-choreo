@@ -15,6 +15,13 @@
  */
 
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.process.ExecOperations
+
+import javax.inject.Inject
+
+abstract class BallerinaExecHelper {
+    @Inject abstract ExecOperations getExecOperations()
+}
 
 description = 'Ballerina - Choreo Extension - Ballerina Module'
 
@@ -193,13 +200,14 @@ task ballerinaBuild {
 
     inputs.dir file(project.projectDir)
     doLast {
+        def execHelper = project.objects.newInstance(BallerinaExecHelper)
         def additionalBuildParams = ""
         if (project.hasProperty("debug")) {
             additionalBuildParams = "--debug ${project.findProperty("debug")}"
         }
 
         delete "${project.projectDir}/Dependencies.toml"
-        exec {
+        execHelper.execOperations.exec {
             workingDir project.projectDir
             environment "JAVA_OPTS", "-DBALLERINA_DEV_COMPILE_BALLERINA_ORG=true"
             if (Os.isFamily(Os.FAMILY_WINDOWS)) {
@@ -223,7 +231,7 @@ task ballerinaBuild {
         }
 
         // Doc creation and packing
-        exec {
+        execHelper.execOperations.exec {
             workingDir project.projectDir
             environment "JAVA_OPTS", "-DBALLERINA_DEV_COMPILE_BALLERINA_ORG=true"
             if (Os.isFamily(Os.FAMILY_WINDOWS)) {
@@ -265,8 +273,9 @@ task ballerinaPublish {
             return
         }
         if (ballerinaCentralAccessToken != null) {
+            def execHelper = project.objects.newInstance(BallerinaExecHelper)
             println("Publishing to the ballerina central...")
-            exec {
+            execHelper.execOperations.exec {
                 workingDir project.projectDir
                 environment "JAVA_OPTS", "-DBALLERINA_DEV_COMPILE_BALLERINA_ORG=true"
                 if (Os.isFamily(Os.FAMILY_WINDOWS)) {
